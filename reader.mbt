@@ -86,7 +86,18 @@ pub fn read_log(bytes : Bytes, limits? : Limits = default_limits()) -> Log raise
         if in_summary { raise Invalid("Message in summary section") }
         add_message(log, decode_message(record.body, limits~), limits)
       }
-      0x06 => raise Invalid("Chunk support not enabled yet")
+      0x06 => {
+        if in_summary { raise Invalid("Chunk in summary section") }
+        let chunk = decode_chunk(record.body, limits~)
+        for nested in chunk.records {
+          match nested.opcode {
+            0x03 => add_schema(log, decode_schema(nested.body, limits~))
+            0x04 => add_channel(log, decode_channel(nested.body, limits~))
+            0x05 => add_message(log, decode_message(nested.body, limits~), limits)
+            _ => ()
+          }
+        }
+      }
       0x0c => {
         if in_summary { raise Invalid("Metadata in summary section") }
         log.metadata.push(decode_metadata(record.body, limits~))
