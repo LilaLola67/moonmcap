@@ -1,0 +1,5 @@
+// import {
+//   "LilaLola67/moonmcap" @lib,
+// }
+
+pkgtype(kind: "executable")
