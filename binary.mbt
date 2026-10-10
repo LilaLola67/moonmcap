@@ -7,7 +7,7 @@ struct Cursor {
 
 ///|
 fn cursor(data : Bytes, limits : Limits) -> Cursor {
-  { data, pos: 0, limits }
+  { data, pos: 0, limits, }
 }
 
 ///|
@@ -47,7 +47,11 @@ fn Cursor::u64(self : Cursor) -> UInt64 raise McapError {
 }
 
 ///|
-fn bounded_length(value : UInt64, maximum : Int, label : String) -> Int raise McapError {
+fn bounded_length(
+  value : UInt64,
+  maximum : Int,
+  label : String,
+) -> Int raise McapError {
   if maximum < 0 || value > maximum.to_uint64() {
     raise Invalid("\{label} length exceeds configured limit")
   }
@@ -56,29 +60,43 @@ fn bounded_length(value : UInt64, maximum : Int, label : String) -> Int raise Mc
 
 ///|
 fn Cursor::text(self : Cursor) -> String raise McapError {
-  let size = bounded_length(self.u32().to_uint64(), self.limits.max_string_bytes, "string")
+  let size = bounded_length(
+    self.u32().to_uint64(),
+    self.limits.max_string_bytes,
+    "string",
+  )
   let bytes = self.take(size)
-  try @utf8.decode(bytes[:], ignore_bom=true) catch {
+  @utf8.decode(bytes[:], ignore_bom=true) catch {
     _ => raise Invalid("malformed UTF-8 at byte \{self.pos - size}")
   }
 }
 
 ///|
 fn Cursor::blob(self : Cursor) -> Bytes raise McapError {
-  let size = bounded_length(self.u32().to_uint64(), self.limits.max_record_bytes, "blob")
+  let size = bounded_length(
+    self.u32().to_uint64(),
+    self.limits.max_record_bytes,
+    "blob",
+  )
   self.take(size)
 }
 
 ///|
 fn Cursor::pairs(self : Cursor) -> Array[(String, String)] raise McapError {
-  let size = bounded_length(self.u32().to_uint64(), self.limits.max_record_bytes, "map")
+  let size = bounded_length(
+    self.u32().to_uint64(),
+    self.limits.max_record_bytes,
+    "map",
+  )
   let nested = cursor(self.take(size), self.limits)
   let pairs = []
   let seen : Map[String, Bool] = {}
   while nested.pos < nested.data.length() {
     let key = nested.text()
     let value = nested.text()
-    if seen.contains(key) { raise Invalid("duplicate map key: \{key}") }
+    if seen.contains(key) {
+      raise Invalid("duplicate map key: \{key}")
+    }
     seen[key] = true
     pairs.push((key, value))
   }
@@ -94,7 +112,9 @@ fn Cursor::finish(self : Cursor) -> Unit raise McapError {
 
 ///|
 fn put_u16(out : @buffer.Buffer, value : Int) -> Unit raise McapError {
-  if value < 0 || value > 65535 { raise Invalid("identifier outside uint16") }
+  if value < 0 || value > 65535 {
+    raise Invalid("identifier outside uint16")
+  }
   out.write_uint16_le(value.to_uint16())
 }
 
@@ -112,11 +132,16 @@ fn put_blob(out : @buffer.Buffer, value : Bytes) -> Unit {
 }
 
 ///|
-fn put_pairs(out : @buffer.Buffer, pairs : Array[(String, String)]) -> Unit raise McapError {
+fn put_pairs(
+  out : @buffer.Buffer,
+  pairs : Array[(String, String)],
+) -> Unit raise McapError {
   let nested = @buffer.Buffer::Buffer()
   let seen : Map[String, Bool] = {}
   for pair in pairs {
-    if seen.contains(pair.0) { raise Invalid("duplicate map key: \{pair.0}") }
+    if seen.contains(pair.0) {
+      raise Invalid("duplicate map key: \{pair.0}")
+    }
     seen[pair.0] = true
     put_text(nested, pair.0)
     put_text(nested, pair.1)
@@ -126,7 +151,9 @@ fn put_pairs(out : @buffer.Buffer, pairs : Array[(String, String)]) -> Unit rais
 
 ///|
 pub fn frame(opcode : Byte, body : Bytes) -> Bytes raise McapError {
-  if opcode == 0 { raise Invalid("opcode zero is reserved") }
+  if opcode == 0 {
+    raise Invalid("opcode zero is reserved")
+  }
   let out = @buffer.Buffer::Buffer()
   out.write_byte(opcode)
   out.write_uint64_le(body.length().to_uint64())
@@ -135,18 +162,28 @@ pub fn frame(opcode : Byte, body : Bytes) -> Bytes raise McapError {
 }
 
 ///|
-pub fn decode_records(bytes : Bytes, limits? : Limits = default_limits(), base? : Int = 0) -> Array[Record] raise McapError {
-  if limits.max_records < 0 || base < 0 { raise Invalid("invalid scan limits or base") }
+pub fn decode_records(
+  bytes : Bytes,
+  limits? : Limits = default_limits(),
+  base? : Int = 0,
+) -> Array[Record] raise McapError {
+  if limits.max_records < 0 || base < 0 {
+    raise Invalid("invalid scan limits or base")
+  }
   let input = cursor(bytes, limits)
   let result = []
   while input.pos < bytes.length() {
-    if result.length() >= limits.max_records { raise Invalid("record count exceeds configured limit") }
+    if result.length() >= limits.max_records {
+      raise Invalid("record count exceeds configured limit")
+    }
     let offset = input.pos
     let opcode = input.take(1)[0]
-    if opcode == 0 { raise Invalid("opcode zero at byte \{offset + base}") }
+    if opcode == 0 {
+      raise Invalid("opcode zero at byte \{offset + base}")
+    }
     let size = bounded_length(input.u64(), limits.max_record_bytes, "record")
     let body = input.take(size)
-    result.push({ opcode, offset: offset + base, body })
+    result.push({ opcode, offset: offset + base, body, })
   }
   result
 }

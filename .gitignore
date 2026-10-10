@@ -4,3 +4,5 @@ target/
 target
 .mooncakes/
 .moonagent/
+_interop_deps/
+_interop/

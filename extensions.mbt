@@ -54,4 +54,3 @@ pub extend Log with @debug.Debug::{to_repr}
 
 ///|
 pub extend McapError with @debug.Debug::{to_repr}
-

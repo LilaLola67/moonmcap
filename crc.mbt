@@ -13,14 +13,20 @@ pub fn crc32_extend(previous : UInt, bytes : Bytes) -> UInt {
     for i = 0; i < 8; i = i + 1 {
       value = if (value & 1U) != 0U {
         (value >> 1) ^ 0xedb88320U
-      } else { value >> 1 }
+      } else {
+        value >> 1
+      }
     }
   }
   value ^ 0xffffffffU
 }
 
 ///|
-pub fn verify_crc(bytes : Bytes, expected : UInt, label? : String = "data") -> Unit raise McapError {
+pub fn verify_crc(
+  bytes : Bytes,
+  expected : UInt,
+  label? : String = "data",
+) -> Unit raise McapError {
   if expected != 0U && crc32(bytes) != expected {
     raise Invalid("\{label} CRC mismatch")
   }

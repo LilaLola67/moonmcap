@@ -7,14 +7,19 @@ pub fn encode_header(value : Header) -> Bytes {
 }
 
 ///|
-pub fn decode_header(bytes : Bytes, limits? : Limits = default_limits()) -> Header raise McapError {
+pub fn decode_header(
+  bytes : Bytes,
+  limits? : Limits = default_limits(),
+) -> Header raise McapError {
   let input = cursor(bytes, limits)
-  { profile: input.text(), library: input.text() }
+  { profile: input.text(), library: input.text(), }
 }
 
 ///|
 pub fn encode_schema(value : Schema) -> Bytes raise McapError {
-  if value.id == 0 { raise Invalid("schema id must be nonzero") }
+  if value.id == 0 {
+    raise Invalid("schema id must be nonzero")
+  }
   let out = @buffer.Buffer::Buffer()
   put_u16(out, value.id)
   put_text(out, value.name)
@@ -24,15 +29,22 @@ pub fn encode_schema(value : Schema) -> Bytes raise McapError {
 }
 
 ///|
-pub fn decode_schema(bytes : Bytes, limits? : Limits = default_limits()) -> Schema raise McapError {
+pub fn decode_schema(
+  bytes : Bytes,
+  limits? : Limits = default_limits(),
+) -> Schema raise McapError {
   let input = cursor(bytes, limits)
   let id = input.u16()
-  if id == 0 { raise Invalid("schema id must be nonzero") }
+  if id == 0 {
+    raise Invalid("schema id must be nonzero")
+  }
   let name = input.text()
   let encoding = input.text()
   let data = input.blob()
-  if encoding == "" && !data.is_empty() { raise Invalid("schema without encoding has nonempty data") }
-  { id, name, encoding, data }
+  if encoding == "" && !data.is_empty() {
+    raise Invalid("schema without encoding has nonempty data")
+  }
+  { id, name, encoding, data, }
 }
 
 ///|
@@ -47,14 +59,17 @@ pub fn encode_channel(value : Channel) -> Bytes raise McapError {
 }
 
 ///|
-pub fn decode_channel(bytes : Bytes, limits? : Limits = default_limits()) -> Channel raise McapError {
+pub fn decode_channel(
+  bytes : Bytes,
+  limits? : Limits = default_limits(),
+) -> Channel raise McapError {
   let input = cursor(bytes, limits)
   let id = input.u16()
   let schema_id = input.u16()
   let topic = input.text()
   let message_encoding = input.text()
   let metadata = input.pairs()
-  { id, schema_id, topic, message_encoding, metadata }
+  { id, schema_id, topic, message_encoding, metadata, }
 }
 
 ///|
@@ -69,14 +84,17 @@ pub fn encode_message(value : Message) -> Bytes raise McapError {
 }
 
 ///|
-pub fn decode_message(bytes : Bytes, limits? : Limits = default_limits()) -> Message raise McapError {
+pub fn decode_message(
+  bytes : Bytes,
+  limits? : Limits = default_limits(),
+) -> Message raise McapError {
   let input = cursor(bytes, limits)
   let channel_id = input.u16()
   let sequence = input.u32()
   let log_time = input.u64()
   let publish_time = input.u64()
   let data = input.take(bytes.length() - input.pos)
-  { channel_id, sequence, log_time, publish_time, data }
+  { channel_id, sequence, log_time, publish_time, data, }
 }
 
 ///|
@@ -95,7 +113,7 @@ pub fn decode_footer(bytes : Bytes) -> Footer raise McapError {
   let summary_offset_start = input.u64()
   let summary_crc = input.u32()
   input.finish()
-  { summary_start, summary_offset_start, summary_crc }
+  { summary_start, summary_offset_start, summary_crc, }
 }
 
 ///|
@@ -107,7 +125,10 @@ pub fn encode_metadata(value : Metadata) -> Bytes raise McapError {
 }
 
 ///|
-pub fn decode_metadata(bytes : Bytes, limits? : Limits = default_limits()) -> Metadata raise McapError {
+pub fn decode_metadata(
+  bytes : Bytes,
+  limits? : Limits = default_limits(),
+) -> Metadata raise McapError {
   let input = cursor(bytes, limits)
-  { name: input.text(), entries: input.pairs() }
+  { name: input.text(), entries: input.pairs(), }
 }

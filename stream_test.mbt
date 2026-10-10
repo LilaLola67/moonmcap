@@ -5,7 +5,9 @@ test "every possible fragmentation preserves framed records" {
   for split = 0; split <= bytes.length(); split = split + 1 {
     let stream = @moonmcap.StreamDecoder::new(base=8)
     let actual = stream.feed(bytes[0:split].to_owned())
-    for record in stream.feed(bytes[split:].to_owned()) { actual.push(record) }
+    for record in stream.feed(bytes[split:].to_owned()) {
+      actual.push(record)
+    }
     stream.finish()
     assert_eq(actual, expected)
   }
@@ -17,14 +19,18 @@ test "one-byte streaming and poison behavior" {
   let stream = @moonmcap.StreamDecoder::new()
   let result = []
   for byte in bytes {
-    for record in stream.feed(Bytes::from_array([byte][:])) { result.push(record) }
+    for record in stream.feed(Bytes::from_array([byte][:])) {
+      result.push(record)
+    }
   }
   assert_eq(result.length(), 1)
   assert_eq(stream.buffered_bytes(), 0)
   stream.finish()
   assert_true((try? stream.feed(b"")) is Err(_))
   let bad = @moonmcap.StreamDecoder::new()
-  assert_true((try? bad.feed(b"\x80\xff\xff\xff\xff\xff\xff\xff\xff")) is Err(_))
+  assert_true(
+    (try? bad.feed(b"\x80\xff\xff\xff\xff\xff\xff\xff\xff")) is Err(_),
+  )
   assert_eq(bad.buffered_bytes(), 0)
   assert_true((try? bad.feed(bytes)) is Err(_))
 }

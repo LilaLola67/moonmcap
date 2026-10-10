@@ -15,7 +15,13 @@ test "statistics distinguish recorded order from chronological gaps" {
 ///|
 test "empty channels avoid fabricated time ranges and division by zero" {
   let log = @moonmcap.empty_log()
-  log.channels.push({id: 0, schema_id: 0, topic: "/empty", message_encoding: "", metadata: []})
+  log.channels.push({
+    id: 0,
+    schema_id: 0,
+    topic: "/empty",
+    message_encoding: "",
+    metadata: [],
+  })
   let stats = @moonmcap.summarize(log)
   assert_eq(stats.topics[0].first_time, None)
   assert_eq(stats.topics[0].frequency_hz, 0.0)

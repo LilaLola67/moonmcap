@@ -21,7 +21,11 @@ test "truncated headers and huge length fail before allocation" {
 
 ///|
 test "record budget is enforced" {
-  let limits = @moonmcap.Limits::{ max_record_bytes: 100, max_string_bytes: 50, max_records: 1 }
+  let limits = @moonmcap.Limits::{
+    max_record_bytes: 100,
+    max_string_bytes: 50,
+    max_records: 1,
+  }
   let bytes = @moonmcap.frame(0x80, b"a") + @moonmcap.frame(0x81, b"b")
   assert_true((try? @moonmcap.decode_records(bytes, limits~)) is Err(_))
 }

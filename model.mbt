@@ -7,7 +7,11 @@ pub(all) struct Limits {
 
 ///|
 pub fn default_limits() -> Limits {
-  { max_record_bytes: 16 * 1024 * 1024, max_string_bytes: 1024 * 1024, max_records: 100000 }
+  {
+    max_record_bytes: 16 * 1024 * 1024,
+    max_string_bytes: 1024 * 1024,
+    max_records: 100000,
+  }
 }
 
 ///|
@@ -79,10 +83,15 @@ pub(all) struct Log {
 ///|
 pub fn empty_log(profile? : String = "") -> Log {
   {
-    header: { profile, library: "moonmcap/0.1.0" },
-    schemas: [], channels: [], messages: [], metadata: [],
+    header: { profile, library: "moonmcap/0.1.0", },
+    schemas: [],
+    channels: [],
+    messages: [],
+    metadata: [],
   }
 }
 
 ///|
-pub fn magic() -> Bytes { b"\x89MCAP0\r\n" }
+pub fn magic() -> Bytes {
+  b"\x89MCAP0\r\n"
+}

@@ -19,9 +19,8 @@ repository = "https://github.com/LilaLola67/moonmcap"
 
 license = "MIT"
 
-keywords = ["mcap", "robotics", "binary", "logging", "index"]
+keywords = [ "mcap", "robotics", "binary", "logging", "index" ]
 
 preferred_target = "wasm"
 
 description = "MoonBit-native MCAP message-log codec, indexed queries and file transformations"
-
