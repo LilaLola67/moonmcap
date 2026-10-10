@@ -31,6 +31,8 @@ pub fn write_indexed(
   let out = @buffer.Buffer::Buffer()
   out.write_bytes(magic()[:])
   let indexes : Array[ChunkIndex] = []
+  let attachments : Array[Bytes] = []
+  let metadata : Array[Bytes] = []
   for record in records {
     if record.opcode == 0x0f || record.opcode == 0x02 {
       continue
@@ -38,6 +40,14 @@ pub fn write_indexed(
     let offset = out.length()
     let framed = frame(record.opcode, record.body)
     out.write_bytes(framed[:])
+    if record.opcode == 0x09 {
+      let value = decode_attachment(record.body, limits~)
+      attachments.push(encode_attachment_index({ offset: offset.to_uint64(), length: framed.length().to_uint64(), log_time: value.log_time, create_time: value.create_time, data_size: value.data.length().to_uint64(), name: value.name, media_type: value.media_type }))
+    }
+    if record.opcode == 0x0c {
+      let value = decode_metadata(record.body, limits~)
+      metadata.push(encode_metadata_index({ offset: offset.to_uint64(), length: framed.length().to_uint64(), name: value.name }))
+    }
     if record.opcode != 0x06 {
       continue
     }
@@ -98,6 +108,8 @@ pub fn write_indexed(
     chunk_bodies.push(encode_chunk_index(index))
   }
   append_group(out, 0x08, chunk_bodies, groups)
+  append_group(out, 0x0a, attachments, groups)
+  append_group(out, 0x0d, metadata, groups)
   let offset_start = out.length()
   for group in groups {
     out.write_bytes(frame(0x0e, encode_summary_offset(group))[:])
@@ -186,7 +198,12 @@ pub fn validate_file_indexes(
       if message_record.opcode != 0x07 {
         raise Invalid("MessageIndex pointer has wrong opcode")
       }
-      if pair.1 < index.chunk_start + index.chunk_length {
+      let index_start = index.chunk_start + index.chunk_length
+      if index.message_index_length > bytes.length().to_uint64() - index_start {
+        raise Invalid("MessageIndex span exceeds file")
+      }
+      if pair.1 < index_start ||
+        pair.1 >= index_start + index.message_index_length {
         raise Invalid("MessageIndex precedes its Chunk")
       }
       let parsed = decode_message_index(message_record.body, limits~)
@@ -203,7 +220,8 @@ pub fn validate_file_indexes(
     for nested in chunk.records {
       if nested.opcode == 0x05 {
         let message = decode_message(nested.body, limits~)
-        if !channel_ids.contains(message.channel_id) {
+        if !index.message_index_offsets.is_empty() &&
+          !channel_ids.contains(message.channel_id) {
           raise Invalid("missing channel MessageIndex")
         }
       }

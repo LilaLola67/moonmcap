@@ -158,7 +158,9 @@ pub fn read_log(
         }
       }
       0x09 => {
-        if in_summary { raise Invalid("Attachment in summary section") }
+        if in_summary {
+          raise Invalid("Attachment in summary section")
+        }
         log.attachments.push(decode_attachment(record.body, limits~))
       }
       0x0c => {
@@ -171,5 +173,6 @@ pub fn read_log(
       _ => ()
     }
   }
+  validate_log(log, limits~)
   log
 }

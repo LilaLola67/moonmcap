@@ -167,7 +167,7 @@ pub fn decode_records(
   limits? : Limits = default_limits(),
   base? : Int = 0,
 ) -> Array[Record] raise McapError {
-  if limits.max_records < 0 || base < 0 {
+  if limits.max_records < 0 || base < 0 || base > 2147483647 - bytes.length() {
     raise Invalid("invalid scan limits or base")
   }
   let input = cursor(bytes, limits)

@@ -9,7 +9,10 @@ pub(all) struct RecoveryReport {
 
 ///|
 /// Recover only a verified contiguous prefix. Never resynchronize through corrupt bytes.
-pub fn recover_prefix(bytes : Bytes, limits? : Limits = default_limits()) -> RecoveryReport raise McapError {
+pub fn recover_prefix(
+  bytes : Bytes,
+  limits? : Limits = default_limits(),
+) -> RecoveryReport raise McapError {
   if bytes.length() < 8 || bytes[0:8].to_owned() != magic() {
     raise Invalid("recovery requires leading MCAP magic")
   }
@@ -50,7 +53,9 @@ pub fn recover_prefix(bytes : Bytes, limits? : Limits = default_limits()) -> Rec
       }
       match opcode {
         0x01 => {
-          if header is Some(_) { raise Invalid("duplicate Header") }
+          if header is Some(_) {
+            raise Invalid("duplicate Header")
+          }
           header = Some(decode_header(body, limits~))
         }
         0x03 => add_schema(log, decode_schema(body, limits~))
@@ -63,17 +68,29 @@ pub fn recover_prefix(bytes : Bytes, limits? : Limits = default_limits()) -> Rec
           for record in chunk.records {
             match record.opcode {
               0x03 => add_schema(candidate, decode_schema(record.body, limits~))
-              0x04 => add_channel(candidate, decode_channel(record.body, limits~))
-              0x05 => add_message(candidate, decode_message(record.body, limits~), limits)
+              0x04 =>
+                add_channel(candidate, decode_channel(record.body, limits~))
+              0x05 =>
+                add_message(
+                  candidate,
+                  decode_message(record.body, limits~),
+                  limits,
+                )
               _ => ()
             }
           }
           log.schemas.clear()
           log.channels.clear()
           log.messages.clear()
-          for schema in candidate.schemas { log.schemas.push(schema) }
-          for channel in candidate.channels { log.channels.push(channel) }
-          for message in candidate.messages { log.messages.push(message) }
+          for schema in candidate.schemas {
+            log.schemas.push(schema)
+          }
+          for channel in candidate.channels {
+            log.channels.push(channel)
+          }
+          for message in candidate.messages {
+            log.messages.push(message)
+          }
         }
         0x09 => log.attachments.push(decode_attachment(body, limits~))
         0x0c => log.metadata.push(decode_metadata(body, limits~))
@@ -81,7 +98,11 @@ pub fn recover_prefix(bytes : Bytes, limits? : Limits = default_limits()) -> Rec
           let input = cursor(body, limits)
           let expected = input.u32()
           input.finish()
-          verify_crc(bytes[0:position].to_owned(), expected, label="recovery DataEnd")
+          verify_crc(
+            bytes[0:position].to_owned(),
+            expected,
+            label="recovery DataEnd",
+          )
           ended = true
         }
         0x02 => raise Invalid("Footer before DataEnd")
@@ -90,33 +111,57 @@ pub fn recover_prefix(bytes : Bytes, limits? : Limits = default_limits()) -> Rec
       }
       true
     } catch {
-      Invalid(reason) => { stopped = reason; false }
+      Invalid(reason) => {
+        stopped = reason
+        false
+      }
     }
-    if !accepted { break }
+    if !accepted {
+      break
+    }
     position += 9 + size
     count += 1
-    if ended { break }
+    if ended {
+      break
+    }
   }
   let header = match header {
     Some(value) => value
     None => raise Invalid("no complete valid Header to recover")
   }
-  let log = { ..log, header }
+  let log = { ..log, header, }
   let complete = if ended {
     try {
       ignore(read_log(bytes, limits~))
       true
-    } catch { _ => false }
-  } else { false }
-  if ended {
-    stopped = if complete { "complete file" } else { "valid data section; summary or footer incomplete" }
+    } catch {
+      _ => false
+    }
+  } else {
+    false
   }
-  { log, recovered_records: count, stop_offset: position, complete, reason: stopped }
+  if ended {
+    stopped = if complete {
+      "complete file"
+    } else {
+      "valid data section; summary or footer incomplete"
+    }
+  }
+  {
+    log,
+    recovered_records: count,
+    stop_offset: position,
+    complete,
+    reason: stopped,
+  }
 }
 
 ///|
 /// Rewrites a recoverable prefix as a fresh valid sequential MCAP file.
-pub fn repair_prefix(bytes : Bytes, limits? : Limits = default_limits()) -> (Bytes, RecoveryReport) raise McapError {
+pub fn repair_prefix(
+  bytes : Bytes,
+  limits? : Limits = default_limits(),
+) -> (Bytes, RecoveryReport) raise McapError {
   let report = recover_prefix(bytes, limits~)
   (write_log(report.log, limits~), report)
 }
