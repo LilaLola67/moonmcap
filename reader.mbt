@@ -129,6 +129,7 @@ pub fn read_log(
     channels: [],
     messages: [],
     metadata: [],
+    attachments: [],
   }
   let mut in_summary = false
   for record in records {
@@ -155,6 +156,10 @@ pub fn read_log(
             _ => ()
           }
         }
+      }
+      0x09 => {
+        if in_summary { raise Invalid("Attachment in summary section") }
+        log.attachments.push(decode_attachment(record.body, limits~))
       }
       0x0c => {
         if in_summary {

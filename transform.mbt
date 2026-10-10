@@ -41,6 +41,7 @@ pub fn merge_logs(
     channels: [],
     messages: [],
     metadata: [],
+    attachments: [],
   }
   let mut schema_id = 0
   let mut channel_id = 0
@@ -106,6 +107,9 @@ pub fn merge_logs(
     for metadata in log.metadata {
       merged.metadata.push({ ..metadata, entries: metadata.entries.copy(), })
     }
+    for attachment in log.attachments {
+      merged.attachments.push({ ..attachment, data: attachment.data.copy() })
+    }
   }
   if chronological {
     let positions = []
@@ -137,6 +141,12 @@ pub fn shift_time(
     let log_time = shift_clock(message.log_time, magnitude, backwards)
     let publish_time = shift_clock(message.publish_time, magnitude, backwards)
     result.messages[i] = { ..message, log_time, publish_time, }
+  }
+  for i = 0; i < result.attachments.length(); i = i + 1 {
+    let attachment = result.attachments[i]
+    result.attachments[i] = { ..attachment,
+      log_time: shift_clock(attachment.log_time, magnitude, backwards),
+      create_time: shift_clock(attachment.create_time, magnitude, backwards) }
   }
   result
 }

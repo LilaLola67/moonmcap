@@ -78,6 +78,7 @@ pub(all) struct Log {
   channels : Array[Channel]
   messages : Array[Message]
   metadata : Array[Metadata]
+  attachments : Array[Attachment]
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -88,6 +89,7 @@ pub fn empty_log(profile? : String = "") -> Log {
     channels: [],
     messages: [],
     metadata: [],
+    attachments: [],
   }
 }
 

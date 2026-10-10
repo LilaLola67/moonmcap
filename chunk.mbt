@@ -124,6 +124,9 @@ pub fn write_chunked(
   for metadata in log.metadata {
     out.write_bytes(frame(0x0c, encode_metadata(metadata))[:])
   }
+  for attachment in log.attachments {
+    out.write_bytes(frame(0x09, encode_attachment(attachment, checksums~))[:])
+  }
   let checksum = if checksums { crc32(out.to_bytes()) } else { 0U }
   out.write_bytes(frame(0x0f, checksum.to_le_bytes())[:])
   out.write_bytes(

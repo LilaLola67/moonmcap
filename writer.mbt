@@ -58,7 +58,12 @@ pub fn validate_log(
     }
     ignore(decode_metadata(body, limits~))
   }
-  let total = log.schemas.length() +
+  for attachment in log.attachments {
+    let body = encode_attachment(attachment)
+    if body.length() > limits.max_record_bytes { raise Invalid("Attachment exceeds record budget") }
+    ignore(decode_attachment(body, limits~))
+  }
+  let total = log.attachments.length() + log.schemas.length() +
     log.channels.length() +
     log.messages.length() +
     log.metadata.length() +
@@ -90,6 +95,9 @@ pub fn write_log(
   }
   for metadata in log.metadata {
     out.write_bytes(frame(0x0c, encode_metadata(metadata))[:])
+  }
+  for attachment in log.attachments {
+    out.write_bytes(frame(0x09, encode_attachment(attachment, checksums~))[:])
   }
   let checksum = if checksums { crc32(out.to_bytes()) } else { 0U }
   out.write_bytes(frame(0x0f, checksum.to_le_bytes())[:])
