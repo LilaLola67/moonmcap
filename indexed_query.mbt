@@ -61,7 +61,8 @@ pub fn query_file(
     if index.end_time < query.start_time || index.start_time > query.end_time {
       continue
     }
-    if !index.message_index_offsets.is_empty() && !index.message_index_offsets.any(fn(pair) { allowed.contains(pair.0) }) {
+    if !index.message_index_offsets.is_empty() &&
+      !index.message_index_offsets.any(fn(pair) { allowed.contains(pair.0) }) {
       continue
     }
     candidate_chunks += 1

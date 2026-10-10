@@ -13,16 +13,28 @@ pub fn encode_hex(bytes : Bytes) -> String {
 
 ///|
 fn hex_digit(value : Char) -> Int raise McapError {
-  if value >= '0' && value <= '9' { value.to_int() - '0'.to_int() }
-  else if value >= 'a' && value <= 'f' { value.to_int() - 'a'.to_int() + 10 }
-  else if value >= 'A' && value <= 'F' { value.to_int() - 'A'.to_int() + 10 }
-  else { raise Invalid("invalid hexadecimal digit") }
+  if value >= '0' && value <= '9' {
+    value.to_int() - '0'.to_int()
+  } else if value >= 'a' && value <= 'f' {
+    value.to_int() - 'a'.to_int() + 10
+  } else if value >= 'A' && value <= 'F' {
+    value.to_int() - 'A'.to_int() + 10
+  } else {
+    raise Invalid("invalid hexadecimal digit")
+  }
 }
 
 ///|
-pub fn decode_hex(value : String, max_bytes? : Int = 16 * 1024 * 1024) -> Bytes raise McapError {
-  if value.length() % 2 != 0 { raise Invalid("hexadecimal string must have even length") }
-  if max_bytes < 0 || value.length() / 2 > max_bytes { raise Invalid("hexadecimal input exceeds byte limit") }
+pub fn decode_hex(
+  value : String,
+  max_bytes? : Int = 16 * 1024 * 1024,
+) -> Bytes raise McapError {
+  if value.length() % 2 != 0 {
+    raise Invalid("hexadecimal string must have even length")
+  }
+  if max_bytes < 0 || value.length() / 2 > max_bytes {
+    raise Invalid("hexadecimal input exceeds byte limit")
+  }
   let out = @buffer.Buffer::Buffer()
   for i = 0; i < value.length(); i = i + 2 {
     let high = hex_digit(value[i].unsafe_to_char())
@@ -31,4 +43,3 @@ pub fn decode_hex(value : String, max_bytes? : Int = 16 * 1024 * 1024) -> Bytes 
   }
   out.to_bytes()
 }
-

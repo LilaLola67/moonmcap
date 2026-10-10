@@ -1,0 +1,376 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "LilaLola67/moonmcap"
+
+import {
+  "moonbitlang/core/buffer",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn all_query() -> Query
+
+pub fn build_query_index(Log) -> QueryIndex raise McapError
+
+pub fn copy_log(Log) -> Log
+
+pub fn crc32(Bytes) -> UInt
+
+pub fn crc32_extend(UInt, Bytes) -> UInt
+
+pub fn decode_attachment(Bytes, limits? : Limits) -> Attachment raise McapError
+
+pub fn decode_attachment_index(Bytes, limits? : Limits) -> AttachmentIndex raise McapError
+
+pub fn decode_channel(Bytes, limits? : Limits) -> Channel raise McapError
+
+pub fn decode_chunk(Bytes, limits? : Limits) -> Chunk raise McapError
+
+pub fn decode_chunk_index(Bytes, limits? : Limits) -> ChunkIndex raise McapError
+
+pub fn decode_footer(Bytes) -> Footer raise McapError
+
+pub fn decode_header(Bytes, limits? : Limits) -> Header raise McapError
+
+pub fn decode_hex(String, max_bytes? : Int) -> Bytes raise McapError
+
+pub fn decode_message(Bytes, limits? : Limits) -> Message raise McapError
+
+pub fn decode_message_index(Bytes, limits? : Limits) -> MessageIndex raise McapError
+
+pub fn decode_metadata(Bytes, limits? : Limits) -> Metadata raise McapError
+
+pub fn decode_metadata_index(Bytes, limits? : Limits) -> MetadataIndex raise McapError
+
+pub fn decode_records(Bytes, limits? : Limits, base? : Int) -> Array[Record] raise McapError
+
+pub fn decode_schema(Bytes, limits? : Limits) -> Schema raise McapError
+
+pub fn decode_summary_offset(Bytes) -> SummaryOffset raise McapError
+
+pub fn default_limits() -> Limits
+
+pub fn empty_log(profile? : String) -> Log
+
+pub fn encode_attachment(Attachment, checksums? : Bool) -> Bytes
+
+pub fn encode_attachment_index(AttachmentIndex) -> Bytes
+
+pub fn encode_channel(Channel) -> Bytes raise McapError
+
+pub fn encode_chunk(Array[Record], UInt64, UInt64, checksums? : Bool) -> Bytes raise McapError
+
+pub fn encode_chunk_index(ChunkIndex) -> Bytes raise McapError
+
+pub fn encode_footer(Footer) -> Bytes
+
+pub fn encode_header(Header) -> Bytes
+
+pub fn encode_hex(Bytes) -> String
+
+pub fn encode_message(Message) -> Bytes raise McapError
+
+pub fn encode_message_index(MessageIndex) -> Bytes raise McapError
+
+pub fn encode_metadata(Metadata) -> Bytes raise McapError
+
+pub fn encode_metadata_index(MetadataIndex) -> Bytes
+
+pub fn encode_schema(Schema) -> Bytes raise McapError
+
+pub fn encode_summary_offset(SummaryOffset) -> Bytes
+
+pub fn find_attachments(Log, name? : String, media_type? : String) -> Array[Attachment]
+
+pub fn frame(Byte, Bytes) -> Bytes raise McapError
+
+pub fn magic() -> Bytes
+
+pub fn merge_logs(Array[Log], chronological? : Bool) -> Log raise McapError
+
+pub fn new_builder(profile? : String, limits? : Limits) -> LogBuilder raise McapError
+
+pub fn query_file(Bytes, Query, limits? : Limits) -> QueryResult raise McapError
+
+pub fn read_log(Bytes, limits? : Limits) -> Log raise McapError
+
+pub fn recover_prefix(Bytes, limits? : Limits) -> RecoveryReport raise McapError
+
+pub fn repair_prefix(Bytes, limits? : Limits) -> (Bytes, RecoveryReport) raise McapError
+
+pub fn scan_file(Bytes, limits? : Limits) -> Array[Record] raise McapError
+
+pub fn shift_time(Log, UInt64, backwards? : Bool) -> Log raise McapError
+
+pub fn slice_log(Log, Query) -> Log raise McapError
+
+pub fn stats_report(LogStats) -> String
+
+pub fn summarize(Log) -> LogStats raise McapError
+
+pub fn validate_attachment_indexes(Bytes, limits? : Limits) -> Int raise McapError
+
+pub fn validate_file_indexes(Bytes, limits? : Limits) -> Array[ChunkIndex] raise McapError
+
+pub fn validate_log(Log, limits? : Limits) -> Unit raise McapError
+
+pub fn validate_message_index(MessageIndex, Chunk) -> Unit raise McapError
+
+pub fn validate_metadata_indexes(Bytes, limits? : Limits) -> Int raise McapError
+
+pub fn validate_summary(Bytes, limits? : Limits) -> Int raise McapError
+
+pub fn verify_crc(Bytes, UInt, label? : String) -> Unit raise McapError
+
+pub fn write_chunked(Log, messages_per_chunk? : Int, checksums? : Bool, limits? : Limits) -> Bytes raise McapError
+
+pub fn write_indexed(Log, messages_per_chunk? : Int, limits? : Limits) -> Bytes raise McapError
+
+pub fn write_log(Log, checksums? : Bool, limits? : Limits) -> Bytes raise McapError
+
+// Errors
+pub suberror McapError {
+  Invalid(String)
+} derive(@debug.Debug)
+pub fn McapError::to_repr(Self) -> @debug.Repr
+
+// Types and methods
+pub(all) struct Attachment {
+  log_time : UInt64
+  create_time : UInt64
+  name : String
+  media_type : String
+  data : Bytes
+} derive(Eq, @debug.Debug)
+pub fn Attachment::equal(Self, Self) -> Bool
+pub fn Attachment::not_equal(Self, Self) -> Bool
+pub fn Attachment::to_repr(Self) -> @debug.Repr
+
+pub(all) struct AttachmentIndex {
+  offset : UInt64
+  length : UInt64
+  log_time : UInt64
+  create_time : UInt64
+  data_size : UInt64
+  name : String
+  media_type : String
+}
+
+pub(all) struct Channel {
+  id : Int
+  schema_id : Int
+  topic : String
+  message_encoding : String
+  metadata : Array[(String, String)]
+} derive(Eq, @debug.Debug)
+pub fn Channel::equal(Self, Self) -> Bool
+pub fn Channel::not_equal(Self, Self) -> Bool
+pub fn Channel::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Chunk {
+  start_time : UInt64
+  end_time : UInt64
+  records : Array[Record]
+}
+
+pub(all) struct ChunkIndex {
+  start_time : UInt64
+  end_time : UInt64
+  chunk_start : UInt64
+  chunk_length : UInt64
+  message_index_offsets : Array[(Int, UInt64)]
+  message_index_length : UInt64
+  compression : String
+  compressed_size : UInt64
+  uncompressed_size : UInt64
+}
+
+type Cursor
+
+pub(all) struct Footer {
+  summary_start : UInt64
+  summary_offset_start : UInt64
+  summary_crc : UInt
+} derive(Eq, @debug.Debug)
+pub fn Footer::equal(Self, Self) -> Bool
+pub fn Footer::not_equal(Self, Self) -> Bool
+pub fn Footer::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Header {
+  profile : String
+  library : String
+} derive(Eq, @debug.Debug)
+pub fn Header::equal(Self, Self) -> Bool
+pub fn Header::not_equal(Self, Self) -> Bool
+pub fn Header::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Limits {
+  max_record_bytes : Int
+  max_string_bytes : Int
+  max_records : Int
+} derive(Eq, @debug.Debug)
+pub fn Limits::equal(Self, Self) -> Bool
+pub fn Limits::not_equal(Self, Self) -> Bool
+pub fn Limits::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Log {
+  header : Header
+  schemas : Array[Schema]
+  channels : Array[Channel]
+  messages : Array[Message]
+  metadata : Array[Metadata]
+  attachments : Array[Attachment]
+} derive(Eq, @debug.Debug)
+pub fn Log::equal(Self, Self) -> Bool
+pub fn Log::not_equal(Self, Self) -> Bool
+pub fn Log::to_repr(Self) -> @debug.Repr
+
+pub struct LogBuilder {
+  log : Log
+  limits : Limits
+  mut closed : Bool
+  mut next_schema : Int
+  mut next_channel : Int
+  sequences : Map[Int, UInt]
+}
+pub fn LogBuilder::add_attachment(Self, Attachment) -> Unit raise McapError
+pub fn LogBuilder::add_metadata(Self, Metadata) -> Unit raise McapError
+pub fn LogBuilder::append(Self, Int, UInt64, Bytes, publish_time? : UInt64) -> Unit raise McapError
+pub fn LogBuilder::finish(Self, indexed? : Bool, messages_per_chunk? : Int) -> Bytes raise McapError
+pub fn LogBuilder::message_count(Self) -> Int
+pub fn LogBuilder::register_channel(Self, String, String, schema_id? : Int, metadata? : Array[(String, String)]) -> Int raise McapError
+pub fn LogBuilder::register_schema(Self, String, String, Bytes) -> Int raise McapError
+pub fn LogBuilder::snapshot(Self) -> Log
+
+pub(all) struct LogStats {
+  schema_count : Int
+  channel_count : Int
+  message_count : Int
+  payload_bytes : UInt64
+  topics : Array[TopicStats]
+}
+
+pub(all) struct Message {
+  channel_id : Int
+  sequence : UInt
+  log_time : UInt64
+  publish_time : UInt64
+  data : Bytes
+} derive(Eq, @debug.Debug)
+pub fn Message::equal(Self, Self) -> Bool
+pub fn Message::not_equal(Self, Self) -> Bool
+pub fn Message::to_repr(Self) -> @debug.Repr
+
+pub(all) struct MessageIndex {
+  channel_id : Int
+  entries : Array[(UInt64, UInt64)]
+}
+
+pub(all) struct Metadata {
+  name : String
+  entries : Array[(String, String)]
+} derive(Eq, @debug.Debug)
+pub fn Metadata::equal(Self, Self) -> Bool
+pub fn Metadata::not_equal(Self, Self) -> Bool
+pub fn Metadata::to_repr(Self) -> @debug.Repr
+
+pub(all) struct MetadataIndex {
+  offset : UInt64
+  length : UInt64
+  name : String
+}
+
+pub(all) struct Query {
+  topics : Array[String]
+  start_time : UInt64
+  end_time : UInt64
+  descending : Bool
+  offset : Int
+  limit : Int
+}
+
+pub(all) struct QueryDiagnostics {
+  total_chunks : Int
+  candidate_chunks : Int
+  matching_messages : Int
+  used_file_indexes : Bool
+}
+
+pub struct QueryIndex {
+  log : Log
+  by_channel : Map[Int, Array[Int]]
+  all_messages : Array[Int]
+}
+pub fn QueryIndex::query(Self, Query) -> Array[Message] raise McapError
+
+pub(all) struct QueryResult {
+  messages : Array[Message]
+  diagnostics : QueryDiagnostics
+}
+
+pub(all) struct Record {
+  opcode : Byte
+  offset : Int
+  body : Bytes
+} derive(Eq, @debug.Debug)
+pub fn Record::equal(Self, Self) -> Bool
+pub fn Record::not_equal(Self, Self) -> Bool
+pub fn Record::to_repr(Self) -> @debug.Repr
+
+pub(all) struct RecoveryReport {
+  log : Log
+  recovered_records : Int
+  stop_offset : Int
+  complete : Bool
+  reason : String
+}
+
+pub(all) struct Schema {
+  id : Int
+  name : String
+  encoding : String
+  data : Bytes
+} derive(Eq, @debug.Debug)
+pub fn Schema::equal(Self, Self) -> Bool
+pub fn Schema::not_equal(Self, Self) -> Bool
+pub fn Schema::to_repr(Self) -> @debug.Repr
+
+pub struct StreamDecoder {
+  limits : Limits
+  pending : @buffer.Buffer
+  mut expected : Int
+  mut offset : Int
+  mut count : Int
+  mut failed : Bool
+  mut finished : Bool
+}
+pub fn StreamDecoder::buffered_bytes(Self) -> Int
+pub fn StreamDecoder::feed(Self, Bytes) -> Array[Record] raise McapError
+pub fn StreamDecoder::finish(Self) -> Unit raise McapError
+pub fn StreamDecoder::new(limits? : Limits, base? : Int) -> Self raise McapError
+pub fn StreamDecoder::record_count(Self) -> Int
+
+pub(all) struct SummaryOffset {
+  opcode : Byte
+  start : UInt64
+  length : UInt64
+}
+
+pub(all) struct TopicStats {
+  channel_id : Int
+  topic : String
+  message_count : Int
+  payload_bytes : UInt64
+  first_time : UInt64?
+  last_time : UInt64?
+  maximum_gap : UInt64
+  median_gap : UInt64
+  p95_gap : UInt64
+  arrival_regressions : Int
+  sequence_discontinuities : Int
+  publish_after_log : Int
+  frequency_hz : Double
+}
+
+// Type aliases
+
+// Traits

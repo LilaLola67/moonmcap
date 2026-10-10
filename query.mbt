@@ -52,7 +52,7 @@ pub fn copy_log(log : Log) -> Log {
     channels: log.channels.map(fn(c) { { ..c, metadata: c.metadata.copy(), } }),
     messages: log.messages.map(fn(m) { { ..m, data: m.data.copy(), } }),
     metadata: log.metadata.map(fn(m) { { ..m, entries: m.entries.copy(), } }),
-    attachments: log.attachments.map(fn(a) { { ..a, data: a.data.copy() } }),
+    attachments: log.attachments.map(fn(a) { { ..a, data: a.data.copy(), } }),
   }
 }
 

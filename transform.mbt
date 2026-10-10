@@ -108,7 +108,7 @@ pub fn merge_logs(
       merged.metadata.push({ ..metadata, entries: metadata.entries.copy(), })
     }
     for attachment in log.attachments {
-      merged.attachments.push({ ..attachment, data: attachment.data.copy() })
+      merged.attachments.push({ ..attachment, data: attachment.data.copy(), })
     }
   }
   if chronological {
@@ -144,9 +144,11 @@ pub fn shift_time(
   }
   for i = 0; i < result.attachments.length(); i = i + 1 {
     let attachment = result.attachments[i]
-    result.attachments[i] = { ..attachment,
+    result.attachments[i] = {
+      ..attachment,
       log_time: shift_clock(attachment.log_time, magnitude, backwards),
-      create_time: shift_clock(attachment.create_time, magnitude, backwards) }
+      create_time: shift_clock(attachment.create_time, magnitude, backwards),
+    }
   }
   result
 }

@@ -105,12 +105,17 @@ pub fn validate_summary(
         if value.start != start || value.length != length {
           raise Invalid("SummaryOffset span mismatch")
         }
-      None => {
-        if value.length != 0UL || value.start < footer.summary_start ||
-          value.start > (if footer.summary_offset_start == 0UL { footer_offset } else { footer.summary_offset_start }) {
+      None =>
+        if value.length != 0UL ||
+          value.start < footer.summary_start ||
+          value.start >
+          (if footer.summary_offset_start == 0UL {
+            footer_offset
+          } else {
+            footer.summary_offset_start
+          }) {
           raise Invalid("SummaryOffset references absent nonempty group")
         }
-      }
     }
   }
   groups.length()

@@ -60,10 +60,13 @@ pub fn validate_log(
   }
   for attachment in log.attachments {
     let body = encode_attachment(attachment)
-    if body.length() > limits.max_record_bytes { raise Invalid("Attachment exceeds record budget") }
+    if body.length() > limits.max_record_bytes {
+      raise Invalid("Attachment exceeds record budget")
+    }
     ignore(decode_attachment(body, limits~))
   }
-  let total = log.attachments.length() + log.schemas.length() +
+  let total = log.attachments.length() +
+    log.schemas.length() +
     log.channels.length() +
     log.messages.length() +
     log.metadata.length() +

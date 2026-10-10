@@ -42,11 +42,27 @@ pub fn write_indexed(
     out.write_bytes(framed[:])
     if record.opcode == 0x09 {
       let value = decode_attachment(record.body, limits~)
-      attachments.push(encode_attachment_index({ offset: offset.to_uint64(), length: framed.length().to_uint64(), log_time: value.log_time, create_time: value.create_time, data_size: value.data.length().to_uint64(), name: value.name, media_type: value.media_type }))
+      attachments.push(
+        encode_attachment_index({
+          offset: offset.to_uint64(),
+          length: framed.length().to_uint64(),
+          log_time: value.log_time,
+          create_time: value.create_time,
+          data_size: value.data.length().to_uint64(),
+          name: value.name,
+          media_type: value.media_type,
+        }),
+      )
     }
     if record.opcode == 0x0c {
       let value = decode_metadata(record.body, limits~)
-      metadata.push(encode_metadata_index({ offset: offset.to_uint64(), length: framed.length().to_uint64(), name: value.name }))
+      metadata.push(
+        encode_metadata_index({
+          offset: offset.to_uint64(),
+          length: framed.length().to_uint64(),
+          name: value.name,
+        }),
+      )
     }
     if record.opcode != 0x06 {
       continue
