@@ -75,4 +75,4 @@ python tools/count_source.py
 
 ## 原创与参考
 
-本项目独立编写 MoonBit 实现，参考 [MCAP 公共规范](https://mcap.dev/spec) 和 [foxglove/mcap](https://github.com/foxglove/mcap)（MIT）的生态与测试行为，未移植其实现源码；不宣称 MCAP 格式本身原创。[公开项目查重记录](docs/duplication-review.md) 含检索范围与相邻项目差异。[项目申报书](docs/项目申报书.md) 留有个人信息空白。
+本项目独立编写 MoonBit 实现，参考 [MCAP 公共规范](https://mcap.dev/spec) 和 [foxglove/mcap](https://github.com/foxglove/mcap)（MIT）的生态与测试行为，未移植其实现源码；不宣称 MCAP 格式本身原创。[公开项目查重记录](docs/duplication-review.md) 含检索范围与相邻项目差异。
