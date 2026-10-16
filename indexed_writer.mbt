@@ -24,9 +24,10 @@ fn append_group(
 pub fn write_indexed(
   log : Log,
   messages_per_chunk? : Int = 256,
+  compression? : Compression = Uncompressed,
   limits? : Limits = default_limits(),
 ) -> Bytes raise McapError {
-  let sequential = write_chunked(log, messages_per_chunk~, limits~)
+  let sequential = write_chunked(log, messages_per_chunk~, compression~, limits~)
   let records = scan_file(sequential, limits~)
   let out = @buffer.Buffer::Buffer()
   out.write_bytes(magic()[:])
@@ -101,8 +102,8 @@ pub fn write_indexed(
       chunk_length: framed.length().to_uint64(),
       message_index_offsets,
       message_index_length: (out.length() - message_index_start).to_uint64(),
-      compression: "",
-      compressed_size: uncompressed_size,
+      compression: compression.name(),
+      compressed_size: (record.body.length() - 40 - @utf8.encode(compression.name()[:]).length()).to_uint64(),
       uncompressed_size,
     })
   }
@@ -174,6 +175,20 @@ pub fn validate_file_indexes(
   }
   let result = []
   let indexed_chunks : Map[UInt64, Bool] = {}
+  let summary_channels : Map[Int, Channel] = Map([])
+  let summary_schemas : Map[Int, Schema] = Map([])
+  let mut summary = false
+  for record in records {
+    if record.opcode == 0x0f { summary = true }
+    if summary && record.opcode == 0x03 {
+      let schema = decode_schema(record.body, limits~)
+      summary_schemas[schema.id] = schema
+    }
+    if summary && record.opcode == 0x04 {
+      let channel = decode_channel(record.body, limits~)
+      summary_channels[channel.id] = channel
+    }
+  }
   for record in records {
     if record.opcode != 0x08 {
       continue
@@ -192,16 +207,20 @@ pub fn validate_file_indexes(
       raise Invalid("ChunkIndex type or length mismatch")
     }
     let chunk = decode_chunk(chunk_record.body, limits~)
+    let properties = cursor(chunk_record.body, limits)
+    ignore(properties.take(28))
+    let compression_name = properties.text()
+    let compressed_size = properties.u64()
     if chunk.start_time != index.start_time ||
       chunk.end_time != index.end_time ||
-      index.compression != "" {
+      index.compression != compression_name {
       raise Invalid("ChunkIndex properties disagree with Chunk")
     }
     let mut payload_size = 0UL
     for nested in chunk.records {
       payload_size += (nested.body.length() + 9).to_uint64()
     }
-    if index.compressed_size != payload_size ||
+    if index.compressed_size != compressed_size ||
       index.uncompressed_size != payload_size {
       raise Invalid("ChunkIndex payload sizes disagree with Chunk")
     }
@@ -237,6 +256,13 @@ pub fn validate_file_indexes(
     for nested in chunk.records {
       if nested.opcode == 0x05 {
         let message = decode_message(nested.body, limits~)
+        let channel = match summary_channels.get(message.channel_id) {
+          Some(value) => value
+          None => raise Invalid("indexed Message has no summary Channel")
+        }
+        if channel.schema_id != 0 && !summary_schemas.contains(channel.schema_id) {
+          raise Invalid("indexed Channel has no summary Schema")
+        }
         if !index.message_index_offsets.is_empty() &&
           !channel_ids.contains(message.channel_id) {
           raise Invalid("missing channel MessageIndex")
@@ -258,3 +284,4 @@ pub fn validate_file_indexes(
   }
   result
 }
+

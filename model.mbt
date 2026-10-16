@@ -3,6 +3,7 @@ pub(all) struct Limits {
   max_record_bytes : Int
   max_string_bytes : Int
   max_records : Int
+  max_decompressed_bytes : Int
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -11,6 +12,7 @@ pub fn default_limits() -> Limits {
     max_record_bytes: 16 * 1024 * 1024,
     max_string_bytes: 1024 * 1024,
     max_records: 100000,
+    max_decompressed_bytes: 64 * 1024 * 1024,
   }
 }
 

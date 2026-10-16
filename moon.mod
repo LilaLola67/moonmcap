@@ -24,3 +24,8 @@ keywords = [ "mcap", "robotics", "binary", "logging", "index" ]
 preferred_target = "wasm"
 
 description = "MoonBit-native MCAP message-log codec, indexed queries and file transformations"
+
+import {
+  "bikallem/compress@0.3.4",
+  "bikallem/blit@0.2.2",
+}

@@ -25,6 +25,7 @@ test "record budget is enforced" {
     max_record_bytes: 100,
     max_string_bytes: 50,
     max_records: 1,
+    max_decompressed_bytes: 64 * 1024 * 1024,
   }
   let bytes = @moonmcap.frame(0x80, b"a") + @moonmcap.frame(0x81, b"b")
   assert_true((try? @moonmcap.decode_records(bytes, limits~)) is Err(_))

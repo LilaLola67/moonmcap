@@ -1,0 +1,52 @@
+[
+  {
+    "file": "bitbuf.mbt",
+    "upstream_sha256": "2e8be276481442e538cc9386c3e741ac3fcf5f61ace71ef424da9a6c00af4751",
+    "upstream": "bikallem/compress@0.3.4"
+  },
+  {
+    "file": "compress.mbt",
+    "upstream_sha256": "b5c0035d562e8327f2c1de838892fec078ebb172a8ef13b7f73307a211ba9413",
+    "upstream": "bikallem/compress@0.3.4"
+  },
+  {
+    "file": "decompress.mbt",
+    "upstream_sha256": "04bddefdabe6fbb7c526c3edbd3bbe01aa3969981373b77082907f8d0cf3b9f0",
+    "upstream": "bikallem/compress@0.3.4"
+  },
+  {
+    "file": "deflater.mbt",
+    "upstream_sha256": "63eb2fed80565f90cc42e684348171ed45932891934a854d0733b4eba4731093",
+    "upstream": "bikallem/compress@0.3.4"
+  },
+  {
+    "file": "dictionary.mbt",
+    "upstream_sha256": "cce20cc13b0ce9bc46d9980d18403f675546f159801b1b4d7ddb73be312a77d9",
+    "upstream": "bikallem/compress@0.3.4"
+  },
+  {
+    "file": "frame_header.mbt",
+    "upstream_sha256": "eb6f7b6224d627031d58cedadaea211f95507245a161a5bf96ba6813b9e331fc",
+    "upstream": "bikallem/compress@0.3.4"
+  },
+  {
+    "file": "fse.mbt",
+    "upstream_sha256": "e84ee3db1d6b13fab36410393010aba3fe5684a0eaa477b33fe35f9dfeeff42b",
+    "upstream": "bikallem/compress@0.3.4"
+  },
+  {
+    "file": "huffman.mbt",
+    "upstream_sha256": "b60d8c76d3e57ed129a7539b5f8bf55787924b1d1a7101bfbf339f22d0bb30f0",
+    "upstream": "bikallem/compress@0.3.4"
+  },
+  {
+    "file": "inflater.mbt",
+    "upstream_sha256": "e3c5564cfd955a7c04e0b63a2857673fd5240e1a12b35eb0e4e0e766362d9b75",
+    "upstream": "bikallem/compress@0.3.4"
+  },
+  {
+    "file": "types.mbt",
+    "upstream_sha256": "3cb07ef8d46ac98f44990f19159f651bdfc4fee15e885ead30204e8521b06dc7",
+    "upstream": "bikallem/compress@0.3.4"
+  }
+]

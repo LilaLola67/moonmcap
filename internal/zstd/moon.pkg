@@ -1,0 +1,8 @@
+import {
+  "bikallem/compress/checksum",
+  "bikallem/blit",
+}
+
+import {
+  "moonbitlang/core/encoding/utf8",
+} for "test"

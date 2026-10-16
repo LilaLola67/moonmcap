@@ -2,4 +2,7 @@ import {
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/buffer",
   "moonbitlang/core/debug",
+  "bikallem/compress/lz4" @lz4,
+  "bikallem/compress/checksum" @checksum,
+  "LilaLola67/moonmcap/internal/zstd" @zstd,
 }

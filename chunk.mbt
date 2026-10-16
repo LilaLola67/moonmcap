@@ -11,6 +11,7 @@ pub fn encode_chunk(
   start_time : UInt64,
   end_time : UInt64,
   checksums? : Bool = true,
+  compression? : Compression = Uncompressed,
 ) -> Bytes raise McapError {
   if start_time > end_time {
     raise Invalid("inverted chunk time range")
@@ -26,14 +27,15 @@ pub fn encode_chunk(
     payload.write_bytes(frame(record.opcode, record.body)[:])
   }
   let bytes = payload.to_bytes()
+  let compressed = compress_payload(bytes, compression)
   let out = @buffer.Buffer::Buffer()
   out.write_uint64_le(start_time)
   out.write_uint64_le(end_time)
   out.write_uint64_le(bytes.length().to_uint64())
   out.write_uint_le(if checksums { crc32(bytes) } else { 0U })
-  put_text(out, "")
-  out.write_uint64_le(bytes.length().to_uint64())
-  out.write_bytes(bytes[:])
+  put_text(out, compression.name())
+  out.write_uint64_le(compressed.length().to_uint64())
+  out.write_bytes(compressed[:])
   out.to_bytes()
 }
 
@@ -49,18 +51,13 @@ pub fn decode_chunk(
   let checksum = input.u32()
   let compression = input.text()
   let size = bounded_length(input.u64(), limits.max_record_bytes, "chunk")
-  let payload = input.take(size)
-  if compression != "" {
-    raise Invalid("unsupported chunk compression: \{compression}")
-  }
-  if expected_size != payload.length().to_uint64() {
-    raise Invalid("chunk uncompressed size mismatch")
-  }
+  let payload = decompress_payload(input.take(size), compression, expected_size, limits~)
   if start_time > end_time {
     raise Invalid("inverted chunk time range")
   }
   verify_crc(payload, checksum, label="chunk")
-  let records = decode_records(payload, limits~)
+  let nested_limits = { ..limits, max_record_bytes: limits.max_record_bytes.min(limits.max_decompressed_bytes) }
+  let records = decode_records(payload, limits=nested_limits)
   for record in records {
     if record.opcode != 0x03 &&
       record.opcode != 0x04 &&
@@ -83,6 +80,7 @@ pub fn write_chunked(
   log : Log,
   messages_per_chunk? : Int = 256,
   checksums? : Bool = true,
+  compression? : Compression = Uncompressed,
   limits? : Limits = default_limits(),
 ) -> Bytes raise McapError {
   validate_log(log, limits~)
@@ -114,7 +112,9 @@ pub fn write_chunked(
       }
       records.push({ opcode: 0x05, offset: 0, body: encode_message(message), })
     }
-    let body = encode_chunk(records, first, last, checksums~)
+    let raw_size = records.fold(init=0UL, fn(n, r) { n + (r.body.length() + 9).to_uint64() })
+    ignore(bounded_length(raw_size, limits.max_decompressed_bytes, "chunk output"))
+    let body = encode_chunk(records, first, last, checksums~, compression~)
     if body.length() > limits.max_record_bytes {
       raise Invalid("chunk exceeds record budget; reduce messages_per_chunk")
     }
@@ -144,3 +144,4 @@ pub fn write_chunked(
   ignore(scan_file(bytes, limits~))
   bytes
 }
+

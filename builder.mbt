@@ -166,10 +166,13 @@ pub fn LogBuilder::finish(
   self : LogBuilder,
   indexed? : Bool = true,
   messages_per_chunk? : Int = 256,
+  compression? : Compression = Uncompressed,
 ) -> Bytes raise McapError {
   self.require_open()
   let bytes = if indexed {
-    write_indexed(self.log, messages_per_chunk~, limits=self.limits)
+    write_indexed(self.log, messages_per_chunk~, compression~, limits=self.limits)
+  } else if compression != Uncompressed {
+    write_chunked(self.log, messages_per_chunk~, compression~, limits=self.limits)
   } else {
     write_log(self.log, limits=self.limits)
   }
@@ -181,3 +184,4 @@ pub fn LogBuilder::finish(
 pub fn LogBuilder::message_count(self : LogBuilder) -> Int {
   self.log.messages.length()
 }
+
