@@ -1,0 +1,6 @@
+import {
+  "LilaLola67/moonmcap" @lib,
+}
+
+options(targets: { "main.mbt": ["js"], "unsupported.mbt": ["not", "js"] })
+pkgtype(kind: "executable")
