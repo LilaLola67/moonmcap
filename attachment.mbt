@@ -137,5 +137,8 @@ pub fn validate_attachment_indexes(
     }
     count += 1
   }
+  if count != 0 && count != records.filter(fn(r) { r.opcode == 0x09 }).length() {
+    raise Invalid("AttachmentIndex set does not cover attachments")
+  }
   count
 }
