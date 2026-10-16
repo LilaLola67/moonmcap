@@ -1,4 +1,5 @@
 // Derived from bikallem/compress 0.3.4, Apache-2.0. Modified for MCAP bounds; see third_party/README.md.
+
 ///|
 priv enum SeqDecoder {
   Fse(FseTable)
@@ -96,7 +97,9 @@ fn decode_literals_section(
       src, pos, block_end,
     )
     pos += header_bytes
-    guard lit_size <= 131072 else { raise ZstdError::CorruptData("literal block exceeds 128 KiB") }
+    guard lit_size <= 131072 else {
+      raise ZstdError::CorruptData("literal block exceeds 128 KiB")
+    }
     guard pos + lit_size <= block_end else {
       raise ZstdError::CorruptData("literals extend past block")
     }
@@ -108,7 +111,9 @@ fn decode_literals_section(
     let (lit_size, header_bytes) = decode_raw_literal_header(
       src, pos, block_end,
     )
-    guard lit_size <= 131072 else { raise ZstdError::CorruptData("RLE literal block exceeds 128 KiB") }
+    guard lit_size <= 131072 else {
+      raise ZstdError::CorruptData("RLE literal block exceeds 128 KiB")
+    }
     pos += header_bytes
     guard pos < block_end else { raise ZstdError::UnexpectedEOF }
     let literals = Bytes::make(lit_size, src.unsafe_get(pos))
@@ -118,7 +123,9 @@ fn decode_literals_section(
   let (lit_size, compressed_size, header_bytes, num_streams) = decode_huffman_literals_header(
     src, pos, block_end,
   )
-  guard lit_size <= 131072 else { raise ZstdError::CorruptData("Huffman literal block exceeds 128 KiB") }
+  guard lit_size <= 131072 else {
+    raise ZstdError::CorruptData("Huffman literal block exceeds 128 KiB")
+  }
   pos += header_bytes
   guard pos + compressed_size <= block_end else {
     raise ZstdError::UnexpectedEOF
@@ -322,7 +329,7 @@ fn decode_sequence_tables(
     ml_prev,
     "match length",
   )
-  ({ ll, of, ml }, pos3)
+  ({ ll, of, ml, }, pos3)
 }
 
 ///|
@@ -409,7 +416,8 @@ fn execute_sequences(
       ll_state,
     )
     let lit_len = decode_literal_length(br, ll_code)
-    guard lit_len <= 131072 - block_out.length() && match_len <= 131072 - block_out.length() - lit_len else {
+    guard lit_len <= 131072 - block_out.length() &&
+      match_len <= 131072 - block_out.length() - lit_len else {
       raise ZstdError::CorruptData("decoded block exceeds 128 KiB")
     }
     if i < num_sequences - 1 {
@@ -459,7 +467,9 @@ fn execute_sequences(
     raise ZstdError::CorruptData("sequence bitstream not fully consumed")
   }
   while lit_pos < lit_data.length() {
-    guard block_out.length() < 131072 else { raise ZstdError::CorruptData("decoded block exceeds 128 KiB") }
+    guard block_out.length() < 131072 else {
+      raise ZstdError::CorruptData("decoded block exceeds 128 KiB")
+    }
     block_out.write_byte(lit_data.unsafe_get(lit_pos))
     lit_pos += 1
   }
@@ -588,4 +598,3 @@ fn resolve_offset(rep : Array[Int], offset_value : Int, lit_len : Int) -> Int {
   rep.unsafe_set(0, tmp)
   rep.unsafe_get(0)
 }
-

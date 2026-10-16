@@ -1,4 +1,5 @@
 // Derived from bikallem/compress 0.3.4, Apache-2.0. Modified for MCAP bounds; see third_party/README.md.
+
 ///|
 priv enum InflatePhase {
   FrameHeader
@@ -32,7 +33,10 @@ priv struct InflaterState {
 struct Inflater(InflaterState)
 
 ///|
-pub fn Inflater::new(dict? : Bytes = Bytes::default(), output_limit? : Int = 64 * 1024 * 1024) -> Inflater {
+pub fn Inflater::new(
+  dict? : Bytes = Bytes::default(),
+  output_limit? : Int = 64 * 1024 * 1024,
+) -> Inflater {
   let parsed = try? parse_dictionary_bytes(dict)
   match parsed {
     Ok(dict) =>
@@ -193,10 +197,16 @@ pub fn Inflater::decode(self : Inflater) -> Decode {
               None => MAX_BLOCK_SIZE
             }
             if block_data.length() > block_limit {
-              return fail_inflater(s, ZstdError::CorruptData("decoded block exceeds frame window"))
+              return fail_inflater(
+                s,
+                ZstdError::CorruptData("decoded block exceeds frame window"),
+              )
             }
             if block_data.length() > s.output_limit - s.total_output {
-              return fail_inflater(s, ZstdError::CorruptData("output exceeds configured limit"))
+              return fail_inflater(
+                s,
+                ZstdError::CorruptData("output exceeds configured limit"),
+              )
             }
             if last_block {
               s.phase = Checksum
@@ -402,4 +412,3 @@ fn fail_inflater(s : InflaterState, e : ZstdError) -> Decode {
   s.failed = Some(e)
   Error(e)
 }
-

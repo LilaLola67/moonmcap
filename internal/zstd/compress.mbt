@@ -1,4 +1,5 @@
 // Derived from bikallem/compress 0.3.4, Apache-2.0. Modified for MCAP bounds; see third_party/README.md.
+
 ///|
 /// Compresses data using the Zstandard format.
 /// Uses LZ77 match finding and zstd compressed blocks with predefined FSE tables.
@@ -8,176 +9,69 @@ pub fn compress(
   dict? : Bytes = Bytes::default(),
 ) -> Bytes {
   ignore(level)
-  let parsed_dict = parse_dictionary_for_encoder(dict)
-  let src = data[:]
+  // This MCAP adapter emits dictionary-free blocks with explicit offsets.
+  ignore(dict)
   let src_len = data.length()
-  let max_out = 18 + src_len + (src_len / MAX_BLOCK_SIZE + 1) * 6 + 4
-  let out = FixedArray::make(max_out, b'\x00')
-  let mut pos = 0
-  pos += write_zstd_frame_header(out, pos, src_len, parsed_dict.dict_id)
-  let xxh = @checksum.XXH64::new()
-  xxh.update(src)
+  let out = FixedArray::make(
+    18 + src_len + (src_len / MAX_BLOCK_SIZE + 1) * 6 + 4,
+    b'\x00',
+  )
+  let mut pos = write_zstd_frame_header(out, 0, src_len, 0U)
   if src_len == 0 {
     pos = write_block_header_fixed(out, pos, true, BLOCK_TYPE_RAW, 0)
-  } else if parsed_dict.content.length() == 0 && is_all_same(src) {
-    let mut remaining = src_len
-    while remaining > 0 {
-      let size = remaining.min(MAX_BLOCK_SIZE)
-      pos = write_block_header_fixed(out, pos, remaining == size, BLOCK_TYPE_RLE, size)
-      out.unsafe_set(pos, src.unsafe_get(0))
+  }
+  let mut start = 0
+  while start < src_len {
+    let length = MAX_BLOCK_SIZE.min(src_len - start)
+    let source = data[start:start + length].to_owned()
+    let last = start + length == src_len
+    if is_all_same(source[:]) {
+      pos = write_block_header_fixed(out, pos, last, BLOCK_TYPE_RLE, length)
+      out[pos] = source[0]
       pos += 1
-      remaining -= size
-    }
-  } else {
-    let (sequences, literals, lit_count) = find_sequences_with_prefix(
-      src,
-      parsed_dict.content[:],
-      parsed_dict.rep,
-    )
-    if sequences.length() == 0 {
-      // No sequences found, emit as raw blocks
-      let mut src_pos = 0
-      while src_pos < src_len {
-        let block_end = if src_pos + MAX_BLOCK_SIZE < src_len {
-          src_pos + MAX_BLOCK_SIZE
-        } else {
-          src_len
-        }
-        let block_len = block_end - src_pos
-        let is_last = block_end == src_len
+    } else {
+      let (sequences, literals, lit_count) = find_sequences_with_prefix(
+        source[:],
+        b""[:],
+        default_rep_offsets(),
+      )
+      // Each match refers to this input block. Explicit offsets do not depend
+      // on repeat-offset state carried over from previously encoded blocks.
+      let explicit = sequences.map(fn(seq) {
+        { ..seq, offset: seq.actual_offset + 3, }
+      })
+      let scratch = FixedArray::make(length * 6 + 512, b'\x00')
+      let size = compress_block_from_sequences(
+        explicit, literals, 0, lit_count, scratch,
+      )
+      if size > 0 && size < length {
         pos = write_block_header_fixed(
           out,
           pos,
-          is_last,
-          BLOCK_TYPE_RAW,
-          block_len,
+          last,
+          BLOCK_TYPE_COMPRESSED,
+          size,
         )
-        for i in 0..<block_len {
-          out.unsafe_set(pos + i, src.unsafe_get(src_pos + i))
+        for i = 0; i < size; i = i + 1 {
+          out[pos + i] = scratch[i]
         }
-        pos += block_len
-        src_pos = block_end
-      }
-    } else {
-      // Split sequences into blocks of MAX_BLOCK_SIZE decoded bytes.
-      // First, split any sequence whose decoded size exceeds MAX_BLOCK_SIZE.
-      let split_seqs : Array[ZstdSequence] = []
-      for i in 0..<sequences.length() {
-        let seq = sequences.unsafe_get(i)
-        let seq_decoded = seq.lit_len + seq.match_len
-        if seq_decoded <= MAX_BLOCK_SIZE {
-          split_seqs.push(seq)
-        } else {
-          // Need to split this sequence.
-          let actual_off = seq.actual_offset
-          let mut remaining_match = seq.match_len
-          let mut first = true
-          while remaining_match > 0 {
-            let lit_len = if first { seq.lit_len } else { 0 }
-            let max_match = MAX_BLOCK_SIZE - lit_len
-            let match_chunk = if remaining_match > max_match {
-              max_match
-            } else {
-              remaining_match
-            }
-            let offset = if first {
-              seq.offset
-            } else {
-              // Continuation: emit as new offset to avoid lit_len=0 repeat offset ambiguity
-              actual_off + 3
-            }
-            split_seqs.push({
-              lit_len,
-              offset,
-              match_len: match_chunk,
-              actual_offset: actual_off,
-            })
-            remaining_match -= match_chunk
-            first = false
-          }
+        pos += size
+      } else {
+        pos = write_block_header_fixed(out, pos, last, BLOCK_TYPE_RAW, length)
+        for i = 0; i < length; i = i + 1 {
+          out[pos + i] = source[i]
         }
-      }
-      let num_seq = split_seqs.length()
-      let mut seq_idx = 0
-      let mut lit_offset = 0
-      let mut decoded_total = 0
-      while seq_idx < num_seq {
-        // Collect sequences for this block (up to MAX_BLOCK_SIZE decoded bytes)
-        let block_seqs : Array[ZstdSequence] = []
-        let mut block_decoded = 0
-        let block_lit_start = lit_offset
-        let mut block_lit_count = 0
-        while seq_idx < num_seq {
-          let seq = split_seqs.unsafe_get(seq_idx)
-          let seq_decoded = seq.lit_len + seq.match_len
-          if block_decoded + seq_decoded > MAX_BLOCK_SIZE &&
-            block_seqs.length() > 0 {
-            break
-          }
-          block_seqs.push(seq)
-          block_decoded += seq_decoded
-          block_lit_count += seq.lit_len
-          lit_offset += seq.lit_len
-          seq_idx += 1
-        }
-        // Check if there are trailing literals (only for the last block)
-        let mut trailing_lit_count = 0
-        if seq_idx >= num_seq {
-          // Last block gets trailing literals
-          trailing_lit_count = lit_count - lit_offset
-        }
-        let total_block_lits = block_lit_count + trailing_lit_count
-        let block_content_size = block_decoded + trailing_lit_count
-        decoded_total += block_content_size
-        let is_last = seq_idx >= num_seq
-        // Encode this block
-        let comp_buf = FixedArray::make(block_content_size + 256, b'\x00')
-        let comp_size = compress_block_from_sequences(
-          block_seqs, literals, block_lit_start, total_block_lits, comp_buf,
-        )
-        if comp_size > 0 && comp_size < block_content_size {
-          pos = write_block_header_fixed(
-            out,
-            pos,
-            is_last,
-            BLOCK_TYPE_COMPRESSED,
-            comp_size,
-          )
-          for i in 0..<comp_size {
-            out.unsafe_set(pos + i, comp_buf.unsafe_get(i))
-          }
-          pos += comp_size
-        } else {
-          // Fall back to raw block - need the original source bytes
-          let raw_start = decoded_total - block_content_size
-          pos = write_block_header_fixed(
-            out,
-            pos,
-            is_last,
-            BLOCK_TYPE_RAW,
-            block_content_size,
-          )
-          for i in 0..<block_content_size {
-            out.unsafe_set(pos + i, src.unsafe_get(raw_start + i))
-          }
-          pos += block_content_size
-        }
-        if trailing_lit_count > 0 {
-          lit_offset += trailing_lit_count
-        }
+        pos += length
       }
     }
+    start += length
   }
-  let cs = xxh.checksum64()
-  let cs32 = cs.to_uint()
-  out.unsafe_set(pos, (cs32 & 0xFFU).to_byte())
-  out.unsafe_set(pos + 1, ((cs32 >> 8) & 0xFFU).to_byte())
-  out.unsafe_set(pos + 2, ((cs32 >> 16) & 0xFFU).to_byte())
-  out.unsafe_set(pos + 3, ((cs32 >> 24) & 0xFFU).to_byte())
+  let checksum = @checksum.xxh64(data[:]).to_uint()
+  for i = 0; i < 4; i = i + 1 {
+    out[pos + i] = ((checksum >> (8 * i)) & 255U).to_byte()
+  }
   pos += 4
-  let result = @blit.make_uninit(pos)
-  @blit.blit_fixed_array(result, 0, out, 0, pos)
-  result.unsafe_reinterpret_as_bytes()
+  Bytes::makei(pos, fn(i) { out[i] })
 }
 
 ///|
@@ -495,7 +389,7 @@ fn build_fse_ctable(
     state_table.unsafe_set(sp, table_size + i)
     sym_pos.unsafe_set(sym, sp + 1)
   }
-  { state_table, symbol_tt }
+  { state_table, symbol_tt, }
 }
 
 ///|
@@ -777,4 +671,3 @@ fn encode_sequences(
   bw.close()
   bw.copy_to(dst, dst_pos)
 }
-

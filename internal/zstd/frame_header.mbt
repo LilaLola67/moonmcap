@@ -1,3 +1,5 @@
+// Derived from bikallem/compress 0.3.4, Apache-2.0. Adapter formatting; see third_party/README.md.
+
 ///|
 priv struct ZstdFrameHeader {
   window_size : Int
@@ -149,7 +151,7 @@ fn try_parse_frame_header(src : BytesView) -> FrameHeaderParse {
     }
   }
   Parsed(
-    { window_size, content_size, dict_id, has_checksum: has_checksum == 1 },
+    { window_size, content_size, dict_id, has_checksum: has_checksum == 1, },
     pos,
   )
 }

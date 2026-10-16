@@ -1,3 +1,5 @@
+// Derived from bikallem/compress 0.3.4, Apache-2.0. Adapter formatting; see third_party/README.md.
+
 ///|
 /// FSE (Finite State Entropy) table for decoding.
 priv struct FseTable {

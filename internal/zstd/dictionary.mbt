@@ -1,3 +1,5 @@
+// Derived from bikallem/compress 0.3.4, Apache-2.0. Adapter formatting; see third_party/README.md.
+
 ///|
 priv struct ZstdDictionary {
   content : Bytes

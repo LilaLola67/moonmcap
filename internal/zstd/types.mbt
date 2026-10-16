@@ -1,4 +1,5 @@
 // Derived from bikallem/compress 0.3.4, Apache-2.0. Modified for MCAP bounds; see third_party/README.md.
+
 ///|
 /// Zstandard compression error type.
 pub(all) suberror ZstdError {
@@ -65,4 +66,3 @@ const MAX_WINDOW_SIZE : Int = 67108864
 ///|
 /// Maximum block size (128 KB).
 const MAX_BLOCK_SIZE : Int = 131072
-

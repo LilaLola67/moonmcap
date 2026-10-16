@@ -1,3 +1,5 @@
+// Derived from bikallem/compress 0.3.4, Apache-2.0. Adapter formatting; see third_party/README.md.
+
 ///|
 priv enum BitReloadStatus {
   Unfinished
@@ -79,7 +81,7 @@ fn BackwardBitReader::new(
   let bits_consumed = 9 -
     highest_bit(last_byte) +
     (if len < 8 { (8 - len) * 8 } else { 0 })
-  { data, ptr, bits: read_le64_padded(data, ptr), bits_consumed }
+  { data, ptr, bits: read_le64_padded(data, ptr), bits_consumed, }
 }
 
 ///|

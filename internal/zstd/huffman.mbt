@@ -1,3 +1,5 @@
+// Derived from bikallem/compress 0.3.4, Apache-2.0. Adapter formatting; see third_party/README.md.
+
 ///|
 const ZSTD_HUFFMAN_MAX_BITS : Int = 12
 
@@ -126,7 +128,7 @@ fn build_huffman_table(
   guard table_idx == entries.length() else {
     raise ZstdError::CorruptData("incomplete Huffman table")
   }
-  { entries, max_bits: table_log }
+  { entries, max_bits: table_log, }
 }
 
 ///|

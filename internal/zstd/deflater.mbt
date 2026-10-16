@@ -1,3 +1,5 @@
+// Derived from bikallem/compress 0.3.4, Apache-2.0. Adapter formatting; see third_party/README.md.
+
 ///|
 const ZSTD_STREAM_WINDOW : Int = MAX_WINDOW_SIZE
 

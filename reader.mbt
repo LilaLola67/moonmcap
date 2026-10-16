@@ -49,8 +49,14 @@ pub fn scan_file(
     raise Invalid("missing DataEnd")
   }
   let summary_minimum = records[data_end].offset + 13
-  let summary_expected = if footer.summary_start == 0UL { footer_offset } else { footer.summary_start.to_int() }
-  if summary_expected != summary_minimum { raise Invalid("gap between DataEnd and summary or Footer") }
+  let summary_expected = if footer.summary_start == 0UL {
+    footer_offset
+  } else {
+    footer.summary_start.to_int()
+  }
+  if summary_expected != summary_minimum {
+    raise Invalid("gap between DataEnd and summary or Footer")
+  }
   for i = 1; i < data_end; i = i + 1 {
     let op = records[i].opcode
     if op == 0x08 || op == 0x0a || op == 0x0b || op == 0x0d || op == 0x0e {
@@ -74,7 +80,11 @@ pub fn scan_file(
   } else if footer.summary_offset_start != 0UL {
     raise Invalid("SummaryOffset without summary")
   } else {
-    verify_crc(bytes[footer_offset:footer_offset + 25].to_owned(), footer.summary_crc, label="empty summary")
+    verify_crc(
+      bytes[footer_offset:footer_offset + 25].to_owned(),
+      footer.summary_crc,
+      label="empty summary",
+    )
   }
   if footer.summary_offset_start != 0UL {
     if footer.summary_offset_start < footer.summary_start ||
@@ -145,18 +155,25 @@ pub fn read_log(
   let mut statistics : FileStatistics? = None
   let mut chunk_count = 0U
   let summary_channels : Map[Int, Bool] = Map([])
+  let mut logical_records = records.length()
   for record in records {
     match record.opcode {
       0x03 => {
         let schema = decode_schema(record.body, limits~)
-        if in_summary && !log.schemas.contains(schema) { raise Invalid("summary Schema is not a data declaration copy") }
+        if in_summary && !log.schemas.contains(schema) {
+          raise Invalid("summary Schema is not a data declaration copy")
+        }
         add_schema(log, schema)
       }
       0x04 => {
         let channel = decode_channel(record.body, limits~)
-        if in_summary && !log.channels.contains(channel) { raise Invalid("summary Channel is not a data declaration copy") }
+        if in_summary && !log.channels.contains(channel) {
+          raise Invalid("summary Channel is not a data declaration copy")
+        }
         add_channel(log, channel)
-        if in_summary { summary_channels[channel.id] = true }
+        if in_summary {
+          summary_channels[channel.id] = true
+        }
       }
       0x05 => {
         if in_summary {
@@ -169,6 +186,10 @@ pub fn read_log(
           raise Invalid("Chunk in summary section")
         }
         let chunk = decode_chunk(record.body, limits~)
+        if chunk.records.length() > limits.max_records - logical_records {
+          raise Invalid("total nested record budget exceeded")
+        }
+        logical_records += chunk.records.length()
         chunk_count += 1U
         for nested in chunk.records {
           match nested.opcode {
@@ -193,10 +214,15 @@ pub fn read_log(
         log.metadata.push(decode_metadata(record.body, limits~))
       }
       0x0b => {
-        if !in_summary || statistics is Some(_) { raise Invalid("Statistics must appear once in summary") }
+        if !in_summary || statistics is Some(_) {
+          raise Invalid("Statistics must appear once in summary")
+        }
         let value = decode_file_statistics(record.body, limits~)
-        if !value.channel_message_counts.is_empty() && log.channels.any(fn(c) { !summary_channels.contains(c.id) }) {
-          raise Invalid("Statistics channel counts require prior summary Channels")
+        if !value.channel_message_counts.is_empty() &&
+          log.channels.any(fn(c) { !summary_channels.contains(c.id) }) {
+          raise Invalid(
+            "Statistics channel counts require prior summary Channels",
+          )
         }
         statistics = Some(value)
       }

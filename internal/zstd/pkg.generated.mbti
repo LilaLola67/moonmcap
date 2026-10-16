@@ -1,0 +1,53 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "LilaLola67/moonmcap/internal/zstd"
+
+// Values
+pub fn compress(Bytes, level? : CompressionLevel, dict? : Bytes) -> Bytes
+
+pub fn decompress(Bytes, dict? : Bytes) -> Bytes raise ZstdError
+
+// Errors
+pub(all) suberror ZstdError {
+  InvalidHeader(String)
+  CorruptData(String)
+  ChecksumMismatch(expected~ : UInt, got~ : UInt)
+  WindowTooLarge(String)
+  UnexpectedEOF
+} derive(Show)
+
+// Types and methods
+pub(all) enum CompressionLevel {
+  Fast
+  Default
+  Best
+  Level(Int)
+} derive(Eq, Show)
+
+pub(all) enum Decode {
+  Await
+  Data(BytesView)
+  End
+  Error(ZstdError)
+} derive(Show)
+
+type Deflater
+pub fn Deflater::encode(Self, BytesView?) -> Encode
+pub fn Deflater::new(level? : CompressionLevel, dict? : Bytes) -> Self
+
+pub(all) enum Encode {
+  Ok
+  Data(BytesView)
+  End
+  Error(ZstdError)
+} derive(Show)
+
+type Inflater
+pub fn Inflater::decode(Self) -> Decode
+pub fn Inflater::enable_direct_output(Self, Int) -> Unit
+pub fn Inflater::new(dict? : Bytes, output_limit? : Int) -> Self
+pub fn Inflater::src(Self, BytesView) -> Unit
+pub fn Inflater::take_output(Self) -> Bytes
+
+// Type aliases
+
+// Traits
