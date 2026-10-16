@@ -5,7 +5,8 @@ pub fn validate_log(
 ) -> Unit raise McapError {
   if limits.max_record_bytes < 22 ||
     limits.max_string_bytes < 0 ||
-    limits.max_records < 0 || limits.max_decompressed_bytes < 0 {
+    limits.max_records < 0 ||
+    limits.max_decompressed_bytes < 0 {
     raise Invalid("invalid resource limits")
   }
   let schema_ids : Map[Int, Bool] = {}

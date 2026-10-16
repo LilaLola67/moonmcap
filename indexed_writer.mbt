@@ -27,7 +27,12 @@ pub fn write_indexed(
   compression? : Compression = Uncompressed,
   limits? : Limits = default_limits(),
 ) -> Bytes raise McapError {
-  let sequential = write_chunked(log, messages_per_chunk~, compression~, limits~)
+  let sequential = write_chunked(
+    log,
+    messages_per_chunk~,
+    compression~,
+    limits~,
+  )
   let records = scan_file(sequential, limits~)
   let out = @buffer.Buffer::Buffer()
   out.write_bytes(magic()[:])
@@ -103,7 +108,9 @@ pub fn write_indexed(
       message_index_offsets,
       message_index_length: (out.length() - message_index_start).to_uint64(),
       compression: compression.name(),
-      compressed_size: (record.body.length() - 40 - @utf8.encode(compression.name()[:]).length()).to_uint64(),
+      compressed_size: (record.body.length() -
+      40 -
+      @utf8.encode(compression.name()[:]).length()).to_uint64(),
       uncompressed_size,
     })
   }
@@ -126,7 +133,16 @@ pub fn write_indexed(
   }
   append_group(out, 0x08, chunk_bodies, groups)
   append_group(out, 0x0a, attachments, groups)
-  append_group(out, 0x0b, [encode_file_statistics(compute_file_statistics(log, indexes.length().to_uint()))], groups)
+  append_group(
+    out,
+    0x0b,
+    [
+      encode_file_statistics(
+        compute_file_statistics(log, indexes.length().to_uint()),
+      ),
+    ],
+    groups,
+  )
   append_group(out, 0x0d, metadata, groups)
   let offset_start = out.length()
   for group in groups {
@@ -179,7 +195,9 @@ pub fn validate_file_indexes(
   let summary_schemas : Map[Int, Schema] = Map([])
   let mut summary = false
   for record in records {
-    if record.opcode == 0x0f { summary = true }
+    if record.opcode == 0x0f {
+      summary = true
+    }
     if summary && record.opcode == 0x03 {
       let schema = decode_schema(record.body, limits~)
       summary_schemas[schema.id] = schema
@@ -260,7 +278,8 @@ pub fn validate_file_indexes(
           Some(value) => value
           None => raise Invalid("indexed Message has no summary Channel")
         }
-        if channel.schema_id != 0 && !summary_schemas.contains(channel.schema_id) {
+        if channel.schema_id != 0 &&
+          !summary_schemas.contains(channel.schema_id) {
           raise Invalid("indexed Channel has no summary Schema")
         }
         if !index.message_index_offsets.is_empty() &&
@@ -284,4 +303,3 @@ pub fn validate_file_indexes(
   }
   result
 }
-

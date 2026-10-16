@@ -51,12 +51,20 @@ pub fn decode_chunk(
   let checksum = input.u32()
   let compression = input.text()
   let size = bounded_length(input.u64(), limits.max_record_bytes, "chunk")
-  let payload = decompress_payload(input.take(size), compression, expected_size, limits~)
+  let payload = decompress_payload(
+    input.take(size),
+    compression,
+    expected_size,
+    limits~,
+  )
   if start_time > end_time {
     raise Invalid("inverted chunk time range")
   }
   verify_crc(payload, checksum, label="chunk")
-  let nested_limits = { ..limits, max_record_bytes: limits.max_record_bytes.min(limits.max_decompressed_bytes) }
+  let nested_limits = {
+    ..limits,
+    max_record_bytes: limits.max_record_bytes.min(limits.max_decompressed_bytes),
+  }
   let records = decode_records(payload, limits=nested_limits)
   for record in records {
     if record.opcode != 0x03 &&
@@ -112,8 +120,12 @@ pub fn write_chunked(
       }
       records.push({ opcode: 0x05, offset: 0, body: encode_message(message), })
     }
-    let raw_size = records.fold(init=0UL, fn(n, r) { n + (r.body.length() + 9).to_uint64() })
-    ignore(bounded_length(raw_size, limits.max_decompressed_bytes, "chunk output"))
+    let raw_size = records.fold(init=0UL, fn(n, r) {
+      n + (r.body.length() + 9).to_uint64()
+    })
+    ignore(
+      bounded_length(raw_size, limits.max_decompressed_bytes, "chunk output"),
+    )
     let body = encode_chunk(records, first, last, checksums~, compression~)
     if body.length() > limits.max_record_bytes {
       raise Invalid("chunk exceeds record budget; reduce messages_per_chunk")
@@ -144,4 +156,3 @@ pub fn write_chunked(
   ignore(scan_file(bytes, limits~))
   bytes
 }
-

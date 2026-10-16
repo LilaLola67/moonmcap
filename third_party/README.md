@@ -13,7 +13,7 @@ Published module: https://mooncakes.io/docs/bikallem/compress
   version 0.3.4, not an original MCAP codec or a new compression algorithm.
 - Local changes add bounded block expansion and cumulative output checks,
   enlarge the adapter's permitted window to 64 MiB after preflight validation,
-  and split large RLE encoder input into valid 128 KiB blocks.
+  and encode independent, explicitly offset 128 KiB blocks to keep noisy and large inputs within the format limits.
 - The upstream encoder accepts a level argument but does not implement distinct
   level strategies. MoonMCAP therefore offers a fixed Zstd encoding strategy,
   without claiming a configurable level or equivalence to libzstd level 3.

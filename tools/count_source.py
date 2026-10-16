@@ -12,4 +12,4 @@ for path in sorted(root.glob("*.mbt")):
     total += count
 print(f"Effective handwritten core implementation lines: {total}")
 if total < 2500:
-    raise SystemExit("Implementation is below the requested 2500-line baseline")
+    raise SystemExit("Core implementation is below the 2500-line baseline")

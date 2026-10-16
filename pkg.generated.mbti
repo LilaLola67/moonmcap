@@ -11,6 +11,10 @@ pub fn all_query() -> Query
 
 pub fn build_query_index(Log) -> QueryIndex raise McapError
 
+pub fn compress_payload(Bytes, Compression) -> Bytes
+
+pub fn compute_file_statistics(Log, UInt) -> FileStatistics
+
 pub fn copy_log(Log) -> Log
 
 pub fn crc32(Bytes) -> UInt
@@ -26,6 +30,8 @@ pub fn decode_channel(Bytes, limits? : Limits) -> Channel raise McapError
 pub fn decode_chunk(Bytes, limits? : Limits) -> Chunk raise McapError
 
 pub fn decode_chunk_index(Bytes, limits? : Limits) -> ChunkIndex raise McapError
+
+pub fn decode_file_statistics(Bytes, limits? : Limits) -> FileStatistics raise McapError
 
 pub fn decode_footer(Bytes) -> Footer raise McapError
 
@@ -47,6 +53,8 @@ pub fn decode_schema(Bytes, limits? : Limits) -> Schema raise McapError
 
 pub fn decode_summary_offset(Bytes) -> SummaryOffset raise McapError
 
+pub fn decompress_payload(Bytes, String, UInt64, limits? : Limits) -> Bytes raise McapError
+
 pub fn default_limits() -> Limits
 
 pub fn empty_log(profile? : String) -> Log
@@ -57,9 +65,11 @@ pub fn encode_attachment_index(AttachmentIndex) -> Bytes
 
 pub fn encode_channel(Channel) -> Bytes raise McapError
 
-pub fn encode_chunk(Array[Record], UInt64, UInt64, checksums? : Bool) -> Bytes raise McapError
+pub fn encode_chunk(Array[Record], UInt64, UInt64, checksums? : Bool, compression? : Compression) -> Bytes raise McapError
 
 pub fn encode_chunk_index(ChunkIndex) -> Bytes raise McapError
+
+pub fn encode_file_statistics(FileStatistics) -> Bytes raise McapError
 
 pub fn encode_footer(Footer) -> Bytes
 
@@ -111,6 +121,8 @@ pub fn validate_attachment_indexes(Bytes, limits? : Limits) -> Int raise McapErr
 
 pub fn validate_file_indexes(Bytes, limits? : Limits) -> Array[ChunkIndex] raise McapError
 
+pub fn validate_file_statistics(Log, FileStatistics, UInt) -> Unit raise McapError
+
 pub fn validate_log(Log, limits? : Limits) -> Unit raise McapError
 
 pub fn validate_message_index(MessageIndex, Chunk) -> Unit raise McapError
@@ -121,9 +133,9 @@ pub fn validate_summary(Bytes, limits? : Limits) -> Int raise McapError
 
 pub fn verify_crc(Bytes, UInt, label? : String) -> Unit raise McapError
 
-pub fn write_chunked(Log, messages_per_chunk? : Int, checksums? : Bool, limits? : Limits) -> Bytes raise McapError
+pub fn write_chunked(Log, messages_per_chunk? : Int, checksums? : Bool, compression? : Compression, limits? : Limits) -> Bytes raise McapError
 
-pub fn write_indexed(Log, messages_per_chunk? : Int, limits? : Limits) -> Bytes raise McapError
+pub fn write_indexed(Log, messages_per_chunk? : Int, compression? : Compression, limits? : Limits) -> Bytes raise McapError
 
 pub fn write_log(Log, checksums? : Bool, limits? : Limits) -> Bytes raise McapError
 
@@ -184,7 +196,32 @@ pub(all) struct ChunkIndex {
   uncompressed_size : UInt64
 }
 
+pub(all) enum Compression {
+  Uncompressed
+  Lz4
+  Zstd
+} derive(Eq, @debug.Debug)
+pub fn Compression::equal(Self, Self) -> Bool
+pub fn Compression::name(Self) -> String
+pub fn Compression::not_equal(Self, Self) -> Bool
+pub fn Compression::to_repr(Self) -> @debug.Repr
+
 type Cursor
+
+pub(all) struct FileStatistics {
+  message_count : UInt64
+  schema_count : Int
+  channel_count : UInt
+  attachment_count : UInt
+  metadata_count : UInt
+  chunk_count : UInt
+  start_time : UInt64
+  end_time : UInt64
+  channel_message_counts : Array[(Int, UInt64)]
+} derive(Eq, @debug.Debug)
+pub fn FileStatistics::equal(Self, Self) -> Bool
+pub fn FileStatistics::not_equal(Self, Self) -> Bool
+pub fn FileStatistics::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Footer {
   summary_start : UInt64
@@ -207,6 +244,7 @@ pub(all) struct Limits {
   max_record_bytes : Int
   max_string_bytes : Int
   max_records : Int
+  max_decompressed_bytes : Int
 } derive(Eq, @debug.Debug)
 pub fn Limits::equal(Self, Self) -> Bool
 pub fn Limits::not_equal(Self, Self) -> Bool
@@ -235,7 +273,7 @@ pub struct LogBuilder {
 pub fn LogBuilder::add_attachment(Self, Attachment) -> Unit raise McapError
 pub fn LogBuilder::add_metadata(Self, Metadata) -> Unit raise McapError
 pub fn LogBuilder::append(Self, Int, UInt64, Bytes, publish_time? : UInt64) -> Unit raise McapError
-pub fn LogBuilder::finish(Self, indexed? : Bool, messages_per_chunk? : Int) -> Bytes raise McapError
+pub fn LogBuilder::finish(Self, indexed? : Bool, messages_per_chunk? : Int, compression? : Compression) -> Bytes raise McapError
 pub fn LogBuilder::message_count(Self) -> Int
 pub fn LogBuilder::register_channel(Self, String, String, schema_id? : Int, metadata? : Array[(String, String)]) -> Int raise McapError
 pub fn LogBuilder::register_schema(Self, String, String, Bytes) -> Int raise McapError
