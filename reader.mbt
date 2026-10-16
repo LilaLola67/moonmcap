@@ -132,6 +132,8 @@ pub fn read_log(
     attachments: [],
   }
   let mut in_summary = false
+  let mut statistics : FileStatistics? = None
+  let mut chunk_count = 0U
   for record in records {
     match record.opcode {
       0x03 => add_schema(log, decode_schema(record.body, limits~))
@@ -147,6 +149,7 @@ pub fn read_log(
           raise Invalid("Chunk in summary section")
         }
         let chunk = decode_chunk(record.body, limits~)
+        chunk_count += 1U
         for nested in chunk.records {
           match nested.opcode {
             0x03 => add_schema(log, decode_schema(nested.body, limits~))
@@ -169,10 +172,18 @@ pub fn read_log(
         }
         log.metadata.push(decode_metadata(record.body, limits~))
       }
+      0x0b => {
+        if !in_summary || statistics is Some(_) { raise Invalid("Statistics must appear once in summary") }
+        statistics = Some(decode_file_statistics(record.body, limits~))
+      }
       0x0f => in_summary = true
       _ => ()
     }
   }
   validate_log(log, limits~)
+  match statistics {
+    Some(value) => validate_file_statistics(log, value, chunk_count)
+    None => ()
+  }
   log
 }

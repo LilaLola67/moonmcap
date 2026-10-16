@@ -125,6 +125,7 @@ pub fn write_indexed(
   }
   append_group(out, 0x08, chunk_bodies, groups)
   append_group(out, 0x0a, attachments, groups)
+  append_group(out, 0x0b, [encode_file_statistics(compute_file_statistics(log, indexes.length().to_uint()))], groups)
   append_group(out, 0x0d, metadata, groups)
   let offset_start = out.length()
   for group in groups {
