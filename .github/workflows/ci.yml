@@ -18,6 +18,7 @@ jobs:
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.14+7d59c7ec9'
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
       - run: moon version --all
+      - run: moon update
       - run: python tools/count_source.py
       - run: moon check --target ${{ matrix.target }}
       - run: moon build --target ${{ matrix.target }}
