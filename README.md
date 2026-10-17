@@ -1,6 +1,6 @@
 # MoonMCAP
 
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、无压缩/LZ4/Zstd 分块读写、索引查询、日志变换和截断恢复。当前模块版本 **0.6.0**，支持按需读取、LRU 块缓存、流式录制与 [通用命令行](docs/cli.md)，见 [更新记录](CHANGELOG.md)。
+MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、无压缩/LZ4/Zstd 分块读写、索引查询、日志变换和截断恢复。当前模块版本 **0.7.0**，支持按需读取、LRU 块缓存、流式录制、[通用命令行](docs/cli.md) 与 [批量变换](docs/batch-transform.md)，见 [更新记录](CHANGELOG.md)。
 
 ## 安装与运行
 

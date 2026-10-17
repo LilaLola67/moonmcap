@@ -36,3 +36,5 @@ inspect、slice、merge、recover、rewrite 在内存中读取、校验和处理
 成功退出码为 0，错误为 2，错误以 JSON 输出到标准错误。`--` 作为应用参数可结束选项解析，随后将以 `--` 开头的名称当作输入路径。未知选项、重复单值选项、缺失值和数字溢出均报错。
 
 执行 `python tools/cli_workflows.py` 可验证命令、CSV、精确时间、压缩输出、防覆盖及失败原子性。
+
+`transform` 命令支持主题映射、时间窗采样、时间对齐、附件及元数据筛选，参数与处理顺序见 [批量变换](batch-transform.md)。

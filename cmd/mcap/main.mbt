@@ -19,7 +19,7 @@ fn text_output(path : String, text : String) -> Unit raise @mcap.McapError {
 fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
   if options.command == "help" {
     println(
-      "MoonMCAP: inspect|query|slice|merge|recover|rewrite INPUT... [--output PATH]\n--topic TOPIC (repeatable) --start NS --end NS --offset N --limit N --descending\n--compression none|lz4|zstd --format json|csv --max-file-bytes N --cache-bytes N\n--chunk-messages N --full\nTime bounds are inclusive. Existing output paths are never overwritten.",
+      "MoonMCAP: inspect|query|slice|merge|recover|rewrite|transform INPUT... [--output PATH]\n--topic TOPIC (repeatable) --start NS --end NS --offset N --limit N --descending\n--compression none|lz4|zstd --format json|csv --max-file-bytes N --cache-bytes N\n--chunk-messages N --full\ntransform: --rename FROM=TO --sample-period NS --sample-origin NS --align-start NS\n--attachment-name NAME --attachment-media-type TYPE --attachment-start NS --attachment-end NS\n--metadata-name NAME --metadata-match KEY=VALUE\nTime bounds are inclusive. Existing output paths are never overwritten.",
     )
     return
   }
@@ -69,6 +69,7 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     return
   }
   let result = match options.command {
+    "transform" => @mcap.transform_log(log, options.transform)
     "slice" => @mcap.slice_log(log, options.query)
     "merge" => {
       let logs = [log]

@@ -143,6 +143,10 @@ pub fn stream_options() -> StreamOptions
 
 pub fn summarize(Log) -> LogStats raise McapError
 
+pub fn transform_log(Log, TransformOptions) -> Log raise McapError
+
+pub fn transform_options() -> TransformOptions
+
 pub fn validate_attachment_indexes(Bytes, limits? : Limits) -> Int raise McapError
 
 pub fn validate_file_indexes(Bytes, limits? : Limits) -> Array[ChunkIndex] raise McapError
@@ -235,6 +239,7 @@ pub(all) struct CommandOptions {
   cache_bytes : Int
   chunk_messages : Int
   full : Bool
+  transform : TransformOptions
 }
 
 pub(all) enum Compression {
@@ -566,6 +571,20 @@ pub(all) struct TopicStats {
   sequence_discontinuities : Int
   publish_after_log : Int
   frequency_hz : Double
+}
+
+pub(all) struct TransformOptions {
+  query : Query
+  topic_map : Array[(String, String)]
+  sample_period : UInt64
+  sample_origin : UInt64
+  align_start : UInt64?
+  attachment_names : Array[String]
+  attachment_media_types : Array[String]
+  attachment_start : UInt64
+  attachment_end : UInt64
+  metadata_names : Array[String]
+  metadata_entries : Array[(String, String)]
 }
 
 pub(all) struct WriteProgress {

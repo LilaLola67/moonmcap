@@ -10,6 +10,7 @@ pub(all) struct CommandOptions {
   cache_bytes : Int
   chunk_messages : Int
   full : Bool
+  transform : TransformOptions
 }
 
 ///|
@@ -31,16 +32,22 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       cache_bytes: 8 * 1024 * 1024,
       chunk_messages: 256,
       full: false,
+      transform: transform_options(),
     }
   }
   let command = args[0]
-  if !["inspect", "query", "slice", "merge", "recover", "rewrite"].contains(
+  if !["inspect", "query", "slice", "merge", "recover", "rewrite", "transform"].contains(
       command,
     ) {
     raise Invalid("unknown command: \{command}")
   }
   let inputs = []
   let topics = []
+  let renames = []
+  let attachment_names = []
+  let attachment_types = []
+  let metadata_names = []
+  let metadata_entries = []
   let values : Map[String, String] = Map([])
   let flags : Map[String, Bool] = Map([])
   let mut positional = false
@@ -62,6 +69,9 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
         if ![
             "--topic", "--start", "--end", "--offset", "--limit", "--output", "--compression",
             "--format", "--max-file-bytes", "--cache-bytes", "--chunk-messages",
+            "--rename", "--sample-period", "--sample-origin", "--align-start", "--attachment-name",
+            "--attachment-media-type", "--attachment-start", "--attachment-end",
+            "--metadata-name", "--metadata-match",
           ].contains(arg) {
           raise Invalid("unknown option: \{arg}")
         }
@@ -71,6 +81,22 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
         }
         if arg == "--topic" {
           topics.push(args[i])
+        } else if arg == "--rename" || arg == "--metadata-match" {
+          let pair = match args[i].split_once("=") {
+            Some((left, right)) => (left.to_string(), right.to_string())
+            None => raise Invalid("mapping must use KEY=VALUE")
+          }
+          if arg == "--rename" {
+            renames.push(pair)
+          } else {
+            metadata_entries.push(pair)
+          }
+        } else if arg == "--attachment-name" {
+          attachment_names.push(args[i])
+        } else if arg == "--attachment-media-type" {
+          attachment_types.push(args[i])
+        } else if arg == "--metadata-name" {
+          metadata_names.push(args[i])
         } else {
           if values.contains(arg) {
             raise Invalid("duplicate option: \{arg}")
@@ -87,7 +113,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     (command != "merge" && inputs.length() != 1) {
     raise Invalid("wrong number of input paths")
   }
-  if !["query", "slice"].contains(command) &&
+  if !["query", "slice", "transform"].contains(command) &&
     (
       !topics.is_empty() ||
       flags.contains("--descending") ||
@@ -95,7 +121,23 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
         values.contains(key)
       })
     ) {
-    raise Invalid("message filters are only available for query and slice")
+    raise Invalid(
+      "message filters are only available for query, slice and transform",
+    )
+  }
+  if command != "transform" &&
+    (
+      !renames.is_empty() ||
+      !attachment_names.is_empty() ||
+      !attachment_types.is_empty() ||
+      !metadata_names.is_empty() ||
+      !metadata_entries.is_empty() ||
+      [
+        "--sample-period", "--sample-origin", "--align-start", "--attachment-start",
+        "--attachment-end",
+      ].any(fn(key) { values.contains(key) })
+    ) {
+    raise Invalid("batch options require the transform command")
   }
   if command != "query" &&
     (flags.contains("--full") || values.contains("--cache-bytes")) {
@@ -135,19 +177,40 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   if chunk_messages == 0 {
     raise Invalid("--chunk-messages must be positive")
   }
+  let query : Query = {
+    topics,
+    start_time,
+    end_time,
+    descending: flags.contains("--descending"),
+    offset: decimal_int(values.get("--offset").unwrap_or("0")),
+    limit: decimal_int(values.get("--limit").unwrap_or("100000")),
+  }
   {
     command,
     inputs,
     output,
     compression,
     format,
-    query: {
-      topics,
-      start_time,
-      end_time,
-      descending: flags.contains("--descending"),
-      offset: decimal_int(values.get("--offset").unwrap_or("0")),
-      limit: decimal_int(values.get("--limit").unwrap_or("100000")),
+    query,
+    transform: {
+      query,
+      topic_map: renames,
+      sample_period: parse_decimal(values.get("--sample-period").unwrap_or("0")),
+      sample_origin: parse_decimal(values.get("--sample-origin").unwrap_or("0")),
+      align_start: match values.get("--align-start") {
+        Some(value) => Some(parse_decimal(value))
+        None => None
+      },
+      attachment_names,
+      attachment_media_types: attachment_types,
+      attachment_start: parse_decimal(
+        values.get("--attachment-start").unwrap_or("0"),
+      ),
+      attachment_end: parse_decimal(
+        values.get("--attachment-end").unwrap_or("18446744073709551615"),
+      ),
+      metadata_names,
+      metadata_entries,
     },
     max_file_bytes: decimal_int(
       values.get("--max-file-bytes").unwrap_or("67108864"),
