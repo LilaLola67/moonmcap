@@ -18,6 +18,8 @@ moon run cmd/main
 
 JS 目标：`moon test --target js`、`moon run cmd/main --target js`。内存示例录制 6 条消息和一个附件，再读取、统计、查询和裁剪，最后输出 `MCAP_HEX=` 数据用于互操作验证。
 
+[可运行文件样例](examples/README.md)提供无压缩/LZ4/Zstd 的实际输入文件、裁剪/合并/恢复的预期输出及一键验证命令：`python examples/run.py`。
+
 尚未发布 mooncakes.io，目前从 GitHub 复现。运行库依赖固定版本的 `bikallem/compress 0.3.4`、`bikallem/blit 0.2.2`；[第三方来源与许可证](third_party/README.md) 说明了引用代码及修改。运行时不需要 Python，也不调用外部压缩进程。
 
 ## API 示例

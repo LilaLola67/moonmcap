@@ -33,9 +33,14 @@ jobs:
       - name: Verify compressed container workflows
         if: matrix.target == 'js'
         run: python tools/conformance.py
+      - name: Verify checked-in file examples
+        if: matrix.target == 'js'
+        run: python examples/run.py
       - name: Upload interoperability report
         if: matrix.target == 'js'
         uses: actions/upload-artifact@v4
         with:
           name: conformance-report
-          path: _interop/conformance/report.json
+          path: |
+            _interop/conformance/report.json
+            _interop/examples/report.json

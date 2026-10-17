@@ -60,6 +60,11 @@ processing or a fixed total-process memory footprint.
 
 ## Reproducible cases
 
+[Runnable file examples](../examples/README.md) include six complete MCAP inputs,
+one truncated input, three expected outputs and an independent verification
+script: `python examples/run.py`. The files and expected results are available
+directly in the repository, with SHA-256 values in `examples/manifest.json`.
+
 ```sh
 moon test --target wasm
 moon test --target js

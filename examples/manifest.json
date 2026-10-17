@@ -1,0 +1,116 @@
+{
+  "format": "MCAP 0",
+  "reference": "mcap==1.3.0; lz4==4.4.5; zstandard==0.25.0",
+  "dataset": "synthetic, no personal or real sensor data",
+  "input_generator": "tools/conformance.py",
+  "outputs_generated_with": "MoonMCAP 0.2.0 / commit 68d10326856064455e5d66e03e9b8566ef7a7a83",
+  "files": [
+    {
+      "path": "files/none-summary.mcap",
+      "role": "input",
+      "bytes": 432548,
+      "sha256": "238c0497e09e6b6dc5810015a988fae005283cb7c594fe71068a218e61770964"
+    },
+    {
+      "path": "files/none-no-summary.mcap",
+      "role": "input",
+      "bytes": 427396,
+      "sha256": "93d567b5b24f280378e919f22c34ce5a1b9a5c52c4e04af6ed7e8d429341ec45"
+    },
+    {
+      "path": "files/lz4-summary.mcap",
+      "role": "input",
+      "bytes": 12371,
+      "sha256": "60eada75c1e37a880d30be66aa81cd5c6e9577027a9187755e1219f58c600ba8"
+    },
+    {
+      "path": "files/lz4-no-summary.mcap",
+      "role": "input",
+      "bytes": 7144,
+      "sha256": "e79917d2b179c329058c1ac0a1c917bc347906e898b0b6d5a7a3d4279a296a50"
+    },
+    {
+      "path": "files/zstd-summary.mcap",
+      "role": "input",
+      "bytes": 10023,
+      "sha256": "17620d4c42d4faf9167cf5e2f9afead4b07011b84096737cd88812cc599cb038"
+    },
+    {
+      "path": "files/zstd-no-summary.mcap",
+      "role": "input",
+      "bytes": 4771,
+      "sha256": "f5b388bbf5aa796d8abadf6a1370ed41b4239fe7a0f339b92554a763f7636c9e"
+    },
+    {
+      "path": "files/truncated-zstd.mcap",
+      "role": "damaged-input",
+      "bytes": 3497,
+      "sha256": "43784f01f2ef08df133221781a995e53aa2895d33fbacfb15c4482c6110b101e"
+    },
+    {
+      "path": "expected/slice-lz4.mcap",
+      "role": "expected-output",
+      "bytes": 1468,
+      "sha256": "38b4ebf3813611a45b615b558a0d15e6398c7aeca97f22886d2a3f73c734249b"
+    },
+    {
+      "path": "expected/merged-zstd.mcap",
+      "role": "expected-output",
+      "bytes": 18286,
+      "sha256": "1aefe8b3dc638c8714daa87c9fb136b56f093c1cb4a1da41fdbe928d538ed1f6"
+    },
+    {
+      "path": "expected/recovered-zstd.mcap",
+      "role": "expected-output",
+      "bytes": 5179,
+      "sha256": "aaacb1287ea5dcc680f5a9c64739e9cacfef5022a2a45b17425235f92acb6e1f"
+    }
+  ],
+  "cases": [
+    {
+      "id": "slice",
+      "input": "files/zstd-summary.mcap",
+      "output": "expected/slice-lz4.mcap",
+      "compression": "lz4",
+      "operation": "slice",
+      "expected": {
+        "messages": 5,
+        "attachments": 1,
+        "metadata": 1,
+        "log_times_seconds": [
+          21,
+          23,
+          25,
+          27,
+          29
+        ]
+      }
+    },
+    {
+      "id": "merge",
+      "input": "files/lz4-no-summary.mcap",
+      "second_input": "files/none-summary.mcap",
+      "output": "expected/merged-zstd.mcap",
+      "compression": "zstd",
+      "operation": "merge",
+      "expected": {
+        "messages": 200,
+        "attachments": 2,
+        "metadata": 2
+      }
+    },
+    {
+      "id": "recover",
+      "input": "files/truncated-zstd.mcap",
+      "output": "expected/recovered-zstd.mcap",
+      "compression": "zstd",
+      "operation": "recover",
+      "expected": {
+        "messages": 48,
+        "attachments": 0,
+        "metadata": 0,
+        "stop_offset": 3404
+      }
+    }
+  ]
+}
