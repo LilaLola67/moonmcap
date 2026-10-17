@@ -57,6 +57,10 @@ pub fn decompress_payload(Bytes, String, UInt64, limits? : Limits) -> Bytes rais
 
 pub fn default_limits() -> Limits
 
+pub fn diagnose_file(Bytes, limits? : Limits) -> FileDiagnosis
+
+pub fn diagnosis_json(FileDiagnosis) -> Json
+
 pub fn empty_log(profile? : String) -> Log
 
 pub fn encode_attachment(Attachment, checksums? : Bool) -> Bytes
@@ -126,6 +130,8 @@ pub fn query_file(Bytes, Query, limits? : Limits) -> QueryResult raise McapError
 pub fn read_diagnostics_json(ReadDiagnostics) -> Json
 
 pub fn read_log(Bytes, limits? : Limits) -> Log raise McapError
+
+pub fn rebuild_indexes(Bytes, compression? : Compression, messages_per_chunk? : Int, limits? : Limits) -> IndexRepair raise McapError
 
 pub fn recover_prefix(Bytes, limits? : Limits) -> RecoveryReport raise McapError
 
@@ -256,6 +262,40 @@ type Cursor
 
 type CursorRun
 
+type DataInspection
+
+pub(all) struct Diagnostic {
+  code : DiagnosticCode
+  offset : UInt64?
+  opcode : Byte?
+  message : String
+  expected : UInt64?
+  actual : UInt64?
+} derive(Eq, @debug.Debug)
+
+pub(all) enum DiagnosticCode {
+  BadEnvelope
+  BadRecord
+  BadDeclaration
+  BadCompression
+  BadChecksum
+  BadIndex
+  BadSummary
+  TruncatedInput
+  LimitExceeded
+} derive(Eq, @debug.Debug)
+pub fn DiagnosticCode::name(Self) -> String
+
+pub(all) struct FileDiagnosis {
+  valid : Bool
+  data_valid : Bool
+  data_crc_verified : Bool
+  messages : Int
+  chunks : Int
+  data_end : UInt64?
+  issues : Array[Diagnostic]
+} derive(Eq, @debug.Debug)
+
 pub(all) struct FileStatistics {
   message_count : UInt64
   schema_count : Int
@@ -287,6 +327,12 @@ pub(all) struct Header {
 pub fn Header::equal(Self, Self) -> Bool
 pub fn Header::not_equal(Self, Self) -> Bool
 pub fn Header::to_repr(Self) -> @debug.Repr
+
+pub(all) struct IndexRepair {
+  bytes : Bytes
+  original : FileDiagnosis
+  result : FileDiagnosis
+}
 
 pub(all) struct Limits {
   max_record_bytes : Int

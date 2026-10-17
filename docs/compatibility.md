@@ -1,6 +1,6 @@
 # MCAP 0 compatibility
 
-MoonMCAP **0.3.0** targets MCAP major version **0**, identified by the `MCAP0`
+MoonMCAP **0.8.0** targets MCAP major version **0**, identified by the `MCAP0`
 magic bytes. The official Python `mcap==1.3.0` package is the interoperability
 reference; this is a package version, not an MCAP format version.
 
@@ -106,9 +106,14 @@ the reference encoder's output.
 
 The library preserves message/schema/channel/attachment/metadata contents
 within its declared semantic model. It does not decode CDR/Protobuf payloads,
-validate every ROS profile rule, provide disk-lazy access or guarantee
-byte-identical rewrites. Version 0.3.0 adds [in-memory query cursors](query-cursor.md)
-without changing these container or compression boundaries. The 0.3.0 module is available from GitHub; Mooncakes
+validate every ROS profile rule or guarantee byte-identical rewrites.
+[RangeReader](range-reader.md) performs selective file I/O using summary indexes;
+fast mode validates the summary and loaded chunks, not unread data or full index
+coverage. Full validation and unindexed fallback have an explicit encoded-file
+budget. [StreamWriter](stream-writer.md) has chunk and retained-summary budgets,
+synchronous backpressure and terminal failure states. [Batch transforms](batch-transform.md)
+use in-memory Logs; [index rebuilding](diagnostics.md) requires a complete valid data section.
+These additions retain the container/compression boundary above. The 0.8.0 module is available from GitHub; Mooncakes
 publication is a separate distribution step.
 
 Sources: [MCAP specification](https://mcap.dev/spec),

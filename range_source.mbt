@@ -50,8 +50,8 @@ pub fn ReadSource::read_exact(
   let out = @buffer.Buffer::Buffer()
   while out.length() < length {
     let remaining = length - out.length()
-    let bytes = (self.read_at)(offset + out.length().to_uint64(), remaining)
     self.calls += 1
+    let bytes = (self.read_at)(offset + out.length().to_uint64(), remaining)
     self.bytes_read += bytes.length().to_uint64()
     if bytes.is_empty() || bytes.length() > remaining {
       raise Invalid(

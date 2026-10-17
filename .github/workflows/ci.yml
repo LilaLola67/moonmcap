@@ -37,6 +37,21 @@ jobs:
       - name: Verify checked-in file examples
         if: matrix.target == 'js'
         run: python examples/run.py
+      - name: Verify selective IO and cache benchmark
+        if: matrix.target == 'js'
+        run: python tools/range_benchmark.py
+      - name: Verify streaming sink interoperability
+        if: matrix.target == 'js'
+        run: python tools/stream_workflows.py
+      - name: Verify configurable CLI and atomic output
+        if: matrix.target == 'js'
+        run: python tools/cli_workflows.py
+      - name: Verify batch transformations
+        if: matrix.target == 'js'
+        run: python tools/batch_workflows.py
+      - name: Verify diagnostics and index rebuilding
+        if: matrix.target == 'js'
+        run: python tools/repair_workflows.py
       - name: Upload interoperability report
         if: matrix.target == 'js'
         uses: actions/upload-artifact@v4
@@ -45,3 +60,8 @@ jobs:
           path: |
             _interop/conformance/report.json
             _interop/examples/report.json
+            _interop/range/report.json
+            _interop/stream/report.json
+            _interop/cli/report.json
+            _interop/batch/report.json
+            _interop/repair/report.json

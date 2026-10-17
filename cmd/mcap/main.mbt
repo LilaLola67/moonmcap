@@ -7,6 +7,10 @@ extern "js" fn error_exit(message : String, code : Int) -> Unit =
   #| (message,code) => { process.stderr.write(message+'\n'); process.exitCode=code; }
 
 ///|
+extern "js" fn set_exit_code(code : Int) -> Unit =
+  #| code => { process.exitCode=code; }
+
+///|
 fn text_output(path : String, text : String) -> Unit raise @mcap.McapError {
   if path == "" {
     println(text)
@@ -20,6 +24,9 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
   if options.command == "help" {
     println(
       "MoonMCAP: inspect|query|slice|merge|recover|rewrite|transform INPUT... [--output PATH]\n--topic TOPIC (repeatable) --start NS --end NS --offset N --limit N --descending\n--compression none|lz4|zstd --format json|csv --max-file-bytes N --cache-bytes N\n--chunk-messages N --full\ntransform: --rename FROM=TO --sample-period NS --sample-origin NS --align-start NS\n--attachment-name NAME --attachment-media-type TYPE --attachment-start NS --attachment-end NS\n--metadata-name NAME --metadata-match KEY=VALUE\nTime bounds are inclusive. Existing output paths are never overwritten.",
+    )
+    println(
+      "validate INPUT [--output REPORT.json]: full structured diagnosis, exit 1 for invalid files\nreindex INPUT --output NEW.mcap: rebuild only from a complete valid data section",
     )
     return
   }
@@ -51,6 +58,28 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     options.inputs[0],
     maximum=options.max_file_bytes,
   )
+  if options.command == "validate" {
+    let report = @mcap.diagnose_file(bytes)
+    text_output(options.output, @mcap.diagnosis_json(report).stringify())
+    if !report.valid {
+      set_exit_code(1)
+    }
+    return
+  }
+  if options.command == "reindex" {
+    let repair = @mcap.rebuild_indexes(
+      bytes,
+      compression=options.compression,
+      messages_per_chunk=options.chunk_messages,
+    )
+    @nodeio.write_atomic_new(options.output, repair.bytes)
+    let report : Json = {
+      "original": @mcap.diagnosis_json(repair.original),
+      "result": @mcap.diagnosis_json(repair.result),
+    }
+    println(report.stringify())
+    return
+  }
   let log = if options.command == "recover" {
     let report = @mcap.recover_prefix(bytes)
     let detail : Json = {
@@ -58,6 +87,7 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
       "stop_offset": report.stop_offset,
       "complete": report.complete,
       "reason": report.reason,
+      "source_diagnosis": @mcap.diagnosis_json(@mcap.diagnose_file(bytes)),
     }
     error_exit(detail.stringify(), 0)
     report.log

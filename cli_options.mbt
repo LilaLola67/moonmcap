@@ -36,9 +36,10 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     }
   }
   let command = args[0]
-  if !["inspect", "query", "slice", "merge", "recover", "rewrite", "transform"].contains(
-      command,
-    ) {
+  if ![
+      "inspect", "query", "slice", "merge", "recover", "rewrite", "transform", "validate",
+      "reindex",
+    ].contains(command) {
     raise Invalid("unknown command: \{command}")
   }
   let inputs = []
@@ -143,7 +144,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     (flags.contains("--full") || values.contains("--cache-bytes")) {
     raise Invalid("--full and --cache-bytes are query options")
   }
-  if ["query", "inspect"].contains(command) &&
+  if ["query", "inspect", "validate"].contains(command) &&
     (values.contains("--compression") || values.contains("--chunk-messages")) {
     raise Invalid("compression and chunk sizing are MCAP output options")
   }
@@ -168,7 +169,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     raise Invalid("CSV is available for query")
   }
   let output = values.get("--output").unwrap_or("")
-  if !["query", "inspect"].contains(command) && output == "" {
+  if !["query", "inspect", "validate"].contains(command) && output == "" {
     raise Invalid("--output is required")
   }
   let chunk_messages = decimal_int(

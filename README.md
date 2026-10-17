@@ -1,6 +1,6 @@
 # MoonMCAP
 
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、无压缩/LZ4/Zstd 分块读写、索引查询、日志变换和截断恢复。当前模块版本 **0.7.0**，支持按需读取、LRU 块缓存、流式录制、[通用命令行](docs/cli.md) 与 [批量变换](docs/batch-transform.md)，见 [更新记录](CHANGELOG.md)。
+MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、按需读取、LRU 块缓存、流式录制、查询游标、批量变换和诊断修复。当前模块版本 **0.8.0**，见 [更新记录](CHANGELOG.md)。
 
 ## 安装与运行
 
@@ -91,9 +91,29 @@ python tools/conformance.py
 python tools/count_source.py
 ```
 
-- MoonBit 单元/回归测试：79 项，覆盖官方压缩帧、边界、损坏输入、游标对照、按需读取和缓存淘汰。
+- MoonBit 单元/回归测试：Wasm 98 项、JS 99 项，JS 多一项 Node 文件适配器测试；覆盖压缩帧、边界、游标、缓存、流式状态、变换、损坏诊断和索引重建。
 - 真实文件验证：30 项；包含 `3 输入压缩 × 2 摘要布局 × 3 输出压缩 = 18` 组双向读写检查，以及顺序文件、无消息索引、无摘要偏移、混合压缩和查询/合并/恢复工作流。
-- 输出报告：`_interop/conformance/report.json`，记录参考输入 SHA-256 及各项结果。GitHub Actions 执行检查、构建、测试和这两个验证脚本，并上传报告。
+- 新增真实文件验证：按需读取基准、三种流式输出、8 项通用 CLI 工作流、4 项批量变换检查和 8 项诊断/修复检查。执行命令见下方，结果位于 `_interop/` 各子目录的 `report.json`。GitHub Actions 完整执行并上传报告。
+
+```sh
+python tools/range_benchmark.py
+python tools/stream_workflows.py
+python tools/cli_workflows.py
+python tools/batch_workflows.py
+python tools/repair_workflows.py
+```
+
+## 文件工具
+
+[通用命令行](docs/cli.md) 提供 `inspect`、`query`、`slice`、`merge`、`recover`、`rewrite`、`transform`、`validate`、`reindex`。主题、UInt64 纳秒时间、分页、压缩和预算均可配置；查询支持 JSON/CSV，输出文件拒绝覆盖已有路径。
+
+```sh
+moon run cmd/mcap --target js -- query examples/files/zstd-summary.mcap --topic /imu --start 20000000000 --end 30000000000
+moon run cmd/mcap --target js -- validate examples/files/zstd-summary.mcap
+moon run cmd/mcap --target js -- reindex broken-summary.mcap --output rebuilt.mcap --compression zstd
+```
+
+[批量变换](docs/batch-transform.md) 提供主题映射、按通道时间窗采样、时间对齐、附件和元数据筛选。[结构化诊断与修复](docs/diagnostics.md) 区分数据区和索引/摘要问题，已知时给出偏移、记录类型与预期/实际值；只从完整有效的数据区重建索引，数据损坏需要显式前缀恢复。
 
 Python `mcap==1.3.0` 仅为开发阶段的官方参考工具，其包版本不是文件格式版本。生成测试不计入有效源码；`tools/count_source.py` 只统计根目录手写核心的非空、非注释 `.mbt` 行，排除测试、生成接口、示例及 `internal/zstd` 引用代码。
 
