@@ -93,11 +93,21 @@ pub fn find_attachments(Log, name? : String, media_type? : String) -> Array[Atta
 
 pub fn frame(Byte, Bytes) -> Bytes raise McapError
 
+pub fn io_error(String) -> McapError
+
 pub fn magic() -> Bytes
+
+pub fn memory_source(Bytes) -> ReadSource
 
 pub fn merge_logs(Array[Log], chronological? : Bool) -> Log raise McapError
 
 pub fn new_builder(profile? : String, limits? : Limits) -> LogBuilder raise McapError
+
+pub fn new_read_source(UInt64, (UInt64, Int) -> Bytes raise McapError) -> ReadSource
+
+pub fn open_reader(ReadSource, limits? : Limits, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int) -> RangeReader raise McapError
+
+pub fn parse_decimal(String) -> UInt64 raise McapError
 
 pub fn query_file(Bytes, Query, limits? : Limits) -> QueryResult raise McapError
 
@@ -166,6 +176,8 @@ pub(all) struct AttachmentIndex {
   name : String
   media_type : String
 }
+
+type CachedChunk
 
 pub(all) struct Channel {
   id : Int
@@ -378,6 +390,48 @@ pub(all) struct QueryResult {
   messages : Array[Message]
   diagnostics : QueryDiagnostics
 }
+
+pub struct RangeReader {
+  source : ReadSource
+  limits : Limits
+  declarations : Log
+  indexes : Array[ChunkIndex]
+  cache : Array[CachedChunk]
+  cache_budget : Int
+  fallback_budget : Int
+  data_end : UInt64
+  mut cache_bytes : Int
+  mut peak_cache_bytes : Int
+  mut decoded_chunks : Int
+  mut cache_hits : Int
+  mut full_validation : Bool
+}
+pub fn RangeReader::clear_cache(Self) -> Unit
+pub fn RangeReader::diagnostics(Self) -> ReadDiagnostics
+pub fn RangeReader::query(Self, Query) -> Array[Message] raise McapError
+pub fn RangeReader::validate_all(Self) -> Unit raise McapError
+
+type RangeRecord
+
+pub(all) struct ReadDiagnostics {
+  read_calls : Int
+  bytes_read : UInt64
+  decoded_chunks : Int
+  cache_hits : Int
+  cache_bytes : Int
+  peak_cache_bytes : Int
+  indexed : Bool
+  full_validation : Bool
+} derive(Eq, @debug.Debug)
+
+pub struct ReadSource {
+  size : UInt64
+  read_at : (UInt64, Int) -> Bytes raise McapError
+  mut calls : Int
+  mut bytes_read : UInt64
+}
+pub fn ReadSource::read_exact(Self, UInt64, Int) -> Bytes raise McapError
+pub fn ReadSource::size(Self) -> UInt64
 
 pub(all) struct Record {
   opcode : Byte

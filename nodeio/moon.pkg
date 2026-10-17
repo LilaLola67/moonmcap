@@ -1,0 +1,7 @@
+import {
+  "LilaLola67/moonmcap" @mcap,
+}
+
+options(
+  targets: { "files.mbt": [ "js" ], "unsupported.mbt": [ "not", "js" ] },
+)

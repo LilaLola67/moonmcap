@@ -34,7 +34,10 @@ pub fn merge_logs(
   if logs.is_empty() {
     return empty_log()
   }
-  let header : Header = { ..logs[0].header, library: "moonmcap/0.2.0 merge", }
+  let header : Header = {
+    ..logs[0].header,
+    library: empty_log().header.library + " merge",
+  }
   let merged : Log = {
     header,
     schemas: [],
