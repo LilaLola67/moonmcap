@@ -1,6 +1,6 @@
 # MoonMCAP
 
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、无压缩/LZ4/Zstd 分块读写、索引查询、日志变换和截断恢复。当前模块版本 **0.2.0**。
+MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、无压缩/LZ4/Zstd 分块读写、索引查询、日志变换和截断恢复。当前模块版本 **0.3.0**，新增连续分页、时间跳转及可取消的内存查询游标，见 [更新记录](CHANGELOG.md)。
 
 ## 安装与运行
 
@@ -40,6 +40,19 @@ let output = @mcap.write_indexed(sliced, compression=@mcap.Lz4)
 
 调用会抛出 `McapError`，应在声明该错误的函数或 `try/catch` 内使用。时间是 UInt64 纳秒，查询区间两端包含；同一时间按原始物理顺序稳定排序，支持倒序、偏移和数量分页。`Uncompressed`、`Lz4`、`Zstd` 是三种写入模式。
 
+连续读取时，可以复用同一个索引与游标：
+
+```moonbit
+let cursor = @mcap.build_query_index(log).cursor(query)
+let first_page = cursor.next_page(32)
+let second_page = cursor.next_page(32)
+cursor.seek(150UL) // 包含时间边界；不重新应用 offset
+let progress = cursor.progress()
+cursor.cancel()
+```
+
+游标最多保留每个匹配通道的一个归并头部，不为每页重新构造完整候选数组。`offset`、`limit` 作用于整个遍历；`seek` 重置本次进度和 limit，取消后不能重开。索引仍持有完整内存快照。完整约定和示例见 [消息游标](docs/query-cursor.md)，运行 `moon run cmd/cursor` 或 `moon run cmd/cursor --target js`。
+
 ## 容器与压缩
 
 覆盖 MCAP 0 的全部 **15 类标准记录**，包括 Statistics、消息/块索引、附件与元数据索引和 SummaryOffset。读取时检查记录顺序、声明依赖、摘要副本、统计内容、物理偏移以及数据区、摘要、块和附件 CRC。可读取顺序、分块、有/无摘要、有/无摘要偏移、无消息索引的合法文件，并在重写时重新生成统计及索引。
@@ -57,6 +70,7 @@ let output = @mcap.write_indexed(sliced, compression=@mcap.Lz4)
 - 按内容去重 schema/channel，合并时安全重映射 ID 并保留重复消息。
 - 平移消息和附件时间，检查 UInt64 溢出/下溢。
 - 时序统计：消息数、数据量、时间间隔、乱序与序号异常；与标准 Statistics 记录分别提供 API。
+- 查询游标：逐条/分批取消息、稳定分页、双向时间跳转、取消和进度；同一索引可共享给多个独立游标。
 - 录制器提供声明去重、自动序号、快照、添加失败原子性及结束状态。
 - 分片记录流解码与连续前缀恢复。压缩块完全解码并通过校验后才接纳消息，遇到损坏或截断就停止，不穿过坏字节重同步。
 
@@ -77,7 +91,7 @@ python tools/conformance.py
 python tools/count_source.py
 ```
 
-- MoonBit 单元/回归测试：62 项，Wasm 与 JS 分别通过，包含官方压缩帧夹具、边界及损坏输入。
+- MoonBit 单元/回归测试：72 项，Wasm 与 JS 分别通过，包含官方压缩帧夹具、边界、损坏输入及游标的批量/独立排序对照。
 - 真实文件验证：30 项；包含 `3 输入压缩 × 2 摘要布局 × 3 输出压缩 = 18` 组双向读写检查，以及顺序文件、无消息索引、无摘要偏移、混合压缩和查询/合并/恢复工作流。
 - 输出报告：`_interop/conformance/report.json`，记录参考输入 SHA-256 及各项结果。GitHub Actions 执行检查、构建、测试和这两个验证脚本，并上传报告。
 

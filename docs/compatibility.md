@@ -1,6 +1,6 @@
 # MCAP 0 compatibility
 
-MoonMCAP **0.2.0** targets MCAP major version **0**, identified by the `MCAP0`
+MoonMCAP **0.3.0** targets MCAP major version **0**, identified by the `MCAP0`
 magic bytes. The official Python `mcap==1.3.0` package is the interoperability
 reference; this is a package version, not an MCAP format version.
 
@@ -107,7 +107,8 @@ the reference encoder's output.
 The library preserves message/schema/channel/attachment/metadata contents
 within its declared semantic model. It does not decode CDR/Protobuf payloads,
 validate every ROS profile rule, provide disk-lazy access or guarantee
-byte-identical rewrites. The 0.2.0 module is available from GitHub; Mooncakes
+byte-identical rewrites. Version 0.3.0 adds [in-memory query cursors](query-cursor.md)
+without changing these container or compression boundaries. The 0.3.0 module is available from GitHub; Mooncakes
 publication is a separate distribution step.
 
 Sources: [MCAP specification](https://mcap.dev/spec),

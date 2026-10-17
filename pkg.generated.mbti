@@ -208,6 +208,8 @@ pub fn Compression::to_repr(Self) -> @debug.Repr
 
 type Cursor
 
+type CursorRun
+
 pub(all) struct FileStatistics {
   message_count : UInt64
   schema_count : Int
@@ -326,6 +328,28 @@ pub(all) struct Query {
   limit : Int
 }
 
+pub struct QueryCursor {
+  index : QueryIndex
+  query : Query
+  heap : Array[CursorRun]
+  mut state : QueryCursorState
+  mut matching : Int
+  mut skipped : Int
+  mut emitted : Int
+  mut remaining : Int
+}
+pub fn QueryCursor::cancel(Self) -> Unit
+pub fn QueryCursor::next(Self) -> Message?
+pub fn QueryCursor::next_page(Self, Int) -> Array[Message] raise McapError
+pub fn QueryCursor::progress(Self) -> QueryProgress
+pub fn QueryCursor::seek(Self, UInt64) -> Unit raise McapError
+
+pub(all) enum QueryCursorState {
+  Active
+  Exhausted
+  Cancelled
+} derive(Eq, @debug.Debug)
+
 pub(all) struct QueryDiagnostics {
   total_chunks : Int
   candidate_chunks : Int
@@ -338,7 +362,17 @@ pub struct QueryIndex {
   by_channel : Map[Int, Array[Int]]
   all_messages : Array[Int]
 }
+pub fn QueryIndex::cursor(Self, Query) -> QueryCursor raise McapError
 pub fn QueryIndex::query(Self, Query) -> Array[Message] raise McapError
+
+pub(all) struct QueryProgress {
+  state : QueryCursorState
+  matching_messages : Int
+  skipped_messages : Int
+  emitted_messages : Int
+  remaining_messages : Int
+  buffered_heads : Int
+} derive(Eq, @debug.Debug)
 
 pub(all) struct QueryResult {
   messages : Array[Message]
