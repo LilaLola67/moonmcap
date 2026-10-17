@@ -3,5 +3,9 @@ import {
 }
 
 options(
-  targets: { "files.mbt": [ "js" ], "unsupported.mbt": [ "not", "js" ] },
+  targets: {
+    "files.mbt": [ "js" ],
+    "files_test.mbt": [ "js" ],
+    "unsupported.mbt": [ "not", "js" ],
+  },
 )

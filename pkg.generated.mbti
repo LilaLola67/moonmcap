@@ -105,6 +105,10 @@ pub fn new_builder(profile? : String, limits? : Limits) -> LogBuilder raise Mcap
 
 pub fn new_read_source(UInt64, (UInt64, Int) -> Bytes raise McapError) -> ReadSource
 
+pub fn new_stream_writer(WriteSink, profile? : String, options? : StreamOptions, limits? : Limits) -> StreamWriter raise McapError
+
+pub fn new_write_sink((Bytes) -> Unit raise McapError) -> WriteSink
+
 pub fn open_reader(ReadSource, limits? : Limits, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int) -> RangeReader raise McapError
 
 pub fn parse_decimal(String) -> UInt64 raise McapError
@@ -124,6 +128,8 @@ pub fn shift_time(Log, UInt64, backwards? : Bool) -> Log raise McapError
 pub fn slice_log(Log, Query) -> Log raise McapError
 
 pub fn stats_report(LogStats) -> String
+
+pub fn stream_options() -> StreamOptions
 
 pub fn summarize(Log) -> LogStats raise McapError
 
@@ -475,6 +481,47 @@ pub fn StreamDecoder::finish(Self) -> Unit raise McapError
 pub fn StreamDecoder::new(limits? : Limits, base? : Int) -> Self raise McapError
 pub fn StreamDecoder::record_count(Self) -> Int
 
+pub(all) struct StreamOptions {
+  compression : Compression
+  chunk_bytes : Int
+  chunk_messages : Int
+  chunk_span : UInt64
+  summary_bytes : Int
+} derive(Eq, @debug.Debug)
+
+pub struct StreamWriter {
+  sink : WriteSink
+  options : StreamOptions
+  limits : Limits
+  declarations : Log
+  pending : Array[Record]
+  summary : Array[(Byte, Bytes)]
+  counts : Map[Int, UInt64]
+  mut state : WriterState
+  mut crc : UInt
+  mut records : Int
+  mut buffered : Int
+  mut peak_buffered : Int
+  mut retained : Int
+  mut messages : UInt64
+  mut chunks : UInt
+  mut attachments : UInt
+  mut metadata : UInt
+  mut start_time : UInt64
+  mut end_time : UInt64
+  mut chunk_start : UInt64
+  mut chunk_end : UInt64
+}
+pub fn StreamWriter::add_attachment(Self, Attachment) -> Unit raise McapError
+pub fn StreamWriter::add_channel(Self, Channel) -> Unit raise McapError
+pub fn StreamWriter::add_metadata(Self, Metadata) -> Unit raise McapError
+pub fn StreamWriter::add_schema(Self, Schema) -> Unit raise McapError
+pub fn StreamWriter::append(Self, Message) -> Unit raise McapError
+pub fn StreamWriter::cancel(Self) -> Unit
+pub fn StreamWriter::finish(Self) -> WriteProgress raise McapError
+pub fn StreamWriter::flush(Self) -> Unit raise McapError
+pub fn StreamWriter::progress(Self) -> WriteProgress
+
 pub(all) struct SummaryOffset {
   opcode : Byte
   start : UInt64
@@ -496,6 +543,29 @@ pub(all) struct TopicStats {
   publish_after_log : Int
   frequency_hz : Double
 }
+
+pub(all) struct WriteProgress {
+  state : WriterState
+  bytes_written : UInt64
+  messages : UInt64
+  chunks : UInt
+  buffered_bytes : Int
+  peak_buffered_bytes : Int
+  retained_summary_bytes : Int
+} derive(Eq, @debug.Debug)
+
+pub struct WriteSink {
+  write_all : (Bytes) -> Unit raise McapError
+  mut position : UInt64
+}
+pub fn WriteSink::position(Self) -> UInt64
+
+pub(all) enum WriterState {
+  WriterOpen
+  WriterFinished
+  WriterFailed
+  WriterCancelled
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 
