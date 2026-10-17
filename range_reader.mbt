@@ -428,3 +428,8 @@ pub fn RangeReader::clear_cache(self : RangeReader) -> Unit {
   self.cache.clear()
   self.cache_bytes = 0
 }
+
+///|
+pub fn RangeReader::channels(self : RangeReader) -> Array[Channel] {
+  self.declarations.channels.map(fn(c) { { ..c, metadata: c.metadata.copy(), } })
+}

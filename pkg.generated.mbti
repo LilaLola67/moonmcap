@@ -93,6 +93,8 @@ pub fn find_attachments(Log, name? : String, media_type? : String) -> Array[Atta
 
 pub fn frame(Byte, Bytes) -> Bytes raise McapError
 
+pub fn inspect_json(Log) -> Json raise McapError
+
 pub fn io_error(String) -> McapError
 
 pub fn magic() -> Bytes
@@ -100,6 +102,10 @@ pub fn magic() -> Bytes
 pub fn memory_source(Bytes) -> ReadSource
 
 pub fn merge_logs(Array[Log], chronological? : Bool) -> Log raise McapError
+
+pub fn messages_csv(Array[Message], Array[Channel]) -> String
+
+pub fn messages_json(Array[Message], Array[Channel]) -> Json
 
 pub fn new_builder(profile? : String, limits? : Limits) -> LogBuilder raise McapError
 
@@ -111,9 +117,13 @@ pub fn new_write_sink((Bytes) -> Unit raise McapError) -> WriteSink
 
 pub fn open_reader(ReadSource, limits? : Limits, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int) -> RangeReader raise McapError
 
+pub fn parse_command(Array[String]) -> CommandOptions raise McapError
+
 pub fn parse_decimal(String) -> UInt64 raise McapError
 
 pub fn query_file(Bytes, Query, limits? : Limits) -> QueryResult raise McapError
+
+pub fn read_diagnostics_json(ReadDiagnostics) -> Json
 
 pub fn read_log(Bytes, limits? : Limits) -> Log raise McapError
 
@@ -212,6 +222,19 @@ pub(all) struct ChunkIndex {
   compression : String
   compressed_size : UInt64
   uncompressed_size : UInt64
+}
+
+pub(all) struct CommandOptions {
+  command : String
+  inputs : Array[String]
+  output : String
+  query : Query
+  compression : Compression
+  format : String
+  max_file_bytes : Int
+  cache_bytes : Int
+  chunk_messages : Int
+  full : Bool
 }
 
 pub(all) enum Compression {
@@ -412,6 +435,7 @@ pub struct RangeReader {
   mut cache_hits : Int
   mut full_validation : Bool
 }
+pub fn RangeReader::channels(Self) -> Array[Channel]
 pub fn RangeReader::clear_cache(Self) -> Unit
 pub fn RangeReader::diagnostics(Self) -> ReadDiagnostics
 pub fn RangeReader::query(Self, Query) -> Array[Message] raise McapError

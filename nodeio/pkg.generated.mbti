@@ -12,6 +12,8 @@ pub fn open_file(String) -> @moonmcap.ReadSource raise @moonmcap.McapError
 
 pub fn read_file(String, maximum? : Int) -> Bytes raise @moonmcap.McapError
 
+pub fn write_atomic_new(String, Bytes) -> Unit raise @moonmcap.McapError
+
 pub fn write_new_file(String, Bytes) -> Unit raise @moonmcap.McapError
 
 // Errors

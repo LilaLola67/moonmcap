@@ -17,6 +17,14 @@ pub fn write_new_file(
 }
 
 ///|
+pub fn write_atomic_new(
+  _path : String,
+  _bytes : Bytes,
+) -> Unit raise @mcap.McapError {
+  raise @mcap.io_error("nodeio requires the JS target")
+}
+
+///|
 pub fn read_file(
   _path : String,
   maximum? : Int = 64 * 1024 * 1024,

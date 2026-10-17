@@ -114,3 +114,29 @@ pub fn read_file(
   }
   source.read_exact(0UL, source.size().to_int())
 }
+
+///|
+extern "js" fn atomic_hex(path : String, hex : String) -> String =
+  #| (destination,hex) => {
+  #|   const fs=process.getBuiltinModule('node:fs'), path=process.getBuiltinModule('node:path');
+  #|   const temp=path.join(path.dirname(destination),'.'+path.basename(destination)+'.'+process.getBuiltinModule('node:crypto').randomUUID()+'.tmp');
+  #|   let fd,created=false;
+  #|   try {
+  #|     fd=fs.openSync(temp,'wx'); created=true;
+  #|     fs.writeFileSync(fd,Buffer.from(hex,'hex')); fs.fsyncSync(fd); fs.closeSync(fd); fd=undefined;
+  #|     fs.linkSync(temp,destination); return '';
+  #|   } catch(e) { return '!'+e.message; }
+  #|   finally { if(fd!==undefined) fs.closeSync(fd); if(created) fs.unlinkSync(temp); }
+  #| }
+
+///|
+/// Publish a complete new file using a same-directory hard link; never replace paths.
+pub fn write_atomic_new(
+  path : String,
+  bytes : Bytes,
+) -> Unit raise @mcap.McapError {
+  let error = atomic_hex(path, @mcap.encode_hex(bytes))
+  if error != "" {
+    raise @mcap.io_error(error)
+  }
+}
