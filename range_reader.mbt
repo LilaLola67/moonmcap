@@ -230,6 +230,7 @@ pub fn open_reader(
 fn RangeReader::load_chunk(
   self : RangeReader,
   index : ChunkIndex,
+  provided? : Bytes? = None,
 ) -> Chunk raise McapError {
   for i = 0; i < self.cache.length(); i = i + 1 {
     if self.cache[i].offset == index.chunk_start {
@@ -239,7 +240,22 @@ fn RangeReader::load_chunk(
       return cached.chunk
     }
   }
-  let record = self.source.record(index.chunk_start, self.data_end, self.limits)
+  let source = match provided {
+    None => self.source
+    Some(span) =>
+      new_read_source(self.source.size, fn(offset, length) {
+        if offset < index.chunk_start ||
+          offset - index.chunk_start > span.length().to_uint64() {
+          raise Invalid("provided chunk span does not cover requested offset")
+        }
+        let begin = (offset - index.chunk_start).to_int()
+        if length < 0 || length > span.length() - begin {
+          raise Invalid("provided chunk span is truncated")
+        }
+        span[begin:begin + length].to_owned()
+      })
+  }
+  let record = source.record(index.chunk_start, self.data_end, self.limits)
   if record.opcode != 0x06 ||
     (record.body.length() + 9).to_uint64() != index.chunk_length {
     raise Invalid("ChunkIndex does not point to a matching Chunk")
@@ -262,7 +278,7 @@ fn RangeReader::load_chunk(
   let seen : Map[Int, Bool] = Map([])
   let mut index_length = 0UL
   for (id, pointer) in index.message_index_offsets {
-    let record = self.source.record(
+    let record = source.record(
       pointer,
       index.chunk_start + index.chunk_length + index.message_index_length,
       self.limits,

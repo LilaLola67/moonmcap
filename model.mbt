@@ -86,7 +86,7 @@ pub(all) struct Log {
 ///|
 pub fn empty_log(profile? : String = "") -> Log {
   {
-    header: { profile, library: "moonmcap/0.8.0", },
+    header: { profile, library: "moonmcap/0.9.0", },
     schemas: [],
     channels: [],
     messages: [],

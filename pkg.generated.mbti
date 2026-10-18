@@ -286,6 +286,41 @@ pub(all) enum DiagnosticCode {
 } derive(Eq, @debug.Debug)
 pub fn DiagnosticCode::name(Self) -> String
 
+pub struct FileCursor {
+  reader : RangeReader
+  original : Query
+  candidates : Array[ChunkIndex]
+  heap : Array[FileItem]
+  allowed : Map[Int, Bool]
+  pending_budget : Int
+  span_budget : Int
+  mut active : Query
+  mut fallback : QueryCursor?
+  mut state : FileCursorState
+  mut loaded : Int
+  mut visited : Int
+  mut emitted : Int
+  mut skipped : Int
+  mut offset_left : Int
+  mut remaining : Int
+  mut pending_bytes : Int
+  mut peak_pending : Int
+}
+pub fn FileCursor::cancel(Self) -> Unit
+pub fn FileCursor::feed(Self, Bytes) -> Unit raise McapError
+pub fn FileCursor::next(Self) -> Message? raise McapError
+pub fn FileCursor::next_page(Self, Int) -> Array[Message] raise McapError
+pub fn FileCursor::poll(Self) -> FilePoll raise McapError
+pub fn FileCursor::progress(Self) -> FileProgress
+pub fn FileCursor::seek(Self, UInt64) -> Unit raise McapError
+
+pub(all) enum FileCursorState {
+  FileActive
+  FileExhausted
+  FileCancelled
+  FileFailed
+} derive(Eq, @debug.Debug)
+
 pub(all) struct FileDiagnosis {
   valid : Bool
   data_valid : Bool
@@ -294,6 +329,26 @@ pub(all) struct FileDiagnosis {
   chunks : Int
   data_end : UInt64?
   issues : Array[Diagnostic]
+} derive(Eq, @debug.Debug)
+
+type FileItem
+
+pub(all) enum FilePoll {
+  FileMessage(Message)
+  FileRead(ReadSpan)
+  FileDone
+}
+
+pub(all) struct FileProgress {
+  state : FileCursorState
+  candidate_chunks : Int
+  loaded_chunks : Int
+  emitted_messages : Int
+  skipped_messages : Int
+  pending_messages : Int
+  pending_bytes : Int
+  peak_pending_bytes : Int
+  used_fallback : Bool
 } derive(Eq, @debug.Debug)
 
 pub(all) struct FileStatistics {
@@ -488,6 +543,7 @@ pub struct RangeReader {
 }
 pub fn RangeReader::channels(Self) -> Array[Channel]
 pub fn RangeReader::clear_cache(Self) -> Unit
+pub fn RangeReader::cursor(Self, Query, pending_bytes? : Int, span_bytes? : Int) -> FileCursor raise McapError
 pub fn RangeReader::diagnostics(Self) -> ReadDiagnostics
 pub fn RangeReader::query(Self, Query) -> Array[Message] raise McapError
 pub fn RangeReader::validate_all(Self) -> Unit raise McapError
@@ -513,6 +569,11 @@ pub struct ReadSource {
 }
 pub fn ReadSource::read_exact(Self, UInt64, Int) -> Bytes raise McapError
 pub fn ReadSource::size(Self) -> UInt64
+
+pub(all) struct ReadSpan {
+  offset : UInt64
+  length : Int
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Record {
   opcode : Byte

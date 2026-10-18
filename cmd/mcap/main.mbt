@@ -39,7 +39,9 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     if options.full {
       reader.validate_all()
     }
-    let messages = reader.query(options.query)
+    let messages = reader
+      .cursor(options.query)
+      .next_page(options.query.limit.max(1))
     if options.format == "csv" {
       text_output(
         options.output,
