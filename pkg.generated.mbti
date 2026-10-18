@@ -95,7 +95,7 @@ pub fn encode_schema(Schema) -> Bytes raise McapError
 
 pub fn encode_summary_offset(SummaryOffset) -> Bytes
 
-pub fn external_merge(Array[ReadSource], SortStorage, WriteSink, options? : ExternalOptions, cancelled? : () -> Bool) -> ExternalReport raise McapError
+pub fn external_merge(Array[ReadSource], SortStorage, WriteSink, options? : ExternalOptions, cancelled? : () -> Bool, preserve_ids? : Bool) -> ExternalReport raise McapError
 
 pub fn external_options() -> ExternalOptions
 
@@ -149,21 +149,29 @@ pub fn repair_prefix(Bytes, limits? : Limits) -> (Bytes, RecoveryReport) raise M
 
 pub fn scan_file(Bytes, limits? : Limits) -> Array[Record] raise McapError
 
+pub fn scan_source(ReadSource, SourceVisitor, limits? : Limits, declaration_bytes? : Int, cancelled? : () -> Bool) -> UInt64 raise McapError
+
 pub fn shift_time(Log, UInt64, backwards? : Bool) -> Log raise McapError
 
 pub fn slice_log(Log, Query) -> Log raise McapError
 
 pub fn sort_storage((Int) -> WriteSink raise McapError, (Int) -> ReadSource raise McapError, (Int) -> Unit raise McapError, finish? : () -> Unit raise McapError) -> SortStorage
 
+pub fn source_visitor(schema? : (Schema) -> Unit raise McapError, channel? : (Channel) -> Unit raise McapError, message? : (Message, MessageLocation) -> Unit raise McapError, attachment? : (Attachment) -> Unit raise McapError, metadata? : (Metadata) -> Unit raise McapError) -> SourceVisitor
+
 pub fn stats_report(LogStats) -> String
 
 pub fn stream_options() -> StreamOptions
+
+pub fn stream_transform(ReadSource, SortStorage, WriteSink, TransformOptions, external? : ExternalOptions, cancelled? : () -> Bool) -> TransformReport raise McapError
 
 pub fn summarize(Log) -> LogStats raise McapError
 
 pub fn transform_log(Log, TransformOptions) -> Log raise McapError
 
 pub fn transform_options() -> TransformOptions
+
+pub fn transform_report_json(TransformReport) -> Json
 
 pub fn validate_attachment_indexes(Bytes, limits? : Limits) -> Int raise McapError
 
@@ -357,6 +365,7 @@ pub fn FileCursor::next_page(Self, Int) -> Array[Message] raise McapError
 pub fn FileCursor::poll(Self) -> FilePoll raise McapError
 pub fn FileCursor::progress(Self) -> FileProgress
 pub fn FileCursor::seek(Self, UInt64) -> Unit raise McapError
+pub fn FileCursor::write_ndjson(Self, WriteSink) -> Int raise McapError
 
 pub(all) enum FileCursorState {
   FileActive
@@ -495,6 +504,12 @@ pub(all) struct MessageIndex {
   channel_id : Int
   entries : Array[(UInt64, UInt64)]
 }
+
+pub(all) struct MessageLocation {
+  offset : UInt64
+  span : Int
+  inner : Int?
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Metadata {
   name : String
@@ -675,6 +690,14 @@ pub struct SortStorage {
 
 type SourceTables
 
+pub(all) struct SourceVisitor {
+  schema : (Schema) -> Unit raise McapError
+  channel : (Channel) -> Unit raise McapError
+  message : (Message, MessageLocation) -> Unit raise McapError
+  attachment : (Attachment) -> Unit raise McapError
+  metadata : (Metadata) -> Unit raise McapError
+}
+
 pub struct StreamDecoder {
   limits : Limits
   pending : @buffer.Buffer
@@ -737,6 +760,8 @@ pub(all) struct SummaryOffset {
   length : UInt64
 }
 
+type TemporaryWorkspace
+
 pub(all) struct TopicStats {
   channel_id : Int
   topic : String
@@ -765,6 +790,14 @@ pub(all) struct TransformOptions {
   attachment_end : UInt64
   metadata_names : Array[String]
   metadata_entries : Array[(String, String)]
+}
+
+pub(all) struct TransformReport {
+  input_messages : UInt64
+  sampled_messages : Int
+  output_messages : Int
+  output_bytes : UInt64
+  peak_temporary_bytes : UInt64
 }
 
 pub(all) struct WriteProgress {

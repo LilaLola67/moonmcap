@@ -71,6 +71,8 @@ fn compare_rows(a : SortRow, b : SortRow) -> Int {
 
 ///|
 struct SortSession {
+  observer : SourceVisitor?
+  preserve_ids : Bool
   storage : SortStorage
   options : ExternalOptions
   live : Map[Int, UInt64]

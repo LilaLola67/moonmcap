@@ -49,17 +49,28 @@ fn SortSession::map_schema(
     return
   }
   tables.reserve(encode_schema(schema).length(), self.options.declaration_bytes)
-  let existing = global.schemas
+  if self.observer is Some(visitor) {
+    (visitor.schema)(schema)
+  }
+  let existing = if self.preserve_ids {
+    None
+  } else {
+    global.schemas
     .iter()
     .find_first(fn(s) {
       s.name == schema.name &&
       s.encoding == schema.encoding &&
       s.data == schema.data
     })
+  }
   match existing {
     Some(value) => tables.schemas[schema.id] = value.id
     None => {
-      let id = next_id(global.schemas.length())
+      let id = if self.preserve_ids {
+        schema.id
+      } else {
+        next_id(global.schemas.length())
+      }
       let mapped = { ..schema, id, }
       self.reserve_declaration(encode_schema(mapped).length())
       writer.add_schema(mapped)
@@ -85,8 +96,14 @@ fn SortSession::map_channel(
     encode_channel(channel).length(),
     self.options.declaration_bytes,
   )
+  if self.observer is Some(visitor) {
+    (visitor.channel)(channel)
+  }
   let schema_id = tables.schemas[channel.schema_id]
-  let existing = global.channels
+  let existing = if self.preserve_ids {
+    None
+  } else {
+    global.channels
     .iter()
     .find_first(fn(c) {
       c.topic == channel.topic &&
@@ -94,10 +111,15 @@ fn SortSession::map_channel(
       c.message_encoding == channel.message_encoding &&
       c.metadata == channel.metadata
     })
+  }
   match existing {
     Some(value) => tables.channels[channel.id] = value.id
     None => {
-      let id = next_id(global.channels.length())
+      let id = if self.preserve_ids {
+        channel.id
+      } else {
+        next_id(global.channels.length())
+      }
       let mapped = { ..channel, id, schema_id, }
       self.reserve_declaration(encode_channel(mapped).length())
       writer.add_channel(mapped)
@@ -113,6 +135,7 @@ fn SortSession::ingest_message(
   tables : SourceTables,
   body : Bytes,
   runs : Array[Int],
+  location : MessageLocation,
 ) -> Unit raise McapError {
   let message = decode_message(body, limits=self.options.limits)
   if !tables.channels.contains(message.channel_id) {
@@ -121,10 +144,15 @@ fn SortSession::ingest_message(
   if self.ordinal >= self.options.limits.max_records.to_uint64() {
     raise Invalid("external total message count budget exceeded")
   }
-  self.add(
-    { ..message, channel_id: tables.channels[message.channel_id], },
-    runs,
-  )
+  if self.observer is Some(visitor) {
+    (visitor.message)(message, location)
+    self.ordinal += 1UL
+  } else {
+    self.add(
+      { ..message, channel_id: tables.channels[message.channel_id], },
+      runs,
+    )
+  }
   tables.counts[message.channel_id] = tables.counts
     .get(message.channel_id)
     .unwrap_or(0UL) +
@@ -323,7 +351,11 @@ fn SortSession::ingest(
         if !indexes.is_empty() {
           raise Invalid("indexed external input has unchunked Message")
         }
-        self.ingest_message(tables, record.body, runs)
+        self.ingest_message(tables, record.body, runs, {
+          offset: position,
+          span: record.body.length() + 9,
+          inner: None,
+        })
       }
       0x06 => {
         let chunk = if indexes.is_empty() {
@@ -354,7 +386,12 @@ fn SortSession::ingest(
                 writer,
                 decode_channel(nested.body, limits~),
               )
-            0x05 => self.ingest_message(tables, nested.body, runs)
+            0x05 =>
+              self.ingest_message(tables, nested.body, runs, {
+                offset: position,
+                span: record.body.length() + 9,
+                inner: Some(nested.offset),
+              })
             _ => ()
           }
         }
@@ -374,6 +411,9 @@ fn SortSession::ingest(
         })
         tables.reserve(index.length(), self.options.declaration_bytes)
         tables.attachments[position] = index
+        if self.observer is Some(visitor) {
+          (visitor.attachment)(value)
+        }
         writer.add_attachment(value)
       }
       0x0c => {
@@ -385,6 +425,9 @@ fn SortSession::ingest(
         })
         tables.reserve(index.length(), self.options.declaration_bytes)
         tables.metadata[position] = index
+        if self.observer is Some(visitor) {
+          (visitor.metadata)(value)
+        }
         writer.add_metadata(value)
       }
       0x0f => {
@@ -423,8 +466,11 @@ pub fn external_merge(
   output : WriteSink,
   options? : ExternalOptions = external_options(),
   cancelled? : () -> Bool = fn() { false },
+  preserve_ids? : Bool = false,
 ) -> ExternalReport raise McapError {
   let session : SortSession = {
+    observer: None,
+    preserve_ids,
     storage,
     options,
     live: Map([]),
@@ -442,6 +488,7 @@ pub fn external_merge(
   }
   let result = try {
     if sources.is_empty() ||
+      (preserve_ids && sources.length() != 1) ||
       options.run_bytes < 43 ||
       options.merge_bytes < 43 ||
       options.fan_in < 2 ||

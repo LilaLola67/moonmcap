@@ -64,6 +64,9 @@ jobs:
       - name: Verify independent block recovery manifests
         if: matrix.target == 'js'
         run: python tools/block_workflows.py
+      - name: Verify disk-backed streaming transformations
+        if: matrix.target == 'js'
+        run: python tools/transform_stream_workflows.py
       - name: Verify fixed-seed differential cases
         if: matrix.target == 'js'
         run: python tools/fuzz_workflows.py
@@ -90,6 +93,7 @@ jobs:
             _interop/http/report.json
             _interop/external/report.json
             _interop/blocks/report.json
+            _interop/transform-stream/report.json
             _interop/fuzz/report.json
             _interop/memory/report.json
             _interop/package/report.json

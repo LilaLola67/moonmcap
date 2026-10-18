@@ -42,7 +42,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   let command = args[0]
   if ![
       "inspect", "query", "slice", "merge", "recover", "rewrite", "transform", "validate",
-      "reindex", "external-merge", "recover-blocks",
+      "reindex", "external-merge", "recover-blocks", "stream-transform",
     ].contains(command) {
     raise Invalid("unknown command: \{command}")
   }
@@ -119,7 +119,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     (!["merge", "external-merge"].contains(command) && inputs.length() != 1) {
     raise Invalid("wrong number of input paths")
   }
-  if !["query", "slice", "transform"].contains(command) &&
+  if !["query", "slice", "transform", "stream-transform"].contains(command) &&
     (
       !topics.is_empty() ||
       flags.contains("--descending") ||
@@ -131,7 +131,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       "message filters are only available for query, slice and transform",
     )
   }
-  if command != "transform" &&
+  if !["transform", "stream-transform"].contains(command) &&
     (
       !renames.is_empty() ||
       !attachment_names.is_empty() ||
@@ -149,14 +149,14 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     (flags.contains("--full") || values.contains("--cache-bytes")) {
     raise Invalid("--full and --cache-bytes are query options")
   }
-  if command != "external-merge" &&
+  if !["external-merge", "stream-transform"].contains(command) &&
     [
       "--temp-dir", "--run-bytes", "--merge-bytes", "--fan-in", "--spool-bytes",
       "--run-limit", "--declaration-bytes",
     ].any(fn(key) { values.contains(key) }) {
     raise Invalid("external storage options require external-merge")
   }
-  if command == "external-merge" &&
+  if ["external-merge", "stream-transform"].contains(command) &&
     (
       values.get("--temp-dir").unwrap_or("") == "" ||
       values.contains("--max-file-bytes")
@@ -183,11 +183,11 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     _ => raise Invalid("compression must be none, lz4 or zstd")
   }
   let format = values.get("--format").unwrap_or("json")
-  if format != "json" && format != "csv" {
-    raise Invalid("format must be json or csv")
+  if !["json", "csv", "ndjson"].contains(format) {
+    raise Invalid("format must be json, csv or ndjson")
   }
-  if format == "csv" && command != "query" {
-    raise Invalid("CSV is available for query")
+  if format != "json" && command != "query" {
+    raise Invalid("CSV/NDJSON is available for query")
   }
   let output = values.get("--output").unwrap_or("")
   if !["query", "inspect", "validate"].contains(command) && output == "" {

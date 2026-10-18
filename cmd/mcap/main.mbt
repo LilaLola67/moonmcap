@@ -11,6 +11,10 @@ extern "js" fn set_exit_code(code : Int) -> Unit =
   #| code => { process.exitCode=code; }
 
 ///|
+extern "js" fn stdout_text(text : String) -> Unit =
+  #| text=>{process.stdout.write(text);}
+
+///|
 fn text_output(path : String, text : String) -> Unit raise @mcap.McapError {
   if path == "" {
     println(text)
@@ -22,6 +26,9 @@ fn text_output(path : String, text : String) -> Unit raise @mcap.McapError {
 ///|
 fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
   if options.command == "help" {
+    println(
+      "stream-transform INPUT --temp-dir DIR --output NEW.mcap: bounded sorting, sampling and transformation; query --format ndjson streams one message per line",
+    )
     println(
       "recover-blocks INPUT --output NEW.mcap: explicitly extract CRC-verified indexed chunks and print a partial-recovery manifest",
     )
@@ -45,9 +52,35 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     if options.full {
       reader.validate_all()
     }
-    let messages = reader
-      .cursor(options.query)
-      .next_page(options.query.limit.max(1))
+    let cursor = reader.cursor(options.query)
+    if options.format == "ndjson" {
+      if options.output == "" {
+        ignore(
+          cursor.write_ndjson(
+            @mcap.new_write_sink(fn(bytes) {
+              stdout_text(
+                @utf8.decode(bytes[:]) catch {
+                  _ => raise @mcap.io_error("invalid NDJSON UTF-8")
+                },
+              )
+            }),
+          ),
+        )
+      } else {
+        let transaction = @nodeio.output_transaction(options.output)
+        try {
+          ignore(cursor.write_ndjson(transaction.sink()))
+          transaction.publish()
+        } catch {
+          error => {
+            transaction.abort()
+            raise error
+          }
+        }
+      }
+      return
+    }
+    let messages = cursor.next_page(options.query.limit.max(1))
     if options.format == "csv" {
       text_output(
         options.output,
@@ -73,6 +106,27 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
       })
       transaction.publish()
       println(@mcap.block_recovery_json(report).stringify())
+    } catch {
+      error => {
+        transaction.abort()
+        raise error
+      }
+    }
+    return
+  }
+  if options.command == "stream-transform" {
+    let source = @nodeio.open_file(options.inputs[0])
+    let transaction = @nodeio.output_transaction(options.output)
+    try {
+      let report = @mcap.stream_transform(
+        source,
+        @nodeio.sort_directory(options.temp_dir),
+        transaction.sink(),
+        options.transform,
+        external=options.external,
+      )
+      transaction.publish()
+      println(@mcap.transform_report_json(report).stringify())
     } catch {
       error => {
         transaction.abort()

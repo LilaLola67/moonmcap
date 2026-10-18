@@ -1,6 +1,6 @@
 # MoonMCAP
 
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.14.0**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
+MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.15.1**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
 
 ## 安装与运行
 
@@ -23,7 +23,7 @@ JS 目标：`moon test --target js`、`moon run cmd/main --target js`。内存�
 安装 Mooncakes 发行版本：
 
 ```sh
-moon add LilaLola67/moonmcap@0.14.0
+moon add LilaLola67/moonmcap@0.15.1
 ```
 
 也可从 GitHub 克隆复现全部样例；[发布包校验](docs/distribution.md) 可生成经过文件清单检查的模块归档。运行库依赖固定版本的 `bikallem/compress 0.3.4`、`bikallem/blit 0.2.2`，异步包使用 `moonbitlang/async 0.20.2`；[第三方来源与许可证](third_party/README.md) 说明了来源。运行时不需要 Python，也不调用外部压缩进程。
@@ -64,6 +64,7 @@ cursor.cancel()
 | 功能 | 行为与边界 |
 | --- | --- |
 | [磁盘游标](docs/file-cursor.md) | 逐页按需加载、处理时间重叠块、seek/取消；候选负载超预算显式失败 |
+| [流式变换](docs/stream-transform.md) | 临时文件支持大文件排序、采样、分页及对齐；NDJSON 逐条导出 |
 | [异步读写与轮转](docs/async-io.md) | 实际异步宿主 I/O、等待输出接纳、任务取消；每个完成段独立可读 |
 | [HTTP 查询](docs/http-source.md) | Range + 强 ETag + If-Match，超时、有限重试、活动请求中止；拒绝整文件回退 |
 | [外部排序合并](docs/external-merge.md) | 乱序输入写临时排序段，多轮归并、稳定重复次序、声明重映射、临时空间预算及清理 |
@@ -109,7 +110,7 @@ python tools/conformance.py
 python tools/count_source.py
 ```
 
-- MoonBit 单元/回归测试：Wasm 111 项、JS 119 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
+- MoonBit 单元/回归测试：Wasm 115 项、JS 123 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
 - 真实文件验证：30 项；包含 `3 输入压缩 × 2 摘要布局 × 3 输出压缩 = 18` 组双向读写检查，以及顺序文件、无消息索引、无摘要偏移、混合压缩和查询/合并/恢复工作流。
 - 真实文件验证还覆盖按需读取、三种流式输出、8 项 CLI、4 项批量变换、8 项诊断修复，以及 5 项异步录制、15 项 HTTP 故障、5 项磁盘排序、9 项独立块恢复、108 项固定种子差分检查和 4 组进程 RSS 测量。执行命令见下方，结果位于 `_interop/` 各子目录的 `report.json`。GitHub Actions 完整执行并上传报告。
 
@@ -123,6 +124,7 @@ python tools/async_workflows.py
 python tools/http_workflows.py
 python tools/external_workflows.py
 python tools/block_workflows.py
+python tools/transform_stream_workflows.py
 python tools/fuzz_workflows.py
 python tools/memory_benchmark.py
 python tools/package_audit.py

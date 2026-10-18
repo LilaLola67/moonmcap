@@ -152,6 +152,14 @@ fn FileCursor::reset(self : FileCursor, query : Query) -> Unit raise McapError {
       limits=self.reader.limits,
     )
     self.reader.full_validation = true
+    self.reader.declarations.schemas.clear()
+    self.reader.declarations.channels.clear()
+    for schema in log.schemas {
+      self.reader.declarations.schemas.push(schema)
+    }
+    for channel in log.channels {
+      self.reader.declarations.channels.push(channel)
+    }
     self.fallback = Some(build_query_index(log).cursor(query))
     return
   }
