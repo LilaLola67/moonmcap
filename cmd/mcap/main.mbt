@@ -52,6 +52,9 @@ fn indexed_reader(
 fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
   if options.command == "help" {
     println(
+      "JSON queries: --where '{\"path\":\"/speed\",\"op\":\">\",\"value\":80}' --select /speed (repeatable) --skip-invalid-json; also stream-transform --where",
+    )
+    println(
       "index-build|index-rebuild INPUT --output NEW.midx; index-check|index-query INPUT --index INDEX [--fast-index --index-bytes N]; dataset-query accepts one --index per input",
     )
     println(
@@ -72,6 +75,65 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     println(
       "validate INPUT [--output REPORT.json]: full structured diagnosis, exit 1 for invalid files\nreindex INPUT --output NEW.mcap: rebuild only from a complete valid data section",
     )
+    return
+  }
+  if options.content is Some(filter) &&
+    ["query", "index-query", "dataset-query"].contains(options.command) {
+    let sources = Array::makei(options.inputs.length(), fn(i) {
+      let provider = if !options.indexes.is_empty() {
+        indexed_reader(options.inputs[i], options.indexes[i], options).query_source()
+      } else {
+        let reader = @mcap.open_reader(
+          @nodeio.open_file(options.inputs[i]),
+          cache_bytes=options.cache_bytes,
+          fallback_bytes=options.max_file_bytes,
+        )
+        if options.full {
+          reader.validate_all()
+        }
+        reader.query_source()
+      }
+      provider.filter_json(filter)
+    })
+    let dataset = @mcap.open_dataset(sources)
+    let cursor = dataset.cursor(options.query)
+    if options.format == "ndjson" {
+      let transaction = if options.output == "" {
+        None
+      } else {
+        Some(@nodeio.output_transaction(options.output))
+      }
+      try {
+        while cursor.next_record() is Some(record) {
+          let text = @mcap.json_query_record(record, dataset.channels(), filter).stringify() +
+            "\n"
+          match transaction {
+            Some(value) => value.sink().write(@utf8.encode(text[:]))
+            None => stdout_text(text)
+          }
+        }
+        if transaction is Some(value) {
+          value.publish()
+        }
+      } catch {
+        error => {
+          cursor.cancel()
+          if transaction is Some(value) {
+            value.abort()
+          }
+          raise error
+        }
+      }
+    } else {
+      let records = cursor.next_page(options.query.limit.max(1))
+      let report : Json = {
+        "messages": records.map(fn(record) {
+          @mcap.json_query_record(record, dataset.channels(), filter)
+        }),
+        "source_count": sources.length(),
+      }
+      text_output(options.output, report.stringify())
+    }
     return
   }
   if options.command == "query" {
@@ -277,6 +339,7 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
         transaction.sink(),
         options.transform,
         external=options.external,
+        content?=options.content,
       )
       transaction.publish()
       println(@mcap.transform_report_json(report).stringify())

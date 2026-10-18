@@ -16,6 +16,7 @@ pub(all) struct CommandOptions {
   indexes : Array[String]
   fast_index : Bool
   index_bytes : Int
+  content : JsonFilter?
 }
 
 ///|
@@ -43,6 +44,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       indexes: [],
       fast_index: false,
       index_bytes: 32 * 1024 * 1024,
+      content: None,
     }
   }
   let command = args[0]
@@ -55,6 +57,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   }
   let inputs = []
   let indexes = []
+  let projections = []
   let topics = []
   let renames = []
   let attachment_names = []
@@ -73,7 +76,9 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       continue
     }
     if !positional && arg.has_prefix("--") {
-      if ["--descending", "--full", "--fast-index"].contains(arg) {
+      if ["--descending", "--full", "--fast-index", "--skip-invalid-json"].contains(
+          arg,
+        ) {
         if flags.contains(arg) {
           raise Invalid("duplicate option: \{arg}")
         }
@@ -86,7 +91,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
             "--attachment-media-type", "--attachment-start", "--attachment-end",
             "--metadata-name", "--metadata-match", "--temp-dir", "--run-bytes", "--merge-bytes",
             "--fan-in", "--spool-bytes", "--run-limit", "--declaration-bytes", "--index",
-            "--index-bytes",
+            "--index-bytes", "--where", "--select",
           ].contains(arg) {
           raise Invalid("unknown option: \{arg}")
         }
@@ -94,7 +99,9 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
         if i >= args.length() || args[i].has_prefix("--") {
           raise Invalid("missing option value: \{arg}")
         }
-        if arg == "--index" {
+        if arg == "--select" {
+          projections.push(args[i])
+        } else if arg == "--index" {
           indexes.push(args[i])
         } else if arg == "--topic" {
           topics.push(args[i])
@@ -214,6 +221,36 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     raise Invalid("CSV/NDJSON is available for query")
   }
   let output = values.get("--output").unwrap_or("")
+  let content = if values.contains("--where") ||
+    !projections.is_empty() ||
+    flags.contains("--skip-invalid-json") {
+    if !["query", "dataset-query", "index-query", "stream-transform"].contains(
+        command,
+      ) ||
+      format == "csv" {
+      raise Invalid(
+        "JSON content options require JSON queries or stream-transform",
+      )
+    }
+    if command == "stream-transform" && !projections.is_empty() {
+      raise Invalid(
+        "projection is for query output; MCAP payloads stay unchanged",
+      )
+    }
+    Some(
+      json_filter(
+        values.get("--where").unwrap_or("true"),
+        select=projections,
+        invalid=if flags.contains("--skip-invalid-json") {
+          JsonSkip
+        } else {
+          JsonError
+        },
+      ),
+    )
+  } else {
+    None
+  }
   if ![
       "query", "dataset-query", "index-query", "index-check", "inspect", "validate",
     ].contains(command) &&
@@ -262,6 +299,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     format,
     query,
     indexes,
+    content,
     fast_index: flags.contains("--fast-index"),
     index_bytes: decimal_int(values.get("--index-bytes").unwrap_or("33554432")),
     temp_dir: values.get("--temp-dir").unwrap_or(""),

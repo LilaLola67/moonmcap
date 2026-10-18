@@ -113,6 +113,10 @@ pub fn inspect_json(Log) -> Json raise McapError
 
 pub fn io_error(String) -> McapError
 
+pub fn json_filter(String, select? : Array[String], invalid? : JsonInvalidPolicy, max_bytes? : Int, max_depth? : Int) -> JsonFilter raise McapError
+
+pub fn json_query_record(DatasetMessage, Array[Channel], JsonFilter) -> Json raise McapError
+
 pub fn magic() -> Bytes
 
 pub fn memory_source(Bytes) -> ReadSource
@@ -175,7 +179,7 @@ pub fn stats_report(LogStats) -> String
 
 pub fn stream_options() -> StreamOptions
 
-pub fn stream_transform(ReadSource, SortStorage, WriteSink, TransformOptions, external? : ExternalOptions, cancelled? : () -> Bool) -> TransformReport raise McapError
+pub fn stream_transform(ReadSource, SortStorage, WriteSink, TransformOptions, external? : ExternalOptions, content? : JsonFilter, cancelled? : () -> Bool) -> TransformReport raise McapError
 
 pub fn summarize(Log) -> LogStats raise McapError
 
@@ -291,6 +295,7 @@ pub(all) struct CommandOptions {
   indexes : Array[String]
   fast_index : Bool
   index_bytes : Int
+  content : JsonFilter?
 }
 
 pub(all) enum Compression {
@@ -381,6 +386,8 @@ pub(all) enum DiagnosticCode {
   LimitExceeded
 } derive(Eq, @debug.Debug)
 pub fn DiagnosticCode::name(Self) -> String
+
+type ExactDecimal
 
 pub(all) struct ExternalOptions {
   run_bytes : Int
@@ -512,6 +519,25 @@ pub(all) enum IndexVerification {
   VerifyContent((ReadSource) -> String raise McapError)
   TrustIdentity(String)
 }
+
+type JsonCondition
+
+type JsonDocumentParser
+
+pub struct JsonFilter {
+  condition : JsonCondition
+  projections : Array[(String, Array[String])]
+  policy : JsonInvalidPolicy
+  maximum : Int
+  depth : Int
+}
+pub fn JsonFilter::matches(Self, Bytes) -> Bool raise McapError
+pub fn JsonFilter::project(Self, Bytes) -> Json raise McapError
+
+pub(all) enum JsonInvalidPolicy {
+  JsonError
+  JsonSkip
+} derive(Eq)
 
 pub(all) struct Limits {
   max_record_bytes : Int
@@ -647,6 +673,7 @@ pub struct QueryIndex {
 }
 pub fn QueryIndex::cursor(Self, Query) -> QueryCursor raise McapError
 pub fn QueryIndex::query(Self, Query) -> Array[Message] raise McapError
+pub fn QueryIndex::query_source(Self) -> QuerySource raise McapError
 
 pub(all) struct QueryProgress {
   state : QueryCursorState
@@ -667,6 +694,7 @@ pub struct QuerySource {
   open : (Query, Int) -> MessageStream raise McapError
   materialized : Bool
 }
+pub fn QuerySource::filter_json(Self, JsonFilter) -> Self raise McapError
 
 pub struct RangeReader {
   source : ReadSource

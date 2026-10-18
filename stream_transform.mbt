@@ -58,6 +58,7 @@ pub fn stream_transform(
   output : WriteSink,
   options : TransformOptions,
   external? : ExternalOptions = external_options(),
+  content? : JsonFilter,
   cancelled? : () -> Bool = fn() { false },
 ) -> TransformReport raise McapError {
   let work : TemporaryWorkspace = {
@@ -114,7 +115,12 @@ pub fn stream_transform(
           cursor.cancel()
           raise Invalid("stream transform cancelled")
         }
-        if sampled_message(message, options, buckets) {
+        if (match content {
+            None => true
+            Some(filter) =>
+              matches_json_message(message, declarations.channels, filter)
+          }) &&
+          sampled_message(message, options, buckets) {
           count[0] += 1
         }
       }
@@ -146,7 +152,12 @@ pub fn stream_transform(
           cursor.cancel()
           raise Invalid("stream transform cancelled")
         }
-        if !sampled_message(message, options, buckets) {
+        if !(match content {
+            None => true
+            Some(filter) =>
+              matches_json_message(message, declarations.channels, filter)
+          }) ||
+          !sampled_message(message, options, buckets) {
           continue
         }
         let index = ordinal[0]
