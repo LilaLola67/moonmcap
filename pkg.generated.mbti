@@ -23,6 +23,8 @@ pub fn crc32(Bytes) -> UInt
 
 pub fn crc32_extend(UInt, Bytes) -> UInt
 
+pub fn dataset_message_json(DatasetMessage, Array[Channel]) -> Json
+
 pub fn decode_attachment(Bytes, limits? : Limits) -> Attachment raise McapError
 
 pub fn decode_attachment_index(Bytes, limits? : Limits) -> AttachmentIndex raise McapError
@@ -115,6 +117,8 @@ pub fn memory_source(Bytes) -> ReadSource
 
 pub fn merge_logs(Array[Log], chronological? : Bool) -> Log raise McapError
 
+pub fn message_stream(() -> Message? raise McapError, () -> Unit, pending_bytes? : () -> Int) -> MessageStream
+
 pub fn messages_csv(Array[Message], Array[Channel]) -> String
 
 pub fn messages_json(Array[Message], Array[Channel]) -> Json
@@ -127,6 +131,8 @@ pub fn new_stream_writer(WriteSink, profile? : String, options? : StreamOptions,
 
 pub fn new_write_sink((Bytes) -> Unit raise McapError) -> WriteSink
 
+pub fn open_dataset(Array[QuerySource], limits? : Limits, declaration_bytes? : Int, max_sources? : Int) -> Dataset raise McapError
+
 pub fn open_reader(ReadSource, limits? : Limits, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int) -> RangeReader raise McapError
 
 pub fn parse_command(Array[String]) -> CommandOptions raise McapError
@@ -134,6 +140,8 @@ pub fn parse_command(Array[String]) -> CommandOptions raise McapError
 pub fn parse_decimal(String) -> UInt64 raise McapError
 
 pub fn query_file(Bytes, Query, limits? : Limits) -> QueryResult raise McapError
+
+pub fn query_source(Log, (Query, Int) -> MessageStream raise McapError, materialized? : Bool) -> QuerySource raise McapError
 
 pub fn read_diagnostics_json(ReadDiagnostics) -> Json
 
@@ -293,6 +301,57 @@ type Cursor
 type CursorRun
 
 type DataInspection
+
+pub struct Dataset {
+  sources : Array[QuerySource]
+  declarations : Log
+  remaps : Array[Map[Int, Int]]
+  limits : Limits
+}
+pub fn Dataset::channels(Self) -> Array[Channel]
+pub fn Dataset::cursor(Self, Query, pending_bytes? : Int) -> DatasetCursor raise McapError
+pub fn Dataset::schemas(Self) -> Array[Schema]
+
+pub struct DatasetCursor {
+  dataset : Dataset
+  original : Query
+  budget : Int
+  streams : Array[MessageStream]
+  heap : Array[DatasetMessage]
+  mut query : Query
+  mut state : FileCursorState
+  mut initialized : Bool
+  mut loaded : Int
+  mut advance : Int?
+  mut remaining : Int
+  mut offset_left : Int
+  mut emitted : Int
+  mut skipped : Int
+  mut peak : Int
+}
+pub fn DatasetCursor::cancel(Self) -> Unit
+pub fn DatasetCursor::next(Self) -> Message? raise McapError
+pub fn DatasetCursor::next_page(Self, Int) -> Array[DatasetMessage] raise McapError
+pub fn DatasetCursor::next_record(Self) -> DatasetMessage? raise McapError
+pub fn DatasetCursor::progress(Self) -> DatasetProgress
+pub fn DatasetCursor::seek(Self, UInt64) -> Unit raise McapError
+pub fn DatasetCursor::write_ndjson(Self, WriteSink) -> Int raise McapError
+
+pub(all) struct DatasetMessage {
+  source_index : Int
+  message : Message
+} derive(Eq, @debug.Debug)
+
+pub(all) struct DatasetProgress {
+  state : FileCursorState
+  sources : Int
+  materialized_sources : Int
+  loaded_sources : Int
+  emitted_messages : Int
+  skipped_messages : Int
+  pending_bytes : Int
+  peak_pending_bytes : Int
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Diagnostic {
   code : DiagnosticCode
@@ -511,6 +570,12 @@ pub(all) struct MessageLocation {
   inner : Int?
 } derive(Eq, @debug.Debug)
 
+pub struct MessageStream {
+  next_message : () -> Message? raise McapError
+  stop : () -> Unit
+  pending : () -> Int
+}
+
 pub(all) struct Metadata {
   name : String
   entries : Array[(String, String)]
@@ -585,6 +650,12 @@ pub(all) struct QueryResult {
   diagnostics : QueryDiagnostics
 }
 
+pub struct QuerySource {
+  declarations : Log
+  open : (Query, Int) -> MessageStream raise McapError
+  materialized : Bool
+}
+
 pub struct RangeReader {
   source : ReadSource
   limits : Limits
@@ -605,6 +676,7 @@ pub fn RangeReader::clear_cache(Self) -> Unit
 pub fn RangeReader::cursor(Self, Query, pending_bytes? : Int, span_bytes? : Int) -> FileCursor raise McapError
 pub fn RangeReader::diagnostics(Self) -> ReadDiagnostics
 pub fn RangeReader::query(Self, Query) -> Array[Message] raise McapError
+pub fn RangeReader::query_source(Self) -> QuerySource raise McapError
 pub fn RangeReader::validate_all(Self) -> Unit raise McapError
 
 type RangeRecord

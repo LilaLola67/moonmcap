@@ -27,6 +27,9 @@ fn text_output(path : String, text : String) -> Unit raise @mcap.McapError {
 fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
   if options.command == "help" {
     println(
+      "dataset-query INPUT... [--topic TOPIC --start NS --end NS --offset N --limit N --descending --format json|ndjson]: query files without merging output",
+    )
+    println(
       "stream-transform INPUT --temp-dir DIR --output NEW.mcap: bounded sorting, sampling and transformation; query --format ndjson streams one message per line",
     )
     println(
@@ -90,6 +93,58 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
       let report : Json = {
         "messages": @mcap.messages_json(messages, reader.channels()),
         "diagnostics": @mcap.read_diagnostics_json(reader.diagnostics()),
+      }
+      text_output(options.output, report.stringify())
+    }
+    return
+  }
+  if options.command == "dataset-query" {
+    let sources = options.inputs.map(fn(path) {
+      let reader = @mcap.open_reader(
+        @nodeio.open_file(path),
+        cache_bytes=options.cache_bytes,
+        fallback_bytes=options.max_file_bytes,
+      )
+      if options.full {
+        reader.validate_all()
+      }
+      reader.query_source()
+    })
+    let dataset = @mcap.open_dataset(sources)
+    let cursor = dataset.cursor(options.query)
+    if options.format == "ndjson" {
+      if options.output == "" {
+        ignore(
+          cursor.write_ndjson(
+            @mcap.new_write_sink(fn(bytes) {
+              stdout_text(
+                @utf8.decode(bytes[:]) catch {
+                  _ => raise @mcap.io_error("invalid NDJSON UTF-8")
+                },
+              )
+            }),
+          ),
+        )
+      } else {
+        let transaction = @nodeio.output_transaction(options.output)
+        try {
+          ignore(cursor.write_ndjson(transaction.sink()))
+          transaction.publish()
+        } catch {
+          error => {
+            transaction.abort()
+            raise error
+          }
+        }
+      }
+    } else {
+      let messages = cursor.next_page(options.query.limit.max(1))
+      let report : Json = {
+        "messages": messages.map(fn(record) {
+          @mcap.dataset_message_json(record, dataset.channels())
+        }),
+        "source_count": sources.length(),
+        "materialized_sources": cursor.progress().materialized_sources,
       }
       text_output(options.output, report.stringify())
     }

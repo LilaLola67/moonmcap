@@ -42,7 +42,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   let command = args[0]
   if ![
       "inspect", "query", "slice", "merge", "recover", "rewrite", "transform", "validate",
-      "reindex", "external-merge", "recover-blocks", "stream-transform",
+      "reindex", "external-merge", "recover-blocks", "stream-transform", "dataset-query",
     ].contains(command) {
     raise Invalid("unknown command: \{command}")
   }
@@ -116,10 +116,16 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     i += 1
   }
   if (["merge", "external-merge"].contains(command) && inputs.length() < 2) ||
-    (!["merge", "external-merge"].contains(command) && inputs.length() != 1) {
+    (command == "dataset-query" && inputs.is_empty()) ||
+    (
+      !["merge", "external-merge", "dataset-query"].contains(command) &&
+      inputs.length() != 1
+    ) {
     raise Invalid("wrong number of input paths")
   }
-  if !["query", "slice", "transform", "stream-transform"].contains(command) &&
+  if !["query", "slice", "transform", "stream-transform", "dataset-query"].contains(
+      command,
+    ) &&
     (
       !topics.is_empty() ||
       flags.contains("--descending") ||
@@ -145,7 +151,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     ) {
     raise Invalid("batch options require the transform command")
   }
-  if command != "query" &&
+  if !["query", "dataset-query"].contains(command) &&
     (flags.contains("--full") || values.contains("--cache-bytes")) {
     raise Invalid("--full and --cache-bytes are query options")
   }
@@ -165,7 +171,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       "external-merge requires --temp-dir and uses run/merge budgets instead of --max-file-bytes",
     )
   }
-  if ["query", "inspect", "validate"].contains(command) &&
+  if ["query", "dataset-query", "inspect", "validate"].contains(command) &&
     (values.contains("--compression") || values.contains("--chunk-messages")) {
     raise Invalid("compression and chunk sizing are MCAP output options")
   }
@@ -186,11 +192,13 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   if !["json", "csv", "ndjson"].contains(format) {
     raise Invalid("format must be json, csv or ndjson")
   }
-  if format != "json" && command != "query" {
+  if (format == "csv" && command != "query") ||
+    (format == "ndjson" && !["query", "dataset-query"].contains(command)) {
     raise Invalid("CSV/NDJSON is available for query")
   }
   let output = values.get("--output").unwrap_or("")
-  if !["query", "inspect", "validate"].contains(command) && output == "" {
+  if !["query", "dataset-query", "inspect", "validate"].contains(command) &&
+    output == "" {
     raise Invalid("--output is required")
   }
   let chunk_messages = decimal_int(
