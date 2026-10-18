@@ -1,5 +1,11 @@
 # 更新记录
 
+## 0.11.0
+
+- 新增异步 HTTP 范围源，要求 HTTP 206、精确 Content-Range、强 ETag 与后续 If-Match，检测内容和长度变化。
+- 每请求有独立超时、有限重试与响应体长度检查；使用 identity 表示，拒绝整文件回退和自动跳转，支持中止活动请求。
+- 复用异步磁盘游标处理远程 MCAP，不下载全文件；提供 remote 查询示例及 15 项本机 HTTP 故障工作流。
+
 ## 0.10.0
 
 - 新增 asyncio 的 AsyncSource、AsyncReader/AsyncCursor、AsyncSink/AsyncWriter，实际通过宿主 Promise 执行异步文件操作，保留原同步 API。

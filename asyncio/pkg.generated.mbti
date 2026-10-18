@@ -16,6 +16,8 @@ pub async fn new_writer(AsyncSink, profile? : String, options? : @moonmcap.Strea
 
 pub async fn open_file(String) -> AsyncSource
 
+pub async fn open_http(String, timeout_ms? : Int, retries? : Int, max_range_bytes? : Int) -> AsyncSource
+
 pub async fn open_reader(AsyncSource, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int, limits? : @moonmcap.Limits) -> AsyncReader
 
 pub fn rotating_writer(@moonmcap.Log, async (Int) -> AsyncSink, options? : @moonmcap.StreamOptions, queue_bytes? : Int, segment_messages? : Int, segment_bytes_target? : UInt64, segment_span? : UInt64, segment_limit? : Int) -> RotatingWriter raise @moonmcap.McapError

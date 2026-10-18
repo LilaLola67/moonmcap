@@ -8,6 +8,7 @@ import {
 options(
   targets: {
     "node.mbt": [ "js" ],
+    "http.mbt": [ "js" ],
     "async_test.mbt": [ "js" ],
     "unsupported.mbt": [ "not", "js" ],
   },

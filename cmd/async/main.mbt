@@ -18,8 +18,50 @@ extern "js" fn report_error(message : String) -> Unit =
 async fn main {
   try {
     let mode = argument(0)
-    if mode == "query" {
-      let source = @aio.open_file(argument(1))
+    if mode == "remote-cancel" {
+      let source = @aio.open_http(argument(1), timeout_ms=5000, retries=0)
+      let observed = [false]
+      @async.with_task_group(async fn(group) {
+        let task = group.spawn(
+          async fn() { ignore(source.read_exact(0UL, 8)) },
+          allow_failure=true,
+        )
+        @async.sleep(10)
+        source.cancel()
+        task.wait() catch {
+          _ => observed[0] = true
+        }
+      })
+      let report : Json = {
+        "cancelled": source.metrics().cancelled,
+        "read_aborted": observed[0],
+      }
+      println(report.stringify())
+      return
+    }
+    if mode == "query" || mode == "remote" {
+      let source = if mode == "remote" {
+        let timeout = if argument(5) == "" {
+          5000UL
+        } else {
+          @mcap.parse_decimal(argument(5))
+        }
+        let retries = if argument(6) == "" {
+          2UL
+        } else {
+          @mcap.parse_decimal(argument(6))
+        }
+        if timeout > 2147483647UL || retries > 10UL {
+          raise @mcap.io_error("HTTP option exceeds budget")
+        }
+        @aio.open_http(
+          argument(1),
+          timeout_ms=timeout.to_int(),
+          retries=retries.to_int(),
+        )
+      } else {
+        @aio.open_file(argument(1))
+      }
       let reader = @aio.open_reader(source)
       let query = {
         ..@mcap.all_query(),
