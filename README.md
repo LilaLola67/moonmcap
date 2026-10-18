@@ -20,11 +20,17 @@ JS 目标：`moon test --target js`、`moon run cmd/main --target js`。内存�
 
 [可运行文件样例](examples/README.md)提供无压缩/LZ4/Zstd 的实际输入文件、裁剪/合并/恢复的预期输出及一键验证命令：`python examples/run.py`。
 
-尚未发布 mooncakes.io，目前从 GitHub 复现；[发布包校验](docs/distribution.md) 可生成经过文件清单检查的模块归档。运行库依赖固定版本的 `bikallem/compress 0.3.4`、`bikallem/blit 0.2.2`，异步包使用 `moonbitlang/async 0.20.2`；[第三方来源与许可证](third_party/README.md) 说明了来源。运行时不需要 Python，也不调用外部压缩进程。
+安装 Mooncakes 发行版本：
+
+```sh
+moon add LilaLola67/moonmcap@0.14.0
+```
+
+也可从 GitHub 克隆复现全部样例；[发布包校验](docs/distribution.md) 可生成经过文件清单检查的模块归档。运行库依赖固定版本的 `bikallem/compress 0.3.4`、`bikallem/blit 0.2.2`，异步包使用 `moonbitlang/async 0.20.2`；[第三方来源与许可证](third_party/README.md) 说明了来源。运行时不需要 Python，也不调用外部压缩进程。
 
 ## API 示例
 
-使用方在 `moon.pkg` 中导入 `"LilaLola67/moonmcap" @mcap`，通过本地模块依赖使用：
+安装依赖后，使用方在 `moon.pkg` 中导入 `"LilaLola67/moonmcap" @mcap`：
 
 ```moonbit
 let recorder = @mcap.new_builder()

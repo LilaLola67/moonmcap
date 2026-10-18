@@ -119,8 +119,8 @@ provides real host IO, rotating recordings and [HTTP ranges](http-source.md).
 attachments and metadata, with separate limits for declarations, input chunks and output summary.
 [Independent recovery](block-recovery.md) requires CRC-checked summary indexes and individual
 chunks and explicitly reports partial extraction; prefix recovery remains unchanged.
-These additions retain the container/compression boundary above. The 0.14.0 module is available from GitHub;
-Mooncakes publication is a separate distribution step, with an audited archive prepared locally.
+These additions retain the container/compression boundary above. The module is distributed as
+`LilaLola67/moonmcap@0.14.0` on Mooncakes; GitHub contains the complete source and reproduction tools.
 
 Sources: [MCAP specification](https://mcap.dev/spec),
 [compression registry](https://mcap.dev/spec/registry),
