@@ -16,11 +16,11 @@ moon run cmd/range --target js -- examples/files/zstd-summary.mcap /imu 20000000
 python tools/range_benchmark.py
 ```
 
-`ReadSource` 的长度及偏移为 UInt64，回调必须提供稳定的同一份内容。`read_exact` 重试短读，零进展、越界和超量返回立即失败。可用 `new_read_source(size, callback)` 实现其他宿主适配器；以 `io_error(message)` 构造宿主错误。Node.js 适配器使用文件身份、大小和纳秒修改/状态时间检查变化；偏移受 Node 安全整数范围限制。其他适配器需自行保证快照稳定性；当前未提供 HTTP 实现。
+`ReadSource` 的长度及偏移为 UInt64，回调必须提供稳定的同一份内容。`read_exact` 重试短读，零进展、越界和超量返回立即失败。可用 `new_read_source(size, callback)` 实现其他宿主适配器；以 `io_error(message)` 构造宿主错误。Node.js 适配器使用文件身份、大小和纳秒修改/状态时间检查变化；偏移受 Node 安全整数范围限制。其他适配器需自行保证快照稳定性；HTTP 通过单独的 [异步范围源](http-source.md) 提供。
 
 打开时读取首尾 magic、Header、DataEnd 边界、Footer 和摘要，检查摘要 CRC、分组、SummaryOffset、ChunkIndex 范围和重叠。查询按索引选择主题/时间相交的块，核对读取到的 Chunk 属性、CRC、声明和 MessageIndex，再按时间及物理顺序稳定排序分页。无消息索引的块仍按时间定位，读取后筛选主题。摘要和索引作为定位依据；快速模式不证明全部数据记录都被索引覆盖，也不校验未读取块或全数据区 CRC。需要完整容器保证时执行 `validate_all`。
 
-无 ChunkIndex 的文件回退至完整读取和 `read_log`，默认大小上限 64 MiB；`fallback_bytes=0` 可关闭回退。摘要默认上限 8 MiB。返回消息数受 Limits.max_records 约束，结果数组会保留本次匹配候选，当前不是逐块游标，也不承诺固定进程内存。
+无 ChunkIndex 的文件回退至完整读取和 `read_log`，默认大小上限 64 MiB；`fallback_bytes=0` 可关闭回退。摘要默认上限 8 MiB。批量 query 结果数组保留本次匹配候选；需要逐页加载时使用 [RangeReader.cursor](file-cursor.md)，其候选另有预算，也不承诺固定进程内存。
 
 缓存默认 8 MiB，以解压后的记录字节数记账，超预算块照常解码但不缓存；空块不缓存。淘汰最久未使用的块，命中会刷新顺序。`cache_bytes`/`peak_cache_bytes` 是原始解压负载预算，不包含对象、返回结果、编码器临时空间或进程 RSS。`read_calls`、`bytes_read` 是 ReadSource 的累计计数；同一源共享给多个读者时也共享计数。`decoded_chunks`、`cache_hits` 是当前读者的累计计数。
 

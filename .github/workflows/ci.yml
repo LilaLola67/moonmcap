@@ -52,6 +52,27 @@ jobs:
       - name: Verify diagnostics and index rebuilding
         if: matrix.target == 'js'
         run: python tools/repair_workflows.py
+      - name: Verify asynchronous IO and recording rotation
+        if: matrix.target == 'js'
+        run: python tools/async_workflows.py
+      - name: Verify HTTP ranges retries and cancellation
+        if: matrix.target == 'js'
+        run: python tools/http_workflows.py
+      - name: Verify bounded external disk sorting
+        if: matrix.target == 'js'
+        run: python tools/external_workflows.py
+      - name: Verify independent block recovery manifests
+        if: matrix.target == 'js'
+        run: python tools/block_workflows.py
+      - name: Verify fixed-seed differential cases
+        if: matrix.target == 'js'
+        run: python tools/fuzz_workflows.py
+      - name: Measure process RSS and payload counters
+        if: matrix.target == 'js'
+        run: python tools/memory_benchmark.py
+      - name: Audit package file allowlist
+        if: matrix.target == 'js'
+        run: python tools/package_audit.py
       - name: Upload interoperability report
         if: matrix.target == 'js'
         uses: actions/upload-artifact@v4
@@ -65,3 +86,10 @@ jobs:
             _interop/cli/report.json
             _interop/batch/report.json
             _interop/repair/report.json
+            _interop/async/report.json
+            _interop/http/report.json
+            _interop/external/report.json
+            _interop/blocks/report.json
+            _interop/fuzz/report.json
+            _interop/memory/report.json
+            _interop/package/report.json

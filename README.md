@@ -1,6 +1,6 @@
 # MoonMCAP
 
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、按需读取、LRU 块缓存、流式录制、查询游标、批量变换和诊断修复。当前模块版本 **0.8.0**，见 [更新记录](CHANGELOG.md)。
+MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.14.0**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
 
 ## 安装与运行
 
@@ -20,7 +20,7 @@ JS 目标：`moon test --target js`、`moon run cmd/main --target js`。内存�
 
 [可运行文件样例](examples/README.md)提供无压缩/LZ4/Zstd 的实际输入文件、裁剪/合并/恢复的预期输出及一键验证命令：`python examples/run.py`。
 
-尚未发布 mooncakes.io，目前从 GitHub 复现。运行库依赖固定版本的 `bikallem/compress 0.3.4`、`bikallem/blit 0.2.2`；[第三方来源与许可证](third_party/README.md) 说明了引用代码及修改。运行时不需要 Python，也不调用外部压缩进程。
+尚未发布 mooncakes.io，目前从 GitHub 复现；[发布包校验](docs/distribution.md) 可生成经过文件清单检查的模块归档。运行库依赖固定版本的 `bikallem/compress 0.3.4`、`bikallem/blit 0.2.2`，异步包使用 `moonbitlang/async 0.20.2`；[第三方来源与许可证](third_party/README.md) 说明了来源。运行时不需要 Python，也不调用外部压缩进程。
 
 ## API 示例
 
@@ -38,7 +38,7 @@ let sliced = @mcap.slice_log(log, query)
 let output = @mcap.write_indexed(sliced, compression=@mcap.Lz4)
 ```
 
-调用会抛出 `McapError`，应在声明该错误的函数或 `try/catch` 内使用。时间是 UInt64 纳秒，查询区间两端包含；同一时间按原始物理顺序稳定排序，支持倒序、偏移和数量分页。`Uncompressed`、`Lz4`、`Zstd` 是三种写入模式。
+调用会抛出 `McapError`，应在声明该错误的函数或 `try/catch` 内使用。时间是 UInt64 纳秒，查询区间两端包含；升序按 `(时间,原始物理位置)` 排序，倒序反转整个次序，支持偏移和数量分页。`Uncompressed`、`Lz4`、`Zstd` 是三种写入模式。
 
 连续读取时，可以复用同一个索引与游标：
 
@@ -52,6 +52,18 @@ cursor.cancel()
 ```
 
 游标最多保留每个匹配通道的一个归并头部，不为每页重新构造完整候选数组。`offset`、`limit` 作用于整个遍历；`seek` 重置本次进度和 limit，取消后不能重开。索引仍持有完整内存快照。完整约定和示例见 [消息游标](docs/query-cursor.md)，运行 `moon run cmd/cursor` 或 `moon run cmd/cursor --target js`。
+
+## 大文件与异步工作流
+
+| 功能 | 行为与边界 |
+| --- | --- |
+| [磁盘游标](docs/file-cursor.md) | 逐页按需加载、处理时间重叠块、seek/取消；候选负载超预算显式失败 |
+| [异步读写与轮转](docs/async-io.md) | 实际异步宿主 I/O、等待输出接纳、任务取消；每个完成段独立可读 |
+| [HTTP 查询](docs/http-source.md) | Range + 强 ETag + If-Match，超时、有限重试、活动请求中止；拒绝整文件回退 |
+| [外部排序合并](docs/external-merge.md) | 乱序输入写临时排序段，多轮归并、稳定重复次序、声明重映射、临时空间预算及清理 |
+| [独立块恢复](docs/block-recovery.md) | 显式跳过坏块、校验后续索引块并输出范围清单；始终标为部分提取 |
+
+异步文件和 HTTP 宿主支持 JS/Node；同步核心、磁盘游标协议和排序算法支持 Wasm。解压/排序仍在当前执行线程运行，异步 I/O 不意味着多线程压缩。负载预算分别计账，不是总进程内存上限，见 [内存实测](docs/performance.md)。
 
 ## 容器与压缩
 
@@ -91,9 +103,9 @@ python tools/conformance.py
 python tools/count_source.py
 ```
 
-- MoonBit 单元/回归测试：Wasm 98 项、JS 99 项，JS 多一项 Node 文件适配器测试；覆盖压缩帧、边界、游标、缓存、流式状态、变换、损坏诊断和索引重建。
+- MoonBit 单元/回归测试：Wasm 111 项、JS 119 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
 - 真实文件验证：30 项；包含 `3 输入压缩 × 2 摘要布局 × 3 输出压缩 = 18` 组双向读写检查，以及顺序文件、无消息索引、无摘要偏移、混合压缩和查询/合并/恢复工作流。
-- 新增真实文件验证：按需读取基准、三种流式输出、8 项通用 CLI 工作流、4 项批量变换检查和 8 项诊断/修复检查。执行命令见下方，结果位于 `_interop/` 各子目录的 `report.json`。GitHub Actions 完整执行并上传报告。
+- 真实文件验证还覆盖按需读取、三种流式输出、8 项 CLI、4 项批量变换、8 项诊断修复，以及 5 项异步录制、15 项 HTTP 故障、5 项磁盘排序、9 项独立块恢复、108 项固定种子差分检查和 4 组进程 RSS 测量。执行命令见下方，结果位于 `_interop/` 各子目录的 `report.json`。GitHub Actions 完整执行并上传报告。
 
 ```sh
 python tools/range_benchmark.py
@@ -101,11 +113,18 @@ python tools/stream_workflows.py
 python tools/cli_workflows.py
 python tools/batch_workflows.py
 python tools/repair_workflows.py
+python tools/async_workflows.py
+python tools/http_workflows.py
+python tools/external_workflows.py
+python tools/block_workflows.py
+python tools/fuzz_workflows.py
+python tools/memory_benchmark.py
+python tools/package_audit.py
 ```
 
 ## 文件工具
 
-[通用命令行](docs/cli.md) 提供 `inspect`、`query`、`slice`、`merge`、`recover`、`rewrite`、`transform`、`validate`、`reindex`。主题、UInt64 纳秒时间、分页、压缩和预算均可配置；查询支持 JSON/CSV，输出文件拒绝覆盖已有路径。
+[通用命令行](docs/cli.md) 提供 `inspect`、`query`、`slice`、`merge`、`external-merge`、`recover`、`recover-blocks`、`rewrite`、`transform`、`validate`、`reindex`。主题、UInt64 纳秒时间、分页、压缩和预算均可配置；查询支持 JSON/CSV，输出文件拒绝覆盖已有路径。
 
 ```sh
 moon run cmd/mcap --target js -- query examples/files/zstd-summary.mcap --topic /imu --start 20000000000 --end 30000000000
@@ -113,7 +132,7 @@ moon run cmd/mcap --target js -- validate examples/files/zstd-summary.mcap
 moon run cmd/mcap --target js -- reindex broken-summary.mcap --output rebuilt.mcap --compression zstd
 ```
 
-[批量变换](docs/batch-transform.md) 提供主题映射、按通道时间窗采样、时间对齐、附件和元数据筛选。[结构化诊断与修复](docs/diagnostics.md) 区分数据区和索引/摘要问题，已知时给出偏移、记录类型与预期/实际值；只从完整有效的数据区重建索引，数据损坏需要显式前缀恢复。
+[批量变换](docs/batch-transform.md) 提供主题映射、按通道时间窗采样、时间对齐、附件和元数据筛选。[结构化诊断与修复](docs/diagnostics.md) 区分数据区和索引/摘要问题，已知时给出偏移、记录类型与预期/实际值；只从完整有效的数据区重建索引，数据损坏可显式选择连续前缀恢复或索引块部分提取。
 
 Python `mcap==1.3.0` 仅为开发阶段的官方参考工具，其包版本不是文件格式版本。生成测试不计入有效源码；`tools/count_source.py` 只统计根目录手写核心的非空、非注释 `.mbt` 行，排除测试、生成接口、示例及 `internal/zstd` 引用代码。
 

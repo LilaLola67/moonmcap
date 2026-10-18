@@ -1,6 +1,6 @@
 # MCAP 0 compatibility
 
-MoonMCAP **0.8.0** targets MCAP major version **0**, identified by the `MCAP0`
+MoonMCAP **0.14.0** targets MCAP major version **0**, identified by the `MCAP0`
 magic bytes. The official Python `mcap==1.3.0` package is the interoperability
 reference; this is a package version, not an MCAP format version.
 
@@ -113,8 +113,14 @@ coverage. Full validation and unindexed fallback have an explicit encoded-file
 budget. [StreamWriter](stream-writer.md) has chunk and retained-summary budgets,
 synchronous backpressure and terminal failure states. [Batch transforms](batch-transform.md)
 use in-memory Logs; [index rebuilding](diagnostics.md) requires a complete valid data section.
-These additions retain the container/compression boundary above. The 0.8.0 module is available from GitHub; Mooncakes
-publication is a separate distribution step.
+The [disk cursor](file-cursor.md) adds lazy ordered pages. The JS [async package](async-io.md)
+provides real host IO, rotating recordings and [HTTP ranges](http-source.md).
+[External merge](external-merge.md) spills bounded stable runs to disk; it preserves
+attachments and metadata, with separate limits for declarations, input chunks and output summary.
+[Independent recovery](block-recovery.md) requires CRC-checked summary indexes and individual
+chunks and explicitly reports partial extraction; prefix recovery remains unchanged.
+These additions retain the container/compression boundary above. The 0.14.0 module is available from GitHub;
+Mooncakes publication is a separate distribution step, with an audited archive prepared locally.
 
 Sources: [MCAP specification](https://mcap.dev/spec),
 [compression registry](https://mcap.dev/spec/registry),
