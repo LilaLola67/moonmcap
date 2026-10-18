@@ -1,0 +1,12 @@
+import {
+  "LilaLola67/moonmcap" @mcap,
+  "LilaLola67/moonmcap/asyncio" @aio,
+  "moonbitlang/async",
+  "moonbitlang/core/json",
+}
+
+pkgtype(kind: "executable")
+
+options(
+  targets: { "main.mbt": [ "js" ], "unsupported.mbt": [ "not", "js" ] },
+)

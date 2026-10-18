@@ -11,7 +11,7 @@
 
 name = "LilaLola67/moonmcap"
 
-version = "0.9.0"
+version = "0.10.0"
 
 readme = "README.md"
 
@@ -28,4 +28,5 @@ description = "MoonBit-native MCAP message-log codec, indexed queries and file t
 import {
   "bikallem/compress@0.3.4",
   "bikallem/blit@0.2.2",
+  "moonbitlang/async@0.20.2",
 }

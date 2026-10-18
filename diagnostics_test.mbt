@@ -101,9 +101,12 @@ test "diagnosis reports bad magic and respects configured resource limits" {
     @moonmcap.BadEnvelope,
   )
   let bytes = @moonmcap.write_indexed(example_log())
+  let header_budget = @moonmcap.encode_header(@moonmcap.empty_log().header)
+    .length()
+    .max(22)
   let report = @moonmcap.diagnose_file(bytes, limits={
     ..@moonmcap.default_limits(),
-    max_record_bytes: 22,
+    max_record_bytes: header_budget,
   })
   assert_true(!report.valid)
   assert_eq(report.issues[0].code, @moonmcap.LimitExceeded)

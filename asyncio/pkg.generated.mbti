@@ -1,0 +1,139 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "LilaLola67/moonmcap/asyncio"
+
+import {
+  "LilaLola67/moonmcap",
+}
+
+// Values
+pub async fn create_sink(String) -> AsyncSink
+
+pub fn new_sink(async (Bytes) -> Unit, abort? : () -> Unit) -> AsyncSink
+
+pub fn new_source(UInt64, async (UInt64, Int) -> Bytes, abort? : () -> Unit) -> AsyncSource
+
+pub async fn new_writer(AsyncSink, profile? : String, options? : @moonmcap.StreamOptions, limits? : @moonmcap.Limits, queue_bytes? : Int) -> AsyncWriter
+
+pub async fn open_file(String) -> AsyncSource
+
+pub async fn open_reader(AsyncSource, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int, limits? : @moonmcap.Limits) -> AsyncReader
+
+pub fn rotating_writer(@moonmcap.Log, async (Int) -> AsyncSink, options? : @moonmcap.StreamOptions, queue_bytes? : Int, segment_messages? : Int, segment_bytes_target? : UInt64, segment_span? : UInt64, segment_limit? : Int) -> RotatingWriter raise @moonmcap.McapError
+
+// Errors
+
+// Types and methods
+pub struct AsyncCursor {
+  source : AsyncSource
+  cursor : @moonmcap.FileCursor
+  mut busy : Bool
+}
+pub fn AsyncCursor::cancel(Self) -> Unit
+pub async fn AsyncCursor::next(Self) -> @moonmcap.Message?
+pub async fn AsyncCursor::next_page(Self, Int) -> Array[@moonmcap.Message]
+pub fn AsyncCursor::progress(Self) -> @moonmcap.FileProgress
+pub fn AsyncCursor::seek(Self, UInt64) -> Unit raise @moonmcap.McapError
+
+pub(all) struct AsyncReadMetrics {
+  read_calls : Int
+  bytes_read : UInt64
+  cancelled : Bool
+}
+
+pub struct AsyncReader {
+  source : AsyncSource
+  reader : @moonmcap.RangeReader
+}
+pub fn AsyncReader::channels(Self) -> Array[@moonmcap.Channel]
+pub fn AsyncReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int, span_bytes? : Int) -> AsyncCursor raise @moonmcap.McapError
+
+pub struct AsyncSink {
+  write_all : async (Bytes) -> Unit
+  abort : () -> Unit
+  mut cancelled : Bool
+  mut bytes_written : UInt64
+  mut claimed : Bool
+}
+pub fn AsyncSink::cancel(Self) -> Unit
+pub async fn AsyncSink::write(Self, Bytes) -> Unit
+
+pub struct AsyncSource {
+  size : UInt64
+  read_at : async (UInt64, Int) -> Bytes
+  abort : () -> Unit
+  mut cancelled : Bool
+  mut read_calls : Int
+  mut bytes_read : UInt64
+}
+pub fn AsyncSource::cancel(Self) -> Unit
+pub fn AsyncSource::metrics(Self) -> AsyncReadMetrics
+pub async fn AsyncSource::read_exact(Self, UInt64, Int) -> Bytes
+pub fn AsyncSource::size(Self) -> UInt64
+
+pub(all) struct AsyncWriteProgress {
+  state : AsyncWriterState
+  bytes_written : UInt64
+  queued_bytes : Int
+  peak_queued_bytes : Int
+  encoded : @moonmcap.WriteProgress
+}
+
+pub struct AsyncWriter {
+  sink : AsyncSink
+  writer : @moonmcap.StreamWriter
+  queue : OutputQueue
+  mut state : AsyncWriterState
+  mut busy : Bool
+}
+pub async fn AsyncWriter::add_attachment(Self, @moonmcap.Attachment) -> Unit
+pub async fn AsyncWriter::add_channel(Self, @moonmcap.Channel) -> Unit
+pub async fn AsyncWriter::add_metadata(Self, @moonmcap.Metadata) -> Unit
+pub async fn AsyncWriter::add_schema(Self, @moonmcap.Schema) -> Unit
+pub async fn AsyncWriter::append(Self, @moonmcap.Message) -> Unit
+pub fn AsyncWriter::cancel(Self) -> Unit
+pub async fn AsyncWriter::finish(Self) -> AsyncWriteProgress
+pub async fn AsyncWriter::flush(Self) -> Unit
+pub fn AsyncWriter::progress(Self) -> AsyncWriteProgress
+
+pub(all) enum AsyncWriterState {
+  AsyncOpen
+  AsyncFinished
+  AsyncFailed
+  AsyncCancelled
+} derive(Eq)
+
+type OutputQueue
+
+pub struct RotatingWriter {
+  template : @moonmcap.Log
+  create : async (Int) -> AsyncSink
+  options : @moonmcap.StreamOptions
+  queue_bytes : Int
+  message_limit : Int
+  byte_target : UInt64
+  time_span : UInt64
+  segment_limit : Int
+  reports : Array[SegmentInfo]
+  mut current : AsyncWriter?
+  mut ordinal : Int
+  mut start_time : UInt64
+  mut end_time : UInt64
+  mut state : AsyncWriterState
+  mut busy : Bool
+}
+pub async fn RotatingWriter::append(Self, @moonmcap.Message) -> Unit
+pub fn RotatingWriter::cancel(Self) -> Unit
+pub async fn RotatingWriter::finish(Self) -> Array[SegmentInfo]
+pub fn RotatingWriter::segments(Self) -> Array[SegmentInfo]
+
+pub(all) struct SegmentInfo {
+  ordinal : Int
+  messages : UInt64
+  bytes : UInt64
+  start_time : UInt64
+  end_time : UInt64
+}
+
+// Type aliases
+
+// Traits

@@ -1,5 +1,12 @@
 # 更新记录
 
+## 0.10.0
+
+- 新增 asyncio 的 AsyncSource、AsyncReader/AsyncCursor、AsyncSink/AsyncWriter，实际通过宿主 Promise 执行异步文件操作，保留原同步 API。
+- 写入使用有预算的编码队列并等待输出接纳再推进，拒绝并发操作和 sink 重复占用，支持终止失败与协作取消。
+- 新增按消息数、已写字节目标、时间跨度切分的 RotatingWriter，每个完成段包含自己的声明、索引与 Footer。
+- 固定使用 Apache-2.0 的 moonbitlang/async 0.20.2；新增 7 项异步测试与 5 项真实异步 I/O/事件循环/分段工作流。
+
 ## 0.9.0
 
 - 新增磁盘 FileCursor，按块时间边界推进、堆归并已加载消息，正确处理重叠块、同时间物理次序、倒序和分页，不为每页收集整个查询结果。

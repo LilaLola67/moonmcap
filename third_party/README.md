@@ -1,5 +1,15 @@
 # Third-party code and licenses
 
+## moonbitlang/async 0.20.2 — Apache-2.0
+
+Source: https://github.com/moonbitlang/async
+Published module: https://mooncakes.io/docs/moonbitlang/async
+
+The optional `asyncio` package uses the official coroutine runtime and JavaScript
+Promise bridge through a pinned dependency. No async runtime code is copied into
+the container core. Node file/network adapters, queues and MCAP operations are
+maintained in this repository. The dependency retains its upstream Apache-2.0 license.
+
 The MCAP container, framing, CRC32, indexing, query, transformation and recovery
 implementation is maintained in the root package under MIT.
 

@@ -1,0 +1,14 @@
+import {
+  "LilaLola67/moonmcap" @mcap,
+  "moonbitlang/async",
+  "moonbitlang/async/js_async",
+  "moonbitlang/core/buffer",
+}
+
+options(
+  targets: {
+    "node.mbt": [ "js" ],
+    "async_test.mbt": [ "js" ],
+    "unsupported.mbt": [ "not", "js" ],
+  },
+)
