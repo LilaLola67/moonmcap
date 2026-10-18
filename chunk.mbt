@@ -57,6 +57,7 @@ pub fn decode_chunk(
     expected_size,
     limits~,
   )
+  input.finish()
   if start_time > end_time {
     raise Invalid("inverted chunk time range")
   }

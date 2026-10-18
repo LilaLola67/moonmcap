@@ -9,6 +9,8 @@ import {
 // Values
 pub fn all_query() -> Query
 
+pub fn block_recovery_json(BlockRecoveryReport) -> Json
+
 pub fn build_query_index(Log) -> QueryIndex raise McapError
 
 pub fn compress_payload(Bytes, Compression) -> Bytes
@@ -139,6 +141,8 @@ pub fn read_log(Bytes, limits? : Limits) -> Log raise McapError
 
 pub fn rebuild_indexes(Bytes, compression? : Compression, messages_per_chunk? : Int, limits? : Limits) -> IndexRepair raise McapError
 
+pub fn recover_blocks(ReadSource, WriteSink, limits? : Limits, options? : StreamOptions, summary_bytes? : Int) -> BlockRecoveryReport raise McapError
+
 pub fn recover_prefix(Bytes, limits? : Limits) -> RecoveryReport raise McapError
 
 pub fn repair_prefix(Bytes, limits? : Limits) -> (Bytes, RecoveryReport) raise McapError
@@ -209,6 +213,14 @@ pub(all) struct AttachmentIndex {
   data_size : UInt64
   name : String
   media_type : String
+}
+
+pub(all) struct BlockRecoveryReport {
+  recovered : Array[RecoveredBlock]
+  skipped : Array[SkippedBlock]
+  messages : Int
+  output_bytes : UInt64
+  source_complete : Bool
 }
 
 type CachedChunk
@@ -616,6 +628,12 @@ pub fn Record::equal(Self, Self) -> Bool
 pub fn Record::not_equal(Self, Self) -> Bool
 pub fn Record::to_repr(Self) -> @debug.Repr
 
+pub(all) struct RecoveredBlock {
+  start : UInt64
+  end : UInt64
+  messages : Int
+} derive(Eq, @debug.Debug)
+
 pub(all) struct RecoveryReport {
   log : Log
   recovered_records : Int
@@ -637,6 +655,12 @@ pub(all) struct Schema {
 pub fn Schema::equal(Self, Self) -> Bool
 pub fn Schema::not_equal(Self, Self) -> Bool
 pub fn Schema::to_repr(Self) -> @debug.Repr
+
+pub(all) struct SkippedBlock {
+  start : UInt64
+  end : UInt64
+  reason : String
+} derive(Eq, @debug.Debug)
 
 type SortRow
 

@@ -42,7 +42,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   let command = args[0]
   if ![
       "inspect", "query", "slice", "merge", "recover", "rewrite", "transform", "validate",
-      "reindex", "external-merge",
+      "reindex", "external-merge", "recover-blocks",
     ].contains(command) {
     raise Invalid("unknown command: \{command}")
   }

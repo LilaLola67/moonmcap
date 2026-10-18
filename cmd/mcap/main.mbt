@@ -23,6 +23,9 @@ fn text_output(path : String, text : String) -> Unit raise @mcap.McapError {
 fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
   if options.command == "help" {
     println(
+      "recover-blocks INPUT --output NEW.mcap: explicitly extract CRC-verified indexed chunks and print a partial-recovery manifest",
+    )
+    println(
       "external-merge INPUT... --temp-dir DIR --output NEW.mcap [--run-bytes N --merge-bytes N --fan-in N --spool-bytes N --run-limit N --declaration-bytes N]",
     )
     println(
@@ -56,6 +59,25 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
         "diagnostics": @mcap.read_diagnostics_json(reader.diagnostics()),
       }
       text_output(options.output, report.stringify())
+    }
+    return
+  }
+  if options.command == "recover-blocks" {
+    let source = @nodeio.open_file(options.inputs[0])
+    let transaction = @nodeio.output_transaction(options.output)
+    try {
+      let report = @mcap.recover_blocks(source, transaction.sink(), options={
+        ..@mcap.stream_options(),
+        compression: options.compression,
+        chunk_messages: options.chunk_messages,
+      })
+      transaction.publish()
+      println(@mcap.block_recovery_json(report).stringify())
+    } catch {
+      error => {
+        transaction.abort()
+        raise error
+      }
     }
     return
   }

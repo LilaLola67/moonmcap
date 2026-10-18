@@ -42,3 +42,7 @@ inspect、slice、merge、recover、rewrite 在内存中读取、校验和处理
 `transform` 命令支持主题映射、时间窗采样、时间对齐、附件及元数据筛选，参数与处理顺序见 [批量变换](batch-transform.md)。
 
 `validate INPUT [--output report.json]` 提供结构化完整诊断；`reindex INPUT --output NEW.mcap` 在数据区完整有效时重建索引和摘要，支持压缩及分块参数。详见 [诊断与修复](diagnostics.md)。两者均受 --max-file-bytes 完整读取预算限制。
+# 独立块部分恢复
+
+`recover-blocks INPUT --output NEW.mcap` 输出恢复清单到标准输出。完整边界及重定向示例见 [独立块恢复](block-recovery.md)。该模式不改变 `recover` 的连续前缀语义。
+
