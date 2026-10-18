@@ -1,5 +1,7 @@
 # 0.8 到 0.14 的接口与行为
 
+0.15.3 新增 SidecarReader/SidecarCursor、IndexVerification、build_sidecar/open_sidecar，以及 Node SHA-256 和文件身份适配器。CommandOptions 新增 indexes、fast_index、index_bytes；手工构造完整参数结构体需补字段，parse_command 的既有参数保持兼容。默认侧车打开会完整读取源内容验证 SHA-256，只有显式 TrustIdentity/--fast-index 走文件属性信任模式。
+
 0.15.1 新增 stream_transform、SourceVisitor/scan_source 和 FileCursor.write_ndjson，原接口继续可用。external_merge 新增 preserve_ids 可选参数，默认行为不变；true 仅允许单输入并保留独立通道身份。0.15.2 新增 QuerySource、Dataset/DatasetCursor 与 dataset-query，多文件 next_page 返回带来源编号的 DatasetMessage。后续功能按 0.15.x 递增发布。
 
 原有内存读写、QueryIndex/QueryCursor、同步 StreamWriter、批量变换、连续前缀恢复和索引重建继续可用。MCAP 格式目标仍为版本 0，消息负载和三种压缩边界不变。没有自动以部分恢复替代严格读取的行为。

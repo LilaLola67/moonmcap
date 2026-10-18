@@ -24,8 +24,36 @@ fn text_output(path : String, text : String) -> Unit raise @mcap.McapError {
 }
 
 ///|
+fn indexed_reader(
+  path : String,
+  index : String,
+  options : @mcap.CommandOptions,
+) -> @mcap.SidecarReader raise @mcap.McapError {
+  let source = @nodeio.open_file(path)
+  let verification = if options.fast_index {
+    @mcap.TrustIdentity(@nodeio.file_identity_token(path))
+  } else {
+    @mcap.VerifyContent(@nodeio.source_sha256)
+  }
+  let reader = @mcap.open_sidecar(
+    source,
+    @nodeio.read_file(index, maximum=options.index_bytes),
+    verification,
+    index_bytes=options.index_bytes,
+    cache_bytes=options.cache_bytes,
+  )
+  if options.full {
+    ignore(@mcap.scan_source(source, @mcap.source_visitor()))
+  }
+  reader
+}
+
+///|
 fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
   if options.command == "help" {
+    println(
+      "index-build|index-rebuild INPUT --output NEW.midx; index-check|index-query INPUT --index INDEX [--fast-index --index-bytes N]; dataset-query accepts one --index per input",
+    )
     println(
       "dataset-query INPUT... [--topic TOPIC --start NS --end NS --offset N --limit N --descending --format json|ndjson]: query files without merging output",
     )
@@ -98,8 +126,78 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     }
     return
   }
+  if ["index-build", "index-rebuild"].contains(options.command) {
+    let source = @nodeio.open_file(options.inputs[0])
+    let token = @nodeio.file_identity_token(options.inputs[0])
+    let bytes = @mcap.build_sidecar(
+      source,
+      @nodeio.source_sha256,
+      identity=token,
+      index_bytes=options.index_bytes,
+    )
+    if @nodeio.file_identity_token(options.inputs[0]) != token {
+      raise @mcap.io_error("source identity changed while indexing")
+    }
+    let reader = @mcap.open_sidecar(
+      source,
+      bytes,
+      @mcap.TrustIdentity(token),
+      index_bytes=options.index_bytes,
+    )
+    @nodeio.write_atomic_new(options.output, bytes)
+    let report : Json = { "build_content_hashed": true, "index": reader.info() }
+    println(report.stringify())
+    return
+  }
+  if ["index-check", "index-query"].contains(options.command) {
+    let reader = indexed_reader(options.inputs[0], options.indexes[0], options)
+    if options.command == "index-check" {
+      reader.validate_entries()
+      text_output(options.output, reader.info().stringify())
+    } else {
+      let cursor = reader.cursor(options.query)
+      if options.format == "ndjson" {
+        if options.output == "" {
+          ignore(
+            cursor.write_ndjson(
+              @mcap.new_write_sink(fn(bytes) {
+                stdout_text(
+                  @utf8.decode(bytes[:]) catch {
+                    _ => raise @mcap.io_error("invalid NDJSON UTF-8")
+                  },
+                )
+              }),
+            ),
+          )
+        } else {
+          let transaction = @nodeio.output_transaction(options.output)
+          try {
+            ignore(cursor.write_ndjson(transaction.sink()))
+            transaction.publish()
+          } catch {
+            error => {
+              transaction.abort()
+              raise error
+            }
+          }
+        }
+      } else {
+        let messages = cursor.next_page(options.query.limit.max(1))
+        let report : Json = {
+          "messages": @mcap.messages_json(messages, reader.channels()),
+          "index": reader.info(),
+        }
+        text_output(options.output, report.stringify())
+      }
+    }
+    return
+  }
   if options.command == "dataset-query" {
-    let sources = options.inputs.map(fn(path) {
+    let sources = Array::makei(options.inputs.length(), fn(i) {
+      let path = options.inputs[i]
+      if !options.indexes.is_empty() {
+        return indexed_reader(path, options.indexes[i], options).query_source()
+      }
       let reader = @mcap.open_reader(
         @nodeio.open_file(path),
         cache_bytes=options.cache_bytes,

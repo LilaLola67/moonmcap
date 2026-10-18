@@ -11,6 +11,6 @@ python tools/dataset_workflows.py
 
 pending_bytes 默认 64 MiB：一半预算等分给子游标候选，其余供堆头及动态检查；小预算或高度重叠块可能显式失败。每个源还拥有自己的块/缓存/摘要预算；不是总进程 RSS 限额。默认最多 64 个输入，声明保留量受预算限制，总输出数量受 Limits.max_records 限制。输入需要保持同一快照，快速查询只验证读到的内容。CLI --full 对每个文件执行既有整文件预算内的完整验证。
 
-无 ChunkIndex 的 RangeReader 提供方会在原 fallback_bytes 预算内先加载完整 Log，并在进度 materialized_sources 中明确计数；关闭 fallback 则拒绝。需要避免这条回退路径时，使用后续的侧车索引提供方。索引文件的快照稳定性由各输入适配器保证。
+无 ChunkIndex 的 RangeReader 提供方会在原 fallback_bytes 预算内先加载完整 Log，并在进度 materialized_sources 中明确计数；关闭 fallback 则拒绝。需要避免这条回退路径时，使用 [SidecarReader.query_source](sidecar-index.md)；CLI 按输入顺序提供等量 --index。索引文件的快照稳定性由各输入适配器保证。
 
 QuerySource/MessageStream 是可扩展的有序提供方接口，便于后续把持久索引接入同一个 Dataset。自定义提供方必须保证查询过滤、排序、声明、取消释放和负载计数正确；流异常会使整个 DatasetCursor 失败并取消其他源。输入数组及声明在构造时复制，来源编号始终对应原始列表，不随筛选或声明去重改变。

@@ -70,6 +70,9 @@ jobs:
       - name: Verify cross-file dataset queries
         if: matrix.target == 'js'
         run: python tools/dataset_workflows.py
+      - name: Verify persistent sidecar indexes and source fingerprints
+        if: matrix.target == 'js'
+        run: python tools/sidecar_workflows.py
       - name: Verify fixed-seed differential cases
         if: matrix.target == 'js'
         run: python tools/fuzz_workflows.py
@@ -98,6 +101,7 @@ jobs:
             _interop/blocks/report.json
             _interop/transform-stream/report.json
             _interop/dataset/report.json
+            _interop/sidecar/report.json
             _interop/fuzz/report.json
             _interop/memory/report.json
             _interop/package/report.json

@@ -13,6 +13,8 @@ pub fn block_recovery_json(BlockRecoveryReport) -> Json
 
 pub fn build_query_index(Log) -> QueryIndex raise McapError
 
+pub fn build_sidecar(ReadSource, (ReadSource) -> String raise McapError, identity? : String, limits? : Limits, index_bytes? : Int, declaration_bytes? : Int, cancelled? : () -> Bool) -> Bytes raise McapError
+
 pub fn compress_payload(Bytes, Compression) -> Bytes
 
 pub fn compute_file_statistics(Log, UInt) -> FileStatistics
@@ -134,6 +136,8 @@ pub fn new_write_sink((Bytes) -> Unit raise McapError) -> WriteSink
 pub fn open_dataset(Array[QuerySource], limits? : Limits, declaration_bytes? : Int, max_sources? : Int) -> Dataset raise McapError
 
 pub fn open_reader(ReadSource, limits? : Limits, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int) -> RangeReader raise McapError
+
+pub fn open_sidecar(ReadSource, Bytes, IndexVerification, limits? : Limits, index_bytes? : Int, cache_bytes? : Int) -> SidecarReader raise McapError
 
 pub fn parse_command(Array[String]) -> CommandOptions raise McapError
 
@@ -284,6 +288,9 @@ pub(all) struct CommandOptions {
   transform : TransformOptions
   external : ExternalOptions
   temp_dir : String
+  indexes : Array[String]
+  fast_index : Bool
+  index_bytes : Int
 }
 
 pub(all) enum Compression {
@@ -499,6 +506,11 @@ pub(all) struct IndexRepair {
   bytes : Bytes
   original : FileDiagnosis
   result : FileDiagnosis
+}
+
+pub(all) enum IndexVerification {
+  VerifyContent((ReadSource) -> String raise McapError)
+  TrustIdentity(String)
 }
 
 pub(all) struct Limits {
@@ -742,6 +754,49 @@ pub(all) struct Schema {
 pub fn Schema::equal(Self, Self) -> Bool
 pub fn Schema::not_equal(Self, Self) -> Bool
 pub fn Schema::to_repr(Self) -> @debug.Repr
+
+pub struct SidecarCursor {
+  reader : SidecarReader
+  original : Query
+  allowed : Map[Int, Bool]
+  mut query : Query
+  mut state : FileCursorState
+  mut position : Int
+  mut remaining : Int
+  mut offset_left : Int
+  mut emitted : Int
+  mut skipped : Int
+}
+pub fn SidecarCursor::cancel(Self) -> Unit
+pub fn SidecarCursor::next(Self) -> Message? raise McapError
+pub fn SidecarCursor::next_page(Self, Int) -> Array[Message] raise McapError
+pub fn SidecarCursor::progress(Self) -> Json
+pub fn SidecarCursor::seek(Self, UInt64) -> Unit raise McapError
+pub fn SidecarCursor::write_ndjson(Self, WriteSink) -> Int raise McapError
+
+type SidecarEntry
+
+pub struct SidecarReader {
+  source : ReadSource
+  declarations : Log
+  entries : Array[SidecarEntry]
+  positions : Array[Int]
+  limits : Limits
+  digest : String
+  content_verified : Bool
+  index_bytes : Int
+  cache_budget : Int
+  mut cached_offset : UInt64?
+  mut cached_span : Int
+  mut cached : Chunk?
+  mut cached_bytes : Int
+}
+pub fn SidecarReader::channels(Self) -> Array[Channel]
+pub fn SidecarReader::clear_cache(Self) -> Unit
+pub fn SidecarReader::cursor(Self, Query) -> SidecarCursor raise McapError
+pub fn SidecarReader::info(Self) -> Json
+pub fn SidecarReader::query_source(Self) -> QuerySource raise McapError
+pub fn SidecarReader::validate_entries(Self) -> Unit raise McapError
 
 pub(all) struct SkippedBlock {
   start : UInt64

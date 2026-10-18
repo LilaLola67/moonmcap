@@ -13,6 +13,9 @@ pub(all) struct CommandOptions {
   transform : TransformOptions
   external : ExternalOptions
   temp_dir : String
+  indexes : Array[String]
+  fast_index : Bool
+  index_bytes : Int
 }
 
 ///|
@@ -37,16 +40,21 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       transform: transform_options(),
       external: external_options(),
       temp_dir: "",
+      indexes: [],
+      fast_index: false,
+      index_bytes: 32 * 1024 * 1024,
     }
   }
   let command = args[0]
   if ![
       "inspect", "query", "slice", "merge", "recover", "rewrite", "transform", "validate",
       "reindex", "external-merge", "recover-blocks", "stream-transform", "dataset-query",
+      "index-build", "index-rebuild", "index-check", "index-query",
     ].contains(command) {
     raise Invalid("unknown command: \{command}")
   }
   let inputs = []
+  let indexes = []
   let topics = []
   let renames = []
   let attachment_names = []
@@ -65,7 +73,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       continue
     }
     if !positional && arg.has_prefix("--") {
-      if ["--descending", "--full"].contains(arg) {
+      if ["--descending", "--full", "--fast-index"].contains(arg) {
         if flags.contains(arg) {
           raise Invalid("duplicate option: \{arg}")
         }
@@ -77,7 +85,8 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
             "--rename", "--sample-period", "--sample-origin", "--align-start", "--attachment-name",
             "--attachment-media-type", "--attachment-start", "--attachment-end",
             "--metadata-name", "--metadata-match", "--temp-dir", "--run-bytes", "--merge-bytes",
-            "--fan-in", "--spool-bytes", "--run-limit", "--declaration-bytes",
+            "--fan-in", "--spool-bytes", "--run-limit", "--declaration-bytes", "--index",
+            "--index-bytes",
           ].contains(arg) {
           raise Invalid("unknown option: \{arg}")
         }
@@ -85,7 +94,9 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
         if i >= args.length() || args[i].has_prefix("--") {
           raise Invalid("missing option value: \{arg}")
         }
-        if arg == "--topic" {
+        if arg == "--index" {
+          indexes.push(args[i])
+        } else if arg == "--topic" {
           topics.push(args[i])
         } else if arg == "--rename" || arg == "--metadata-match" {
           let pair = match args[i].split_once("=") {
@@ -123,9 +134,9 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     ) {
     raise Invalid("wrong number of input paths")
   }
-  if !["query", "slice", "transform", "stream-transform", "dataset-query"].contains(
-      command,
-    ) &&
+  if ![
+      "query", "slice", "transform", "stream-transform", "dataset-query", "index-query",
+    ].contains(command) &&
     (
       !topics.is_empty() ||
       flags.contains("--descending") ||
@@ -151,7 +162,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     ) {
     raise Invalid("batch options require the transform command")
   }
-  if !["query", "dataset-query"].contains(command) &&
+  if !["query", "dataset-query", "index-query", "index-check"].contains(command) &&
     (flags.contains("--full") || values.contains("--cache-bytes")) {
     raise Invalid("--full and --cache-bytes are query options")
   }
@@ -171,7 +182,10 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       "external-merge requires --temp-dir and uses run/merge budgets instead of --max-file-bytes",
     )
   }
-  if ["query", "dataset-query", "inspect", "validate"].contains(command) &&
+  if [
+      "query", "dataset-query", "index-query", "index-check", "index-build", "index-rebuild",
+      "inspect", "validate",
+    ].contains(command) &&
     (values.contains("--compression") || values.contains("--chunk-messages")) {
     raise Invalid("compression and chunk sizing are MCAP output options")
   }
@@ -193,11 +207,16 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     raise Invalid("format must be json, csv or ndjson")
   }
   if (format == "csv" && command != "query") ||
-    (format == "ndjson" && !["query", "dataset-query"].contains(command)) {
+    (
+      format == "ndjson" &&
+      !["query", "dataset-query", "index-query"].contains(command)
+    ) {
     raise Invalid("CSV/NDJSON is available for query")
   }
   let output = values.get("--output").unwrap_or("")
-  if !["query", "dataset-query", "inspect", "validate"].contains(command) &&
+  if ![
+      "query", "dataset-query", "index-query", "index-check", "inspect", "validate",
+    ].contains(command) &&
     output == "" {
     raise Invalid("--output is required")
   }
@@ -215,6 +234,26 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     offset: decimal_int(values.get("--offset").unwrap_or("0")),
     limit: decimal_int(values.get("--limit").unwrap_or("100000")),
   }
+  if ["index-query", "index-check"].contains(command) {
+    if indexes.length() != 1 {
+      raise Invalid("index-query/index-check requires one --index")
+    }
+  } else if command == "dataset-query" {
+    if !indexes.is_empty() && indexes.length() != inputs.length() {
+      raise Invalid("dataset sidecars must match input count and order")
+    }
+  } else if !indexes.is_empty() {
+    raise Invalid("--index requires index-query, index-check or dataset-query")
+  }
+  if flags.contains("--fast-index") && indexes.is_empty() {
+    raise Invalid("--fast-index requires sidecar inputs")
+  }
+  if values.contains("--index-bytes") &&
+    ![
+      "index-build", "index-rebuild", "index-query", "index-check", "dataset-query",
+    ].contains(command) {
+    raise Invalid("--index-bytes requires index command or dataset-query")
+  }
   {
     command,
     inputs,
@@ -222,6 +261,9 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     compression,
     format,
     query,
+    indexes,
+    fast_index: flags.contains("--fast-index"),
+    index_bytes: decimal_int(values.get("--index-bytes").unwrap_or("33554432")),
     temp_dir: values.get("--temp-dir").unwrap_or(""),
     external: {
       ..external_options(),

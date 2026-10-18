@@ -1,4 +1,16 @@
 ///|
+pub fn source_sha256(
+  _source : @mcap.ReadSource,
+) -> String raise @mcap.McapError {
+  raise @mcap.io_error("SHA-256 host adapter requires JS")
+}
+
+///|
+pub fn file_identity_token(_path : String) -> String raise @mcap.McapError {
+  raise @mcap.io_error("file identity adapter requires JS")
+}
+
+///|
 pub fn open_file(_path : String) -> @mcap.ReadSource raise @mcap.McapError {
   raise @mcap.io_error("nodeio requires the JS target and Node.js 22.3+")
 }

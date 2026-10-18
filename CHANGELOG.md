@@ -1,5 +1,12 @@
 # 更新记录
 
+## 0.15.3
+
+- 新增版本化侧车索引的构建、打开、检查和新路径重建，支持顺序、无摘要/无索引分块及三种压缩文件，不改变源 MCAP。
+- 默认通过宿主 SHA-256 回调核对源内容；显式快速身份模式报告 content_verified=false，过期、损坏或未知版本拒绝。
+- 新增 SidecarReader/SidecarCursor、直接记录定位、单块缓存和 Dataset 提供方；CLI 支持 index-build/index-rebuild/index-check/index-query 及跨文件侧车配对。
+- 新增 4 项便携核心测试、1 项 Node SHA-256 标准向量测试和 52 项独立参考文件工作流，接入 CI。
+
 ## 0.15.2
 
 - 新增 QuerySource、MessageStream、Dataset 和 DatasetCursor，按全局时间与来源位置归并文件，无需生成合并文件。

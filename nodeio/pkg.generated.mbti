@@ -8,6 +8,8 @@ import {
 // Values
 pub fn create_sink(String) -> @moonmcap.WriteSink raise @moonmcap.McapError
 
+pub fn file_identity_token(String) -> String raise @moonmcap.McapError
+
 pub fn open_file(String) -> @moonmcap.ReadSource raise @moonmcap.McapError
 
 pub fn output_transaction(String) -> OutputTransaction raise @moonmcap.McapError
@@ -15,6 +17,8 @@ pub fn output_transaction(String) -> OutputTransaction raise @moonmcap.McapError
 pub fn read_file(String, maximum? : Int) -> Bytes raise @moonmcap.McapError
 
 pub fn sort_directory(String) -> @moonmcap.SortStorage raise @moonmcap.McapError
+
+pub fn source_sha256(@moonmcap.ReadSource) -> String raise @moonmcap.McapError
 
 pub fn write_atomic_new(String, Bytes) -> Unit raise @moonmcap.McapError
 
