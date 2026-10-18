@@ -16,6 +16,19 @@ pub fn WriteSink::position(self : WriteSink) -> UInt64 {
 }
 
 ///|
+/// Write raw bytes to an exclusively owned sink (for temporary run storage).
+pub fn WriteSink::write(
+  self : WriteSink,
+  bytes : Bytes,
+) -> Unit raise McapError {
+  if bytes.length().to_uint64() > 18446744073709551615UL - self.position {
+    raise Invalid("sink offset overflow")
+  }
+  (self.write_all)(bytes)
+  self.position += bytes.length().to_uint64()
+}
+
+///|
 pub(all) enum WriterState {
   WriterOpen
   WriterFinished

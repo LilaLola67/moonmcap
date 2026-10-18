@@ -86,3 +86,17 @@ pub fn inspect_json(log : Log) -> Json raise McapError {
     }),
   }
 }
+
+///|
+pub fn external_report_json(report : ExternalReport) -> Json {
+  {
+    "input_files": report.input_files,
+    "messages": report.messages.to_string(),
+    "runs_created": report.runs_created,
+    "merge_passes": report.merge_passes,
+    "peak_run_bytes": report.peak_run_bytes,
+    "peak_merge_bytes": report.peak_merge_bytes,
+    "peak_spool_bytes": report.peak_spool_bytes.to_string(),
+    "output_bytes": report.output_bytes.to_string(),
+  }
+}

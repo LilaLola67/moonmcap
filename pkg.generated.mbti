@@ -93,6 +93,12 @@ pub fn encode_schema(Schema) -> Bytes raise McapError
 
 pub fn encode_summary_offset(SummaryOffset) -> Bytes
 
+pub fn external_merge(Array[ReadSource], SortStorage, WriteSink, options? : ExternalOptions, cancelled? : () -> Bool) -> ExternalReport raise McapError
+
+pub fn external_options() -> ExternalOptions
+
+pub fn external_report_json(ExternalReport) -> Json
+
 pub fn find_attachments(Log, name? : String, media_type? : String) -> Array[Attachment]
 
 pub fn frame(Byte, Bytes) -> Bytes raise McapError
@@ -142,6 +148,8 @@ pub fn scan_file(Bytes, limits? : Limits) -> Array[Record] raise McapError
 pub fn shift_time(Log, UInt64, backwards? : Bool) -> Log raise McapError
 
 pub fn slice_log(Log, Query) -> Log raise McapError
+
+pub fn sort_storage((Int) -> WriteSink raise McapError, (Int) -> ReadSource raise McapError, (Int) -> Unit raise McapError, finish? : () -> Unit raise McapError) -> SortStorage
 
 pub fn stats_report(LogStats) -> String
 
@@ -246,6 +254,8 @@ pub(all) struct CommandOptions {
   chunk_messages : Int
   full : Bool
   transform : TransformOptions
+  external : ExternalOptions
+  temp_dir : String
 }
 
 pub(all) enum Compression {
@@ -285,6 +295,28 @@ pub(all) enum DiagnosticCode {
   LimitExceeded
 } derive(Eq, @debug.Debug)
 pub fn DiagnosticCode::name(Self) -> String
+
+pub(all) struct ExternalOptions {
+  run_bytes : Int
+  merge_bytes : Int
+  fan_in : Int
+  spool_bytes : UInt64
+  run_limit : Int
+  declaration_bytes : Int
+  limits : Limits
+  output : StreamOptions
+}
+
+pub(all) struct ExternalReport {
+  input_files : Int
+  messages : UInt64
+  runs_created : Int
+  merge_passes : Int
+  peak_run_bytes : Int
+  peak_merge_bytes : Int
+  peak_spool_bytes : UInt64
+  output_bytes : UInt64
+}
 
 pub struct FileCursor {
   reader : RangeReader
@@ -592,6 +624,10 @@ pub(all) struct RecoveryReport {
   reason : String
 }
 
+type RunHead
+
+type RunInput
+
 pub(all) struct Schema {
   id : Int
   name : String
@@ -601,6 +637,19 @@ pub(all) struct Schema {
 pub fn Schema::equal(Self, Self) -> Bool
 pub fn Schema::not_equal(Self, Self) -> Bool
 pub fn Schema::to_repr(Self) -> @debug.Repr
+
+type SortRow
+
+type SortSession
+
+pub struct SortStorage {
+  create : (Int) -> WriteSink raise McapError
+  open : (Int) -> ReadSource raise McapError
+  remove : (Int) -> Unit raise McapError
+  finish : () -> Unit raise McapError
+}
+
+type SourceTables
 
 pub struct StreamDecoder {
   limits : Limits
@@ -709,6 +758,7 @@ pub struct WriteSink {
   mut position : UInt64
 }
 pub fn WriteSink::position(Self) -> UInt64
+pub fn WriteSink::write(Self, Bytes) -> Unit raise McapError
 
 pub(all) enum WriterState {
   WriterOpen

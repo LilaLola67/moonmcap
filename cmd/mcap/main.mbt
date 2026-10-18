@@ -23,6 +23,9 @@ fn text_output(path : String, text : String) -> Unit raise @mcap.McapError {
 fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
   if options.command == "help" {
     println(
+      "external-merge INPUT... --temp-dir DIR --output NEW.mcap [--run-bytes N --merge-bytes N --fan-in N --spool-bytes N --run-limit N --declaration-bytes N]",
+    )
+    println(
       "MoonMCAP: inspect|query|slice|merge|recover|rewrite|transform INPUT... [--output PATH]\n--topic TOPIC (repeatable) --start NS --end NS --offset N --limit N --descending\n--compression none|lz4|zstd --format json|csv --max-file-bytes N --cache-bytes N\n--chunk-messages N --full\ntransform: --rename FROM=TO --sample-period NS --sample-origin NS --align-start NS\n--attachment-name NAME --attachment-media-type TYPE --attachment-start NS --attachment-end NS\n--metadata-name NAME --metadata-match KEY=VALUE\nTime bounds are inclusive. Existing output paths are never overwritten.",
     )
     println(
@@ -53,6 +56,30 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
         "diagnostics": @mcap.read_diagnostics_json(reader.diagnostics()),
       }
       text_output(options.output, report.stringify())
+    }
+    return
+  }
+  if options.command == "external-merge" {
+    let sources = options.inputs.map(fn(path) { @nodeio.open_file(path) })
+    let transaction = @nodeio.output_transaction(options.output)
+    try {
+      let storage = @nodeio.sort_directory(options.temp_dir)
+      let report = @mcap.external_merge(
+        sources,
+        storage,
+        transaction.sink(),
+        options=options.external,
+      )
+      transaction.publish()
+      println(@mcap.external_report_json(report).stringify())
+    } catch {
+      error => {
+        transaction.abort() catch {
+          @mcap.Invalid(reason) =>
+            raise @mcap.io_error("external output cleanup failed: \{reason}")
+        }
+        raise error
+      }
     }
     return
   }

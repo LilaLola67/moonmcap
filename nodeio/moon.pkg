@@ -5,6 +5,7 @@ import {
 options(
   targets: {
     "files.mbt": [ "js" ],
+    "storage.mbt": [ "js" ],
     "files_test.mbt": [ "js" ],
     "unsupported.mbt": [ "not", "js" ],
   },

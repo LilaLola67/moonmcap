@@ -11,6 +11,8 @@ pub(all) struct CommandOptions {
   chunk_messages : Int
   full : Bool
   transform : TransformOptions
+  external : ExternalOptions
+  temp_dir : String
 }
 
 ///|
@@ -33,12 +35,14 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       chunk_messages: 256,
       full: false,
       transform: transform_options(),
+      external: external_options(),
+      temp_dir: "",
     }
   }
   let command = args[0]
   if ![
       "inspect", "query", "slice", "merge", "recover", "rewrite", "transform", "validate",
-      "reindex",
+      "reindex", "external-merge",
     ].contains(command) {
     raise Invalid("unknown command: \{command}")
   }
@@ -72,7 +76,8 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
             "--format", "--max-file-bytes", "--cache-bytes", "--chunk-messages",
             "--rename", "--sample-period", "--sample-origin", "--align-start", "--attachment-name",
             "--attachment-media-type", "--attachment-start", "--attachment-end",
-            "--metadata-name", "--metadata-match",
+            "--metadata-name", "--metadata-match", "--temp-dir", "--run-bytes", "--merge-bytes",
+            "--fan-in", "--spool-bytes", "--run-limit", "--declaration-bytes",
           ].contains(arg) {
           raise Invalid("unknown option: \{arg}")
         }
@@ -110,8 +115,8 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     }
     i += 1
   }
-  if (command == "merge" && inputs.length() < 2) ||
-    (command != "merge" && inputs.length() != 1) {
+  if (["merge", "external-merge"].contains(command) && inputs.length() < 2) ||
+    (!["merge", "external-merge"].contains(command) && inputs.length() != 1) {
     raise Invalid("wrong number of input paths")
   }
   if !["query", "slice", "transform"].contains(command) &&
@@ -143,6 +148,22 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   if command != "query" &&
     (flags.contains("--full") || values.contains("--cache-bytes")) {
     raise Invalid("--full and --cache-bytes are query options")
+  }
+  if command != "external-merge" &&
+    [
+      "--temp-dir", "--run-bytes", "--merge-bytes", "--fan-in", "--spool-bytes",
+      "--run-limit", "--declaration-bytes",
+    ].any(fn(key) { values.contains(key) }) {
+    raise Invalid("external storage options require external-merge")
+  }
+  if command == "external-merge" &&
+    (
+      values.get("--temp-dir").unwrap_or("") == "" ||
+      values.contains("--max-file-bytes")
+    ) {
+    raise Invalid(
+      "external-merge requires --temp-dir and uses run/merge budgets instead of --max-file-bytes",
+    )
   }
   if ["query", "inspect", "validate"].contains(command) &&
     (values.contains("--compression") || values.contains("--chunk-messages")) {
@@ -193,6 +214,23 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     compression,
     format,
     query,
+    temp_dir: values.get("--temp-dir").unwrap_or(""),
+    external: {
+      ..external_options(),
+      run_bytes: decimal_int(values.get("--run-bytes").unwrap_or("2097152")),
+      merge_bytes: decimal_int(
+        values.get("--merge-bytes").unwrap_or("16777216"),
+      ),
+      fan_in: decimal_int(values.get("--fan-in").unwrap_or("8")),
+      spool_bytes: parse_decimal(
+        values.get("--spool-bytes").unwrap_or("536870912"),
+      ),
+      run_limit: decimal_int(values.get("--run-limit").unwrap_or("32768")),
+      declaration_bytes: decimal_int(
+        values.get("--declaration-bytes").unwrap_or("8388608"),
+      ),
+      output: { ..stream_options(), compression, chunk_messages, },
+    },
     transform: {
       query,
       topic_map: renames,
