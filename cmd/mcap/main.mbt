@@ -28,8 +28,9 @@ fn indexed_reader(
   path : String,
   index : String,
   options : @mcap.CommandOptions,
+  scope : @nodeio.FileScope,
 ) -> @mcap.SidecarReader raise @mcap.McapError {
-  let source = @nodeio.open_file(path)
+  let source = scope.open(path)
   let verification = if options.fast_index {
     @mcap.TrustIdentity(@nodeio.file_identity_token(path))
   } else {
@@ -49,7 +50,10 @@ fn indexed_reader(
 }
 
 ///|
-fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
+fn run(
+  options : @mcap.CommandOptions,
+  scope : @nodeio.FileScope,
+) -> Unit raise @mcap.McapError {
   if options.command == "help" {
     println(
       "external-merge INPUT... --job NEW_DIR [--resume] --output NEW.mcap; job-inspect DIR; job-clean DIR",
@@ -104,7 +108,7 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     let job = @nodeio.open_merge_job(options.job_dir, resume=options.resume_job)
     try {
       let checkpoint = job.checkpoint()
-      let sources = options.inputs.map(fn(path) { @nodeio.open_file(path) })
+      let sources = options.inputs.map(fn(path) { scope.open(path) })
       let transaction = job.output(options.output)
       try {
         let report = @mcap.resumable_merge(
@@ -141,10 +145,10 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     ["query", "index-query", "dataset-query"].contains(options.command) {
     let sources = Array::makei(options.inputs.length(), fn(i) {
       let provider = if !options.indexes.is_empty() {
-        indexed_reader(options.inputs[i], options.indexes[i], options).query_source()
+        indexed_reader(options.inputs[i], options.indexes[i], options, scope).query_source()
       } else {
         let reader = @mcap.open_reader(
-          @nodeio.open_file(options.inputs[i]),
+          scope.open(options.inputs[i]),
           cache_bytes=options.cache_bytes,
           fallback_bytes=options.max_file_bytes,
         )
@@ -198,7 +202,7 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
   }
   if options.command == "query" {
     let reader = @mcap.open_reader(
-      @nodeio.open_file(options.inputs[0]),
+      scope.open(options.inputs[0]),
       cache_bytes=options.cache_bytes,
       fallback_bytes=options.max_file_bytes,
     )
@@ -249,7 +253,7 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     return
   }
   if ["index-build", "index-rebuild"].contains(options.command) {
-    let source = @nodeio.open_file(options.inputs[0])
+    let source = scope.open(options.inputs[0])
     let token = @nodeio.file_identity_token(options.inputs[0])
     let bytes = @mcap.build_sidecar(
       source,
@@ -272,7 +276,12 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     return
   }
   if ["index-check", "index-query"].contains(options.command) {
-    let reader = indexed_reader(options.inputs[0], options.indexes[0], options)
+    let reader = indexed_reader(
+      options.inputs[0],
+      options.indexes[0],
+      options,
+      scope,
+    )
     if options.command == "index-check" {
       reader.validate_entries()
       text_output(options.output, reader.info().stringify())
@@ -318,10 +327,10 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     let sources = Array::makei(options.inputs.length(), fn(i) {
       let path = options.inputs[i]
       if !options.indexes.is_empty() {
-        return indexed_reader(path, options.indexes[i], options).query_source()
+        return indexed_reader(path, options.indexes[i], options, scope).query_source()
       }
       let reader = @mcap.open_reader(
-        @nodeio.open_file(path),
+        scope.open(path),
         cache_bytes=options.cache_bytes,
         fallback_bytes=options.max_file_bytes,
       )
@@ -371,7 +380,7 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     return
   }
   if options.command == "recover-blocks" {
-    let source = @nodeio.open_file(options.inputs[0])
+    let source = scope.open(options.inputs[0])
     let transaction = @nodeio.output_transaction(options.output)
     try {
       let report = @mcap.recover_blocks(source, transaction.sink(), options={
@@ -390,7 +399,7 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     return
   }
   if options.command == "stream-transform" {
-    let source = @nodeio.open_file(options.inputs[0])
+    let source = scope.open(options.inputs[0])
     let transaction = @nodeio.output_transaction(options.output)
     try {
       let report = @mcap.stream_transform(
@@ -412,7 +421,7 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     return
   }
   if options.command == "external-merge" {
-    let sources = options.inputs.map(fn(path) { @nodeio.open_file(path) })
+    let sources = options.inputs.map(fn(path) { scope.open(path) })
     let transaction = @nodeio.output_transaction(options.output)
     try {
       let storage = @nodeio.sort_directory(options.temp_dir)
@@ -508,10 +517,14 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
 
 ///|
 fn main {
-  run(@mcap.parse_command(arguments())) catch {
+  let scope = @nodeio.file_scope(max_open=1024)
+  run(@mcap.parse_command(arguments()), scope) catch {
     @mcap.Invalid(reason) => {
       let error : Json = { "error": reason }
       error_exit(error.stringify(), 2)
     }
+  }
+  scope.close() catch {
+    @mcap.Invalid(reason) => error_exit(reason, 2)
   }
 }

@@ -1,4 +1,13 @@
 ///|
+pub fn open_managed_file(
+  _path : String,
+  read_ahead_bytes? : Int = 65536,
+) -> ManagedFile raise @mcap.McapError {
+  ignore(read_ahead_bytes)
+  raise @mcap.io_error("managed files require JS")
+}
+
+///|
 pub fn open_merge_job(
   _path : String,
   resume? : Bool = false,

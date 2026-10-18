@@ -58,6 +58,9 @@ pub fn ReadSource::read_exact(
         "short read without progress or invalid over-read at \{offset}",
       )
     }
+    if out.length() == 0 && bytes.length() == length {
+      return bytes
+    }
     out.write_bytes(bytes[:])
   }
   out.to_bytes()

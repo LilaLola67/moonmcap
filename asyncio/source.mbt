@@ -59,6 +59,9 @@ pub async fn AsyncSource::read_exact(
     if bytes.is_empty() || bytes.length() > length - out.length() {
       raise @mcap.io_error("async read made no progress or over-read")
     }
+    if out.length() == 0 && bytes.length() == length {
+      return bytes
+    }
     out.write_bytes(bytes[:])
   }
   out.to_bytes()

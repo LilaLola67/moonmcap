@@ -10,7 +10,11 @@ pub fn create_sink(String) -> @moonmcap.WriteSink raise @moonmcap.McapError
 
 pub fn file_identity_token(String) -> String raise @moonmcap.McapError
 
+pub fn file_scope(max_open? : Int, read_ahead_bytes? : Int) -> FileScope
+
 pub fn open_file(String) -> @moonmcap.ReadSource raise @moonmcap.McapError
+
+pub fn open_managed_file(String, read_ahead_bytes? : Int) -> ManagedFile raise @moonmcap.McapError
 
 pub fn open_merge_job(String, resume? : Bool) -> MergeJob raise @moonmcap.McapError
 
@@ -29,6 +33,32 @@ pub fn write_new_file(String, Bytes) -> Unit raise @moonmcap.McapError
 // Errors
 
 // Types and methods
+pub(all) struct FileIoMetrics {
+  physical_reads : Int
+  physical_bytes : UInt64
+  cached_bytes : Int
+  closed : Bool
+}
+
+pub struct FileScope {
+  paths : Array[String]
+  files : Array[ManagedFile]
+  maximum : Int
+  ahead : Int
+  mut closed : Bool
+}
+pub fn FileScope::close(Self) -> Unit raise @moonmcap.McapError
+pub fn FileScope::open(Self, String) -> @moonmcap.ReadSource raise @moonmcap.McapError
+
+pub struct ManagedFile {
+  source : @moonmcap.ReadSource
+  close_native : () -> Unit raise @moonmcap.McapError
+  metrics_native : () -> FileIoMetrics
+}
+pub fn ManagedFile::close(Self) -> Unit raise @moonmcap.McapError
+pub fn ManagedFile::metrics(Self) -> FileIoMetrics
+pub fn ManagedFile::source(Self) -> @moonmcap.ReadSource
+
 pub struct MergeJob {
   path : String
   key : String

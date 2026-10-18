@@ -1,5 +1,7 @@
 # 0.8 到 0.14 的接口与行为
 
+0.15.6 新增可显式关闭的 ManagedFile/FileScope；已有 open_file、异步文件接口和查询签名保持兼容。CLI 运行期间持有输入句柄，最多 1024 个；每文件默认 64 KiB 预读。见 [文件 I/O](file-io.md)。
+
 0.15.5 新增 resumable_merge、checkpoint_run_ids 和 Node MergeJob；CommandOptions 新增 job_dir/resume_job，parse_command 原有用法保持兼容。持久任务需显式 --job，普通临时合并行为不变。见 [恢复任务](resumable-merge.md)。
 
 0.15.4 新增 JSON 内容过滤和投影，CommandOptions 增加 content 可选字段（无过滤为 None）；Query 结构和既有查询不变。stream_transform 增加可选 content 参数，原始 MCAP payload 保持不变。见 [JSON 查询](json-query.md)。

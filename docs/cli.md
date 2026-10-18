@@ -1,5 +1,7 @@
 # 通用命令行
 
+内容条件与字段投影见 [JSON 查询](json-query.md)；持久任务、恢复、查看和清理见 [可恢复合并](resumable-merge.md)。输入句柄的关闭与有界预读见 [文件 I/O](file-io.md)。
+
 大文件有序合并使用 `external-merge`，按输入读取、排序段和归并预算处理，不受整文件载入限制。参数和失败清理约定见 [外部排序与合并](external-merge.md)。
 
 需要 Node.js 22.3+。以下命令从项目根目录运行；`--` 后面是应用参数。
@@ -29,9 +31,9 @@ moon run cmd/mcap --target js -- rewrite input.mcap --compression zstd --output 
 | --max-file-bytes N | 完整读取的编码文件预算，默认 64 MiB；merge 为全部输入合计 |
 | --full | query 先执行完整容器校验；受完整读取预算约束 |
 
-query 使用 RangeReader；快速模式只校验摘要和已读取块，在 JSON diagnostics 中明确标记 full_validation=false。无索引时使用有预算的完整扫描回退。query 当前保留一次查询的候选数组，不是磁盘消息游标。
+query 使用 RangeReader 的磁盘消息游标；快速模式只校验摘要和已读取块，在 JSON diagnostics 中明确标记 full_validation=false。无索引时使用有预算的完整扫描回退。NDJSON 逐条输出；普通 JSON/CSV 按查询 limit 收集返回消息。
 
-inspect、slice、merge、recover、rewrite 在内存中读取、校验和处理数据。slice 默认保留原附件和元数据；recover 只恢复连续有效前缀，将停止位置/原因写到标准错误。JSON 消息时间使用字符串，负载使用 data_hex，不进行业务解码；CSV 使用 CRLF 并将 topic 包在引号中。
+inspect、slice、merge、recover、rewrite 在内存中读取、校验和处理数据。slice 默认保留原附件和元数据；recover 只恢复连续有效前缀，将停止位置/原因写到标准错误。JSON 消息时间使用字符串，负载使用 data_hex；显式 --where/--select 增加 JSON 内容解析与 decoded 字段。CSV 使用 CRLF 并将 topic 包在引号中。
 
 输出路径必须不存在，包括作为输出的输入文件自身。先在同目录完整写入并同步临时文件，再通过硬链接独占发布，避免读到半成品或覆盖已有文件；文件系统必须支持同目录硬链接。不支持时报告失败，不退回覆盖写入。参数错误不产生输出，失败清理本次临时文件；不保证跨断电的目录持久性。
 

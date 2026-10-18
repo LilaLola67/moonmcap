@@ -1,12 +1,14 @@
 # MoonMCAP
 
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.15.5**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
+MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.15.6**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
 
 ## 安装与运行
 
 [JSON 内容查询](docs/json-query.md)支持精确数字条件、字段投影、跨文件分页及流式转换筛选。
 
 [可恢复合并任务](docs/resumable-merge.md)支持持久检查点、已完成排序段复用，以及任务查看和清理。
+
+[文件 I/O](docs/file-io.md)提供直接字节桥接、可关闭文件句柄、有界预读及物理读取统计。
 
 需要 `moonc >= 0.10.14`，已验证 `v0.10.14+7d59c7ec9`；文件操作示例需要 Node.js 22.3 及以上。工具链安装见 [MoonBit 官方下载页](https://www.moonbitlang.com/download/)。
 
@@ -27,7 +29,7 @@ JS 目标：`moon test --target js`、`moon run cmd/main --target js`。内存�
 安装 Mooncakes 发行版本：
 
 ```sh
-moon add LilaLola67/moonmcap@0.15.5
+moon add LilaLola67/moonmcap@0.15.6
 ```
 
 也可从 GitHub 克隆复现全部样例；[发布包校验](docs/distribution.md) 可生成经过文件清单检查的模块归档。运行库依赖固定版本的 `bikallem/compress 0.3.4`、`bikallem/blit 0.2.2`，异步包使用 `moonbitlang/async 0.20.2`；[第三方来源与许可证](third_party/README.md) 说明了来源。运行时不需要 Python，也不调用外部压缩进程。
@@ -154,7 +156,7 @@ Python `mcap==1.3.0` 仅为开发阶段的官方参考工具，其包版本不�
 
 ## 边界
 
-不支持外部压缩字典、拼接帧、skippable frame 或自定义压缩算法；不支持消息体语义解码。原有文件 API 接收已加载的 Bytes；RangeReader 和 Node.js 文件适配器支持 [按需读取](docs/range-reader.md)，快速模式不校验未读取的数据。[StreamWriter](docs/stream-writer.md) 支持同步输出、增量校验和与分块/摘要预算；旧 LogBuilder 仍提供完整快照和原子添加。
+不支持外部压缩字典、拼接帧、skippable frame 或自定义压缩算法。消息体可显式执行 JSON 条件和投影；CDR/Protobuf 等编码仍作为原始字节处理。原有文件 API 接收已加载的 Bytes；RangeReader 和 Node.js 文件适配器支持 [按需读取](docs/range-reader.md)，快速模式不校验未读取的数据。[StreamWriter](docs/stream-writer.md) 支持同步输出、增量校验和与分块/摘要预算；旧 LogBuilder 仍提供完整快照和原子添加。
 
 `scan_file` 可取得未知原始记录；`Log` 是语义模型，重写会重建容器，不保留未知记录和扩展字段的原始字节。未提供 CRC 的内容无法仅凭解析证明未损坏。互操作结果限于已执行的矩阵与声明边界，不等于所有未来扩展格式都已验证。
 

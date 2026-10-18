@@ -3,12 +3,24 @@ extern "js" fn identity(path : String) -> String =
   #| (path) => { try { const s = process.getBuiltinModule('node:fs').statSync(path, {bigint:true}); if (!s.isFile()) return '!not a regular file'; return `${s.size}|${s.dev}|${s.ino}|${s.mtimeNs}|${s.ctimeNs}`; } catch (e) { return '!' + e.message; } }
 
 ///|
-extern "js" fn range_hex(
+#external
+type FileRead
+
+///|
+extern "js" fn file_read_error(result : FileRead) -> String =
+  #| result=>result.error
+
+///|
+extern "js" fn file_read_bytes(result : FileRead) -> Bytes =
+  #| result=>result.bytes
+
+///|
+extern "js" fn range_bytes(
   path : String,
   expected : String,
   offset : String,
   length : Int,
-) -> String =
+) -> FileRead =
   #| (path, expected, offset, length) => {
   #|   const fs = process.getBuiltinModule('node:fs'); let fd;
   #|   try {
@@ -16,12 +28,12 @@ extern "js" fn range_hex(
   #|     const sig = () => { const s = fs.fstatSync(fd, {bigint:true}); return `${s.size}|${s.dev}|${s.ino}|${s.mtimeNs}|${s.ctimeNs}`; };
   #|     if (sig() !== expected) throw new Error('source changed since opening');
   #|     const position = Number(BigInt(offset));
-  #|     if (!Number.isSafeInteger(position)) throw new Error('offset exceeds Node safe integer range');
+  #|     if (!Number.isSafeInteger(position+length)) throw new Error('offset exceeds Node safe integer range');
   #|     const data = Buffer.alloc(length);
   #|     const count = fs.readSync(fd, data, 0, length, position);
   #|     if (sig() !== expected) throw new Error('source changed while reading');
-  #|     return data.subarray(0, count).toString('hex');
-  #|   } catch (e) { return '!' + e.message; } finally { if (fd !== undefined) fs.closeSync(fd); }
+  #|     return {error:'',bytes:new Uint8Array(data.buffer,data.byteOffset,count)};
+  #|   } catch (e) { return {error:e.message,bytes:new Uint8Array()}; } finally { if (fd !== undefined) fs.closeSync(fd); }
   #| }
 
 ///|
@@ -35,11 +47,12 @@ pub fn open_file(path : String) -> @mcap.ReadSource raise @mcap.McapError {
     None => raise @mcap.io_error("invalid file identity")
   }
   @mcap.new_read_source(size, fn(offset, length) {
-    let hex = range_hex(path, signature, offset.to_string(), length)
-    if hex.has_prefix("!") {
-      raise @mcap.io_error(hex)
+    let result = range_bytes(path, signature, offset.to_string(), length)
+    let error = file_read_error(result)
+    if error != "" {
+      raise @mcap.io_error(error)
     }
-    @mcap.decode_hex(hex, max_bytes=length)
+    file_read_bytes(result)
   })
 }
 
@@ -48,18 +61,18 @@ extern "js" fn create_exclusive(path : String) -> String =
   #| (path) => { const fs=process.getBuiltinModule('node:fs'); let fd; try { fd=fs.openSync(path,'wx'); const s=fs.fstatSync(fd,{bigint:true}); return `${s.dev}|${s.ino}`; } catch(e) { return '!'+e.message; } finally { if(fd!==undefined) fs.closeSync(fd); } }
 
 ///|
-extern "js" fn append_hex(
+extern "js" fn append_bytes(
   path : String,
   expected : String,
   position : String,
-  hex : String,
+  data : Bytes,
 ) -> String =
-  #| (path,expected,position,hex) => {
+  #| (path,expected,position,data) => {
   #|   const fs=process.getBuiltinModule('node:fs'); let fd;
   #|   try {
   #|     fd=fs.openSync(path,'r+'); const s=fs.fstatSync(fd,{bigint:true});
   #|     if(`${s.dev}|${s.ino}`!==expected || s.size!==BigInt(position)) throw new Error('output changed');
-  #|     const data=Buffer.from(hex,'hex'); const start=Number(BigInt(position));
+  #|     const start=Number(BigInt(position));
   #|     if(!Number.isSafeInteger(start+data.length)) throw new Error('output offset exceeds Node safe range');
   #|     let done=0; while(done<data.length) { const n=fs.writeSync(fd,data,done,data.length-done,start+done); if(!n) throw new Error('write made no progress'); done+=n; }
   #|     return '';
@@ -75,12 +88,7 @@ pub fn create_sink(path : String) -> @mcap.WriteSink raise @mcap.McapError {
   }
   let position = [0UL]
   @mcap.new_write_sink(fn(bytes) {
-    let error = append_hex(
-      path,
-      signature,
-      position[0].to_string(),
-      @mcap.encode_hex(bytes),
-    )
+    let error = append_bytes(path, signature, position[0].to_string(), bytes)
     if error != "" {
       raise @mcap.io_error(error)
     }
@@ -97,7 +105,7 @@ pub fn write_new_file(
   if signature.has_prefix("!") {
     raise @mcap.io_error(signature)
   }
-  let error = append_hex(path, signature, "0", @mcap.encode_hex(bytes))
+  let error = append_bytes(path, signature, "0", bytes)
   if error != "" {
     raise @mcap.io_error(error)
   }
@@ -116,14 +124,14 @@ pub fn read_file(
 }
 
 ///|
-extern "js" fn atomic_hex(path : String, hex : String) -> String =
-  #| (destination,hex) => {
+extern "js" fn atomic_bytes(path : String, data : Bytes) -> String =
+  #| (destination,data) => {
   #|   const fs=process.getBuiltinModule('node:fs'), path=process.getBuiltinModule('node:path');
   #|   const temp=path.join(path.dirname(destination),'.'+path.basename(destination)+'.'+process.getBuiltinModule('node:crypto').randomUUID()+'.tmp');
   #|   let fd,created=false;
   #|   try {
   #|     fd=fs.openSync(temp,'wx'); created=true;
-  #|     fs.writeFileSync(fd,Buffer.from(hex,'hex')); fs.fsyncSync(fd); fs.closeSync(fd); fd=undefined;
+  #|     fs.writeFileSync(fd,data); fs.fsyncSync(fd); fs.closeSync(fd); fd=undefined;
   #|     fs.linkSync(temp,destination); return '';
   #|   } catch(e) { return '!'+e.message; }
   #|   finally { if(fd!==undefined) fs.closeSync(fd); if(created) fs.unlinkSync(temp); }
@@ -135,7 +143,7 @@ pub fn write_atomic_new(
   path : String,
   bytes : Bytes,
 ) -> Unit raise @mcap.McapError {
-  let error = atomic_hex(path, @mcap.encode_hex(bytes))
+  let error = atomic_bytes(path, bytes)
   if error != "" {
     raise @mcap.io_error(error)
   }

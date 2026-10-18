@@ -12,6 +12,6 @@ python tools/transform_stream_workflows.py
 
 临时排序段和两个 MCAP 中间文件统一受 spool_bytes 磁盘预算约束；排序段、归并头部、输入解压、输出块、摘要和声明另有预算。普通错误与协作取消清理已知临时文件；崩溃恢复不在本版范围。CLI 独占发布新输出，失败清理暂存文件；直接调用者必须丢弃失败输出。已有 transform_log 与 transform 命令仍为内存接口。
 
-query --format ndjson 与 FileCursor.write_ndjson 每次向 sink 写一条 JSON 消息对象和换行，时间为无精度损失的字符串、负载为 data_hex，不解码业务内容。输出到 stdout 可接管道；stdout 已发送的行无法撤回，快速查询也不验证未读取内容。输出到文件使用同样的独占发布事务。
+query --format ndjson 与 FileCursor.write_ndjson 每次向 sink 写一条 JSON 消息对象和换行，时间为无精度损失的字符串、负载为 data_hex。CLI 显式指定 --where/--select 时支持 [JSON 条件与投影](json-query.md)；stream-transform --where 先过滤再采样，保持原始负载。输出到 stdout 可接管道；stdout 已发送的行无法撤回，快速查询也不验证未读取内容。输出到文件使用同样的独占发布事务。
 
 scan_source / SourceVisitor 提供物理顺序、单记录/单块缓冲的完整验证访问器，包含消息原始定位信息，供后续索引与工具复用。回调可能在最终 DataEnd CRC/摘要关系校验前执行；调用者只有在整个扫描成功后才能提交副作用。资源和记录预算生效，未知记录不进入语义变换结果。

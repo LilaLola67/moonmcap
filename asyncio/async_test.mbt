@@ -1,4 +1,35 @@
 ///|
+extern "js" fn binary_test_path() -> String =
+  #| ()=>{const fs=process.getBuiltinModule('node:fs'),p=process.getBuiltinModule('node:path');return p.join(fs.mkdtempSync(p.join(process.getBuiltinModule('node:os').tmpdir(),'moonmcap-bytes-')),'data');}
+
+///|
+extern "js" fn binary_test_cleanup(path : String) -> Unit =
+  #| path=>{const fs=process.getBuiltinModule('node:fs');fs.unlinkSync(path);fs.rmdirSync(process.getBuiltinModule('node:path').dirname(path));}
+
+///|
+async test "async binary file bridge preserves every byte and cancelled reads" {
+  let path = binary_test_path()
+  let b = @buffer.Buffer::Buffer()
+  for i = 0; i < 8192; i = i + 1 {
+    b.write_byte((i % 256).to_byte())
+  }
+  let bytes = b.to_bytes()
+  let sink = @asyncio.create_sink(path)
+  sink.write(bytes[0:256].to_owned())
+  sink.write(bytes[256:].to_owned())
+  let source = @asyncio.open_file(path)
+  assert_eq(source.read_exact(0UL, 8192), bytes)
+  assert_eq(source.read_exact(255UL, 1000), bytes[255:1255].to_owned())
+  source.cancel()
+  try source.read_exact(0UL, 1) catch {
+    _ => ()
+  } noraise {
+    _ => fail("cancelled binary read")
+  }
+  binary_test_cleanup(path)
+}
+
+///|
 async test "async file protocol suspends and preserves sorting across small pages" {
   let builder = @mcap.new_builder()
   let channel = builder.register_channel("/test", "raw")
