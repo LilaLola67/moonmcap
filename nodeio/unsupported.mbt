@@ -1,4 +1,67 @@
 ///|
+pub fn open_merge_job(
+  _path : String,
+  resume? : Bool = false,
+) -> MergeJob raise @mcap.McapError {
+  ignore(resume)
+  raise @mcap.io_error("merge jobs require JS")
+}
+
+///|
+pub fn MergeJob::checkpoint(_self : MergeJob) -> Bytes? raise @mcap.McapError {
+  raise @mcap.io_error("merge jobs require JS")
+}
+
+///|
+pub fn MergeJob::save(
+  _self : MergeJob,
+  _bytes : Bytes,
+) -> Unit raise @mcap.McapError {
+  raise @mcap.io_error("merge jobs require JS")
+}
+
+///|
+pub fn MergeJob::storage(_self : MergeJob) -> @mcap.SortStorage {
+  @mcap.sort_storage(
+    fn(_) { raise @mcap.io_error("merge jobs require JS") },
+    fn(_) { raise @mcap.io_error("merge jobs require JS") },
+    fn(_) { () },
+  )
+}
+
+///|
+pub fn MergeJob::output(
+  _self : MergeJob,
+  _target : String,
+) -> OutputTransaction raise @mcap.McapError {
+  raise @mcap.io_error("merge jobs require JS")
+}
+
+///|
+pub fn MergeJob::complete(
+  _self : MergeJob,
+  _report : Json,
+) -> Unit raise @mcap.McapError {
+  raise @mcap.io_error("merge jobs require JS")
+}
+
+///|
+pub fn MergeJob::inspect(_self : MergeJob) -> String raise @mcap.McapError {
+  raise @mcap.io_error("merge jobs require JS")
+}
+
+///|
+pub fn MergeJob::close(self : MergeJob) -> Unit raise @mcap.McapError {
+  self.closed = true
+}
+
+///|
+pub fn MergeJob::clean(self : MergeJob) -> Unit raise @mcap.McapError {
+  self.closed = true
+  raise @mcap.io_error("merge jobs require JS")
+}
+
+///|
 pub fn source_sha256(
   _source : @mcap.ReadSource,
 ) -> String raise @mcap.McapError {

@@ -6,6 +6,7 @@ options(
   targets: {
     "files.mbt": [ "js" ],
     "storage.mbt": [ "js" ],
+    "merge_job.mbt": [ "js" ],
     "fingerprint.mbt": [ "js" ],
     "files_test.mbt": [ "js" ],
     "unsupported.mbt": [ "not", "js" ],

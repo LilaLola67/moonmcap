@@ -17,6 +17,8 @@ pub(all) struct CommandOptions {
   fast_index : Bool
   index_bytes : Int
   content : JsonFilter?
+  job_dir : String
+  resume_job : Bool
 }
 
 ///|
@@ -45,13 +47,16 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       fast_index: false,
       index_bytes: 32 * 1024 * 1024,
       content: None,
+      job_dir: "",
+      resume_job: false,
     }
   }
   let command = args[0]
   if ![
       "inspect", "query", "slice", "merge", "recover", "rewrite", "transform", "validate",
       "reindex", "external-merge", "recover-blocks", "stream-transform", "dataset-query",
-      "index-build", "index-rebuild", "index-check", "index-query",
+      "index-build", "index-rebuild", "index-check", "index-query", "job-inspect",
+      "job-clean",
     ].contains(command) {
     raise Invalid("unknown command: \{command}")
   }
@@ -76,9 +81,9 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       continue
     }
     if !positional && arg.has_prefix("--") {
-      if ["--descending", "--full", "--fast-index", "--skip-invalid-json"].contains(
-          arg,
-        ) {
+      if [
+          "--descending", "--full", "--fast-index", "--skip-invalid-json", "--resume",
+        ].contains(arg) {
         if flags.contains(arg) {
           raise Invalid("duplicate option: \{arg}")
         }
@@ -91,7 +96,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
             "--attachment-media-type", "--attachment-start", "--attachment-end",
             "--metadata-name", "--metadata-match", "--temp-dir", "--run-bytes", "--merge-bytes",
             "--fan-in", "--spool-bytes", "--run-limit", "--declaration-bytes", "--index",
-            "--index-bytes", "--where", "--select",
+            "--index-bytes", "--where", "--select", "--job",
           ].contains(arg) {
           raise Invalid("unknown option: \{arg}")
         }
@@ -182,7 +187,10 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   }
   if ["external-merge", "stream-transform"].contains(command) &&
     (
-      values.get("--temp-dir").unwrap_or("") == "" ||
+      (
+        values.get("--temp-dir").unwrap_or("") == "" &&
+        values.get("--job").unwrap_or("") == ""
+      ) ||
       values.contains("--max-file-bytes")
     ) {
     raise Invalid(
@@ -197,6 +205,15 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     raise Invalid("compression and chunk sizing are MCAP output options")
   }
   let start_time = parse_decimal(values.get("--start").unwrap_or("0"))
+  if values.contains("--job") || flags.contains("--resume") {
+    if command != "external-merge" ||
+      values.get("--job").unwrap_or("") == "" ||
+      values.contains("--temp-dir") {
+      raise Invalid(
+        "--job/--resume require external-merge --job DIR without --temp-dir",
+      )
+    }
+  }
   let end_time = parse_decimal(
     values.get("--end").unwrap_or("18446744073709551615"),
   )
@@ -253,6 +270,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   }
   if ![
       "query", "dataset-query", "index-query", "index-check", "inspect", "validate",
+      "job-inspect", "job-clean",
     ].contains(command) &&
     output == "" {
     raise Invalid("--output is required")
@@ -300,6 +318,8 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     query,
     indexes,
     content,
+    job_dir: values.get("--job").unwrap_or(""),
+    resume_job: flags.contains("--resume"),
     fast_index: flags.contains("--fast-index"),
     index_bytes: decimal_int(values.get("--index-bytes").unwrap_or("33554432")),
     temp_dir: values.get("--temp-dir").unwrap_or(""),

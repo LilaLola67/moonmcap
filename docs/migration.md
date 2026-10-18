@@ -1,5 +1,7 @@
 # 0.8 到 0.14 的接口与行为
 
+0.15.5 新增 resumable_merge、checkpoint_run_ids 和 Node MergeJob；CommandOptions 新增 job_dir/resume_job，parse_command 原有用法保持兼容。持久任务需显式 --job，普通临时合并行为不变。见 [恢复任务](resumable-merge.md)。
+
 0.15.4 新增 JSON 内容过滤和投影，CommandOptions 增加 content 可选字段（无过滤为 None）；Query 结构和既有查询不变。stream_transform 增加可选 content 参数，原始 MCAP payload 保持不变。见 [JSON 查询](json-query.md)。
 
 0.15.3 新增 SidecarReader/SidecarCursor、IndexVerification、build_sidecar/open_sidecar，以及 Node SHA-256 和文件身份适配器。CommandOptions 新增 indexes、fast_index、index_bytes；手工构造完整参数结构体需补字段，parse_command 的既有参数保持兼容。默认侧车打开会完整读取源内容验证 SHA-256，只有显式 TrustIdentity/--fast-index 走文件属性信任模式。

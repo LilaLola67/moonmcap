@@ -15,6 +15,8 @@ pub fn build_query_index(Log) -> QueryIndex raise McapError
 
 pub fn build_sidecar(ReadSource, (ReadSource) -> String raise McapError, identity? : String, limits? : Limits, index_bytes? : Int, declaration_bytes? : Int, cancelled? : () -> Bool) -> Bytes raise McapError
 
+pub fn checkpoint_run_ids(Bytes) -> Array[Int] raise McapError
+
 pub fn compress_payload(Bytes, Compression) -> Bytes
 
 pub fn compute_file_statistics(Log, UInt) -> FileStatistics
@@ -163,6 +165,8 @@ pub fn recover_prefix(Bytes, limits? : Limits) -> RecoveryReport raise McapError
 
 pub fn repair_prefix(Bytes, limits? : Limits) -> (Bytes, RecoveryReport) raise McapError
 
+pub fn resumable_merge(Array[ReadSource], SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, cancelled? : () -> Bool) -> ExternalReport raise McapError
+
 pub fn scan_file(Bytes, limits? : Limits) -> Array[Record] raise McapError
 
 pub fn scan_source(ReadSource, SourceVisitor, limits? : Limits, declaration_bytes? : Int, cancelled? : () -> Bool) -> UInt64 raise McapError
@@ -296,6 +300,8 @@ pub(all) struct CommandOptions {
   fast_index : Bool
   index_bytes : Int
   content : JsonFilter?
+  job_dir : String
+  resume_job : Bool
 }
 
 pub(all) enum Compression {
@@ -585,6 +591,8 @@ pub(all) struct LogStats {
   payload_bytes : UInt64
   topics : Array[TopicStats]
 }
+
+type MergeState
 
 pub(all) struct Message {
   channel_id : Int

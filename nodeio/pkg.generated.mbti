@@ -12,6 +12,8 @@ pub fn file_identity_token(String) -> String raise @moonmcap.McapError
 
 pub fn open_file(String) -> @moonmcap.ReadSource raise @moonmcap.McapError
 
+pub fn open_merge_job(String, resume? : Bool) -> MergeJob raise @moonmcap.McapError
+
 pub fn output_transaction(String) -> OutputTransaction raise @moonmcap.McapError
 
 pub fn read_file(String, maximum? : Int) -> Bytes raise @moonmcap.McapError
@@ -27,6 +29,20 @@ pub fn write_new_file(String, Bytes) -> Unit raise @moonmcap.McapError
 // Errors
 
 // Types and methods
+pub struct MergeJob {
+  path : String
+  key : String
+  mut closed : Bool
+}
+pub fn MergeJob::checkpoint(Self) -> Bytes? raise @moonmcap.McapError
+pub fn MergeJob::clean(Self) -> Unit raise @moonmcap.McapError
+pub fn MergeJob::close(Self) -> Unit raise @moonmcap.McapError
+pub fn MergeJob::complete(Self, Json) -> Unit raise @moonmcap.McapError
+pub fn MergeJob::inspect(Self) -> String raise @moonmcap.McapError
+pub fn MergeJob::output(Self, String) -> OutputTransaction raise @moonmcap.McapError
+pub fn MergeJob::save(Self, Bytes) -> Unit raise @moonmcap.McapError
+pub fn MergeJob::storage(Self) -> @moonmcap.SortStorage
+
 pub struct OutputTransaction {
   target : String
   temporary : String

@@ -52,6 +52,9 @@ fn indexed_reader(
 fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
   if options.command == "help" {
     println(
+      "external-merge INPUT... --job NEW_DIR [--resume] --output NEW.mcap; job-inspect DIR; job-clean DIR",
+    )
+    println(
       "JSON queries: --where '{\"path\":\"/speed\",\"op\":\">\",\"value\":80}' --select /speed (repeatable) --skip-invalid-json; also stream-transform --where",
     )
     println(
@@ -75,6 +78,63 @@ fn run(options : @mcap.CommandOptions) -> Unit raise @mcap.McapError {
     println(
       "validate INPUT [--output REPORT.json]: full structured diagnosis, exit 1 for invalid files\nreindex INPUT --output NEW.mcap: rebuild only from a complete valid data section",
     )
+    return
+  }
+  if ["job-inspect", "job-clean"].contains(options.command) {
+    let job = @nodeio.open_merge_job(options.inputs[0], resume=true)
+    try {
+      if options.command == "job-clean" {
+        job.clean()
+        println("{\"cleaned\":true}")
+      } else {
+        text_output(options.output, job.inspect())
+        job.close()
+      }
+    } catch {
+      error => {
+        job.close() catch {
+          _ => ()
+        }
+        raise error
+      }
+    }
+    return
+  }
+  if options.command == "external-merge" && options.job_dir != "" {
+    let job = @nodeio.open_merge_job(options.job_dir, resume=options.resume_job)
+    try {
+      let checkpoint = job.checkpoint()
+      let sources = options.inputs.map(fn(path) { @nodeio.open_file(path) })
+      let transaction = job.output(options.output)
+      try {
+        let report = @mcap.resumable_merge(
+          sources,
+          job.storage(),
+          transaction.sink(),
+          @nodeio.source_sha256,
+          fn(bytes) { job.save(bytes) },
+          checkpoint?,
+          options=options.external,
+        )
+        transaction.publish()
+        let json = @mcap.external_report_json(report)
+        job.complete(json)
+        println(json.stringify())
+      } catch {
+        error => {
+          transaction.abort()
+          raise error
+        }
+      }
+      job.close()
+    } catch {
+      error => {
+        job.close() catch {
+          _ => ()
+        }
+        raise error
+      }
+    }
     return
   }
   if options.content is Some(filter) &&
