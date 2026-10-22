@@ -19,6 +19,7 @@ pub(all) struct CommandOptions {
   content : JsonFilter?
   job_dir : String
   resume_job : Bool
+  aggregate : AggregateOptions
 }
 
 ///|
@@ -49,20 +50,22 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       content: None,
       job_dir: "",
       resume_job: false,
+      aggregate: aggregate_options(),
     }
   }
   let command = args[0]
   if ![
       "inspect", "query", "slice", "merge", "recover", "rewrite", "transform", "validate",
       "reindex", "external-merge", "recover-blocks", "stream-transform", "dataset-query",
-      "index-build", "index-rebuild", "index-check", "index-query", "job-inspect",
-      "job-clean",
+      "aggregate", "index-build", "index-rebuild", "index-check", "index-query",
+      "job-inspect", "job-clean",
     ].contains(command) {
     raise Invalid("unknown command: \{command}")
   }
   let inputs = []
   let indexes = []
   let projections = []
+  let group_paths = []
   let topics = []
   let renames = []
   let attachment_names = []
@@ -83,6 +86,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     if !positional && arg.has_prefix("--") {
       if [
           "--descending", "--full", "--fast-index", "--skip-invalid-json", "--resume",
+          "--no-topic-group",
         ].contains(arg) {
         if flags.contains(arg) {
           raise Invalid("duplicate option: \{arg}")
@@ -96,7 +100,8 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
             "--attachment-media-type", "--attachment-start", "--attachment-end",
             "--metadata-name", "--metadata-match", "--temp-dir", "--run-bytes", "--merge-bytes",
             "--fan-in", "--spool-bytes", "--run-limit", "--declaration-bytes", "--index",
-            "--index-bytes", "--where", "--select", "--job",
+            "--index-bytes", "--where", "--select", "--job", "--value", "--group",
+            "--window", "--origin", "--max-groups", "--group-bytes",
           ].contains(arg) {
           raise Invalid("unknown option: \{arg}")
         }
@@ -104,7 +109,9 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
         if i >= args.length() || args[i].has_prefix("--") {
           raise Invalid("missing option value: \{arg}")
         }
-        if arg == "--select" {
+        if arg == "--group" {
+          group_paths.push(args[i])
+        } else if arg == "--select" {
           projections.push(args[i])
         } else if arg == "--index" {
           indexes.push(args[i])
@@ -139,15 +146,18 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     i += 1
   }
   if (["merge", "external-merge"].contains(command) && inputs.length() < 2) ||
-    (command == "dataset-query" && inputs.is_empty()) ||
+    (["dataset-query", "aggregate"].contains(command) && inputs.is_empty()) ||
     (
-      !["merge", "external-merge", "dataset-query"].contains(command) &&
+      !["merge", "external-merge", "dataset-query", "aggregate"].contains(
+        command,
+      ) &&
       inputs.length() != 1
     ) {
     raise Invalid("wrong number of input paths")
   }
   if ![
-      "query", "slice", "transform", "stream-transform", "dataset-query", "index-query",
+      "query", "slice", "transform", "stream-transform", "dataset-query", "aggregate",
+      "index-query",
     ].contains(command) &&
     (
       !topics.is_empty() ||
@@ -174,7 +184,9 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     ) {
     raise Invalid("batch options require the transform command")
   }
-  if !["query", "dataset-query", "index-query", "index-check"].contains(command) &&
+  if !["query", "dataset-query", "aggregate", "index-query", "index-check"].contains(
+      command,
+    ) &&
     (flags.contains("--full") || values.contains("--cache-bytes")) {
     raise Invalid("--full and --cache-bytes are query options")
   }
@@ -198,8 +210,8 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     )
   }
   if [
-      "query", "dataset-query", "index-query", "index-check", "index-build", "index-rebuild",
-      "inspect", "validate",
+      "query", "dataset-query", "aggregate", "index-query", "index-check", "index-build",
+      "index-rebuild", "inspect", "validate",
     ].contains(command) &&
     (values.contains("--compression") || values.contains("--chunk-messages")) {
     raise Invalid("compression and chunk sizing are MCAP output options")
@@ -233,17 +245,32 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   if (format == "csv" && command != "query") ||
     (
       format == "ndjson" &&
-      !["query", "dataset-query", "index-query"].contains(command)
+      !["query", "dataset-query", "aggregate", "index-query"].contains(command)
     ) {
     raise Invalid("CSV/NDJSON is available for query")
   }
   let output = values.get("--output").unwrap_or("")
+  if command != "aggregate" &&
+    (
+      !group_paths.is_empty() ||
+      flags.contains("--no-topic-group") ||
+      ["--value", "--window", "--origin", "--max-groups", "--group-bytes"].any(fn(
+        key,
+      ) {
+        values.contains(key)
+      })
+    ) {
+    raise Invalid("aggregate options require aggregate command")
+  }
+  if command == "aggregate" && (format != "json" || !projections.is_empty()) {
+    raise Invalid("aggregate produces JSON groups and does not take --select")
+  }
   let content = if values.contains("--where") ||
     !projections.is_empty() ||
     flags.contains("--skip-invalid-json") {
-    if !["query", "dataset-query", "index-query", "stream-transform"].contains(
-        command,
-      ) ||
+    if ![
+        "query", "dataset-query", "aggregate", "index-query", "stream-transform",
+      ].contains(command) ||
       format == "csv" {
       raise Invalid(
         "JSON content options require JSON queries or stream-transform",
@@ -269,8 +296,8 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     None
   }
   if ![
-      "query", "dataset-query", "index-query", "index-check", "inspect", "validate",
-      "job-inspect", "job-clean",
+      "query", "dataset-query", "aggregate", "index-query", "index-check", "inspect",
+      "validate", "job-inspect", "job-clean",
     ].contains(command) &&
     output == "" {
     raise Invalid("--output is required")
@@ -293,7 +320,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     if indexes.length() != 1 {
       raise Invalid("index-query/index-check requires one --index")
     }
-  } else if command == "dataset-query" {
+  } else if ["dataset-query", "aggregate"].contains(command) {
     if !indexes.is_empty() && indexes.length() != inputs.length() {
       raise Invalid("dataset sidecars must match input count and order")
     }
@@ -306,6 +333,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   if values.contains("--index-bytes") &&
     ![
       "index-build", "index-rebuild", "index-query", "index-check", "dataset-query",
+      "aggregate",
     ].contains(command) {
     raise Invalid("--index-bytes requires index command or dataset-query")
   }
@@ -320,6 +348,21 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     content,
     job_dir: values.get("--job").unwrap_or(""),
     resume_job: flags.contains("--resume"),
+    aggregate: {
+      ..aggregate_options(),
+      value_path: values.get("--value").unwrap_or(""),
+      group_paths,
+      by_topic: !flags.contains("--no-topic-group"),
+      window: parse_decimal(values.get("--window").unwrap_or("0")),
+      origin: parse_decimal(values.get("--origin").unwrap_or("0")),
+      max_groups: decimal_int(values.get("--max-groups").unwrap_or("1024")),
+      group_bytes: decimal_int(values.get("--group-bytes").unwrap_or("8388608")),
+      invalid: if flags.contains("--skip-invalid-json") {
+        JsonSkip
+      } else {
+        JsonError
+      },
+    },
     fast_index: flags.contains("--fast-index"),
     index_bytes: decimal_int(values.get("--index-bytes").unwrap_or("33554432")),
     temp_dir: values.get("--temp-dir").unwrap_or(""),

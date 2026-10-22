@@ -1,5 +1,7 @@
 # 0.8 到 0.14 的接口与行为
 
+0.15.7 新增 AggregateOptions/aggregate_json 和 aggregate 命令；CommandOptions 增加 aggregate 字段，使用 parse_command 的旧调用保持兼容。平均值提供精确分数及明确舍入的小数，见 [聚合](aggregation.md)。
+
 0.15.6 新增可显式关闭的 ManagedFile/FileScope；已有 open_file、异步文件接口和查询签名保持兼容。CLI 运行期间持有输入句柄，最多 1024 个；每文件默认 64 KiB 预读。见 [文件 I/O](file-io.md)。
 
 0.15.5 新增 resumable_merge、checkpoint_run_ids 和 Node MergeJob；CommandOptions 新增 job_dir/resume_job，parse_command 原有用法保持兼容。持久任务需显式 --job，普通临时合并行为不变。见 [恢复任务](resumable-merge.md)。

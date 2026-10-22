@@ -3,6 +3,7 @@ import {
   "moonbitlang/core/buffer",
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "moonbitlang/core/bigint",
   "bikallem/compress/lz4",
   "bikallem/compress/checksum",
   "LilaLola67/moonmcap/internal/zstd",

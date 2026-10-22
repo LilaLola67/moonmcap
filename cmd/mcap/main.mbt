@@ -50,11 +50,41 @@ fn indexed_reader(
 }
 
 ///|
+fn query_dataset(
+  options : @mcap.CommandOptions,
+  scope : @nodeio.FileScope,
+) -> @mcap.Dataset raise @mcap.McapError {
+  let sources = Array::makei(options.inputs.length(), fn(i) {
+    let provider = if options.indexes.is_empty() {
+      let reader = @mcap.open_reader(
+        scope.open(options.inputs[i]),
+        cache_bytes=options.cache_bytes,
+        fallback_bytes=options.max_file_bytes,
+      )
+      if options.full {
+        reader.validate_all()
+      }
+      reader.query_source()
+    } else {
+      indexed_reader(options.inputs[i], options.indexes[i], options, scope).query_source()
+    }
+    match options.content {
+      Some(filter) => provider.filter_json(filter)
+      None => provider
+    }
+  })
+  @mcap.open_dataset(sources)
+}
+
+///|
 fn run(
   options : @mcap.CommandOptions,
   scope : @nodeio.FileScope,
 ) -> Unit raise @mcap.McapError {
   if options.command == "help" {
+    println(
+      "aggregate INPUT... [--value /number --group /field --window NS --origin NS --no-topic-group --max-groups N --group-bytes N] [query filters]",
+    )
     println(
       "external-merge INPUT... --job NEW_DIR [--resume] --output NEW.mcap; job-inspect DIR; job-clean DIR",
     )
@@ -81,6 +111,18 @@ fn run(
     )
     println(
       "validate INPUT [--output REPORT.json]: full structured diagnosis, exit 1 for invalid files\nreindex INPUT --output NEW.mcap: rebuild only from a complete valid data section",
+    )
+    return
+  }
+  if options.command == "aggregate" {
+    let dataset = query_dataset(options, scope)
+    text_output(
+      options.output,
+      @mcap.aggregate_json(
+        dataset.cursor(options.query),
+        dataset.channels(),
+        options=options.aggregate,
+      ).stringify(),
     )
     return
   }

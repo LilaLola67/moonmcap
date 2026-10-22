@@ -7,6 +7,10 @@ import {
 }
 
 // Values
+pub fn aggregate_json(DatasetCursor, Array[Channel], options? : AggregateOptions) -> Json raise McapError
+
+pub fn aggregate_options() -> AggregateOptions
+
 pub fn all_query() -> Query
 
 pub fn block_recovery_json(BlockRecoveryReport) -> Json
@@ -222,6 +226,19 @@ pub suberror McapError {
 pub fn McapError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+pub(all) struct AggregateOptions {
+  value_path : String
+  group_paths : Array[String]
+  by_topic : Bool
+  window : UInt64
+  origin : UInt64
+  max_groups : Int
+  group_bytes : Int
+  invalid : JsonInvalidPolicy
+}
+
+type AggregateState
+
 pub(all) struct Attachment {
   log_time : UInt64
   create_time : UInt64
@@ -302,6 +319,7 @@ pub(all) struct CommandOptions {
   content : JsonFilter?
   job_dir : String
   resume_job : Bool
+  aggregate : AggregateOptions
 }
 
 pub(all) enum Compression {
