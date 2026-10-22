@@ -1,5 +1,6 @@
 import {
   "LilaLola67/moonmcap" @mcap,
+  "moonbitlang/core/json",
 }
 
 options(

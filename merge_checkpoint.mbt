@@ -4,6 +4,8 @@ struct MergeState {
   hashes : Map[Int, String]
   inputs : Array[String]
   auxiliary : String
+  completed : Int
+  input_auxiliary : Array[String]
 }
 
 ///|
@@ -51,7 +53,7 @@ fn merge_checkpoint(
   state : MergeState,
 ) -> Bytes raise McapError {
   let b = @buffer.Buffer::Buffer()
-  b.write_bytes(b"MJOB1\r\n\x00"[:])
+  b.write_bytes(b"MJOB2\r\n\x00"[:])
   b.write_bytes(checkpoint_settings(session.options)[:])
   b.write_uint_le(state.inputs.length().to_uint())
   for fingerprint in state.inputs {
@@ -69,6 +71,11 @@ fn merge_checkpoint(
     b.write_uint_le(id.to_uint())
     b.write_uint64_le(session.live[id])
     checkpoint_text(b, state.hashes[id])
+  }
+  b.write_uint_le(state.completed.to_uint())
+  b.write_uint_le(state.input_auxiliary.length().to_uint())
+  for digest in state.input_auxiliary {
+    checkpoint_text(b, digest)
   }
   let body = b.to_bytes()
   if body.length() > 8 * 1024 * 1024 - 4 {
@@ -88,7 +95,8 @@ fn checkpoint_cursor(bytes : Bytes) -> Cursor raise McapError {
     raise Invalid("merge checkpoint checksum mismatch")
   }
   let c = cursor(body, { ..default_limits(), max_string_bytes: 256, })
-  if c.take(8) != b"MJOB1\r\n\x00" {
+  let version = c.take(8)
+  if version != b"MJOB1\r\n\x00" && version != b"MJOB2\r\n\x00" {
     raise Invalid("unsupported merge checkpoint version")
   }
   c
@@ -159,8 +167,45 @@ fn restore_merge(
     hashes[id] = c.text()
     runs.push(id)
   }
+  let (completed, input_auxiliary) = checkpoint_input_state(
+    c,
+    bytes,
+    inputs.length(),
+    auxiliary,
+  )
   c.finish()
-  { runs, hashes, inputs, auxiliary, }
+  { runs, hashes, inputs, auxiliary, completed, input_auxiliary, }
+}
+
+///|
+fn checkpoint_input_state(
+  c : Cursor,
+  bytes : Bytes,
+  inputs : Int,
+  auxiliary : String,
+) -> (Int, Array[String]) raise McapError {
+  if bytes[0:8].to_owned() == b"MJOB1\r\n\x00" {
+    if auxiliary == "" {
+      raise Invalid("legacy checkpoint missing auxiliary fingerprint")
+    }
+    return (inputs, [])
+  }
+  let completed = bounded_length(
+    c.u32().to_uint64(),
+    inputs,
+    "checkpoint completed inputs",
+  )
+  let count = bounded_length(
+    c.u32().to_uint64(),
+    64,
+    "checkpoint input auxiliary count",
+  )
+  let digests = Array::makei(count, fn(_) { c.text() })
+  if (auxiliary == "" && count != completed) ||
+    (auxiliary != "" && (completed != inputs || count != 0)) {
+    raise Invalid("checkpoint input/auxiliary stage mismatch")
+  }
+  (completed, digests)
 }
 
 ///|
@@ -172,10 +217,10 @@ pub fn checkpoint_run_ids(bytes : Bytes) -> Array[Int] raise McapError {
   for i = 0; i < inputs; i = i + 1 {
     ignore(c.text())
   }
-  ignore(c.text())
+  let auxiliary = c.text()
   ignore(c.take(32))
   let count = bounded_length(c.u32().to_uint64(), 32768, "checkpoint run count")
-  let ids = [-1]
+  let ids = if auxiliary == "" { [] } else { [-1] }
   for i = 0; i < count; i = i + 1 {
     ids.push(
       bounded_length(c.u32().to_uint64(), 2147483647, "checkpoint run id"),
@@ -183,8 +228,95 @@ pub fn checkpoint_run_ids(bytes : Bytes) -> Array[Int] raise McapError {
     ignore(c.u64())
     ignore(c.text())
   }
+  let (_, input_auxiliary) = checkpoint_input_state(c, bytes, inputs, auxiliary)
+  for i = 0; i < input_auxiliary.length(); i = i + 1 {
+    ids.push(-2 - i)
+  }
   c.finish()
   ids
+}
+
+///|
+pub fn checkpoint_progress(bytes : Bytes) -> Json raise McapError {
+  let c = checkpoint_cursor(bytes)
+  ignore(c.take(65))
+  let inputs = bounded_length(c.u32().to_uint64(), 64, "checkpoint inputs")
+  for i = 0; i < inputs; i = i + 1 {
+    ignore(c.text())
+  }
+  let auxiliary = c.text()
+  let messages = c.u64()
+  let next_run = c.u32()
+  let passes = c.u32()
+  ignore(c.take(16))
+  let count = bounded_length(c.u32().to_uint64(), 32768, "checkpoint run count")
+  for i = 0; i < count; i = i + 1 {
+    ignore(c.take(12))
+    ignore(c.text())
+  }
+  let (completed, _) = checkpoint_input_state(c, bytes, inputs, auxiliary)
+  c.finish()
+  {
+    "version": if bytes[0:8].to_owned() == b"MJOB1\r\n\x00" {
+      1
+    } else {
+      2
+    },
+    "input_files": inputs,
+    "completed_inputs": completed,
+    "messages": messages.to_string(),
+    "runs_created": next_run,
+    "merge_groups": passes,
+    "live_runs": count,
+    "stage": if auxiliary == "" {
+      "ingest"
+    } else {
+      "merge"
+    },
+  }
+}
+
+///|
+fn SortSession::auxiliary_sink(
+  self : SortSession,
+  id : Int,
+) -> WriteSink raise McapError {
+  let raw = (self.storage.create)(id)
+  new_write_sink(fn(bytes) {
+    self.check_cancel()
+    if bytes.length().to_uint64() > self.options.spool_bytes - self.spool {
+      raise Invalid("auxiliary MCAP exceeds spool budget")
+    }
+    raw.write(bytes)
+    self.spool += bytes.length().to_uint64()
+    if self.spool > self.peak_spool {
+      self.peak_spool = self.spool
+    }
+  })
+}
+
+///|
+fn copy_merge_auxiliary(
+  source : ReadSource,
+  writer : StreamWriter,
+  options : ExternalOptions,
+  cancelled : () -> Bool,
+) -> Unit raise McapError {
+  ignore(
+    scan_source(
+      source,
+      source_visitor(
+        schema=fn(s) { writer.add_schema(s) },
+        channel=fn(c) { writer.add_channel(c) },
+        attachment=fn(a) { writer.add_attachment(a) },
+        metadata=fn(m) { writer.add_metadata(m) },
+        message=fn(_, _) { raise Invalid("merge auxiliary contains messages") },
+      ),
+      limits=options.limits,
+      declaration_bytes=options.declaration_bytes,
+      cancelled~,
+    ),
+  )
 }
 
 ///|
@@ -235,69 +367,143 @@ pub fn resumable_merge(
     session.check_cancel()
     fingerprint(source)
   })
-  let mut state = match checkpoint {
+  let mut state : MergeState = match checkpoint {
     Some(bytes) => restore_merge(session, bytes, fingerprints)
-    None => {
-      let first = open_reader(
-        sources[0],
-        limits=options.limits,
-        cache_bytes=0,
-        fallback_bytes=0,
-        summary_bytes=options.declaration_bytes,
+    None =>
+      {
+        runs: [],
+        hashes: Map([]),
+        inputs: fingerprints,
+        auxiliary: "",
+        completed: 0,
+        input_auxiliary: [],
+      }
+  }
+  if checkpoint is Some(_) {
+    let auxiliary_ids = if state.auxiliary == "" {
+      Array::makei(state.input_auxiliary.length(), fn(i) { -2 - i })
+    } else {
+      [-1]
+    }
+    for id in auxiliary_ids {
+      let source = (storage.open)(id)
+      let expected = if id == -1 {
+        state.auxiliary
+      } else {
+        state.input_auxiliary[-2 - id]
+      }
+      if fingerprint(source) != expected {
+        raise Invalid("merge auxiliary fingerprint changed")
+      }
+      if source.size > options.spool_bytes - session.spool {
+        raise Invalid("merge auxiliary exceeds spool budget")
+      }
+      session.spool += source.size
+    }
+    // Verify committed rows before adding any new work to the job.
+    let mut count = 0UL
+    for id in state.runs {
+      if fingerprint((storage.open)(id)) != state.hashes[id] {
+        raise Invalid("merge run fingerprint changed")
+      }
+      let run = session.open_run(id)
+      count += run.count
+      while run.next() is Some(row) {
+        if row.ordinal >= session.ordinal {
+          raise Invalid("merge run ordinal out of bounds")
+        }
+      }
+    }
+    if count != session.ordinal {
+      raise Invalid("merge checkpoint message count mismatch")
+    }
+  }
+  if state.auxiliary == "" {
+    let first = open_reader(
+      sources[0],
+      limits=options.limits,
+      cache_bytes=0,
+      fallback_bytes=0,
+      summary_bytes=options.declaration_bytes,
+    )
+    let global = { ..empty_log(), header: first.declarations.header, }
+    if state.completed > 0 {
+      ignore(
+        scan_source(
+          (storage.open)(-1 - state.completed),
+          source_visitor(
+            schema=fn(s) { add_schema(global, s) },
+            channel=fn(c) { add_channel(global, c) },
+            message=fn(_, _) {
+              raise Invalid("input auxiliary contains messages")
+            },
+          ),
+          limits=options.limits,
+          declaration_bytes=options.declaration_bytes,
+          cancelled~,
+        ),
       )
-      let global = { ..empty_log(), header: first.declarations.header, }
-      let raw = (storage.create)(-1)
-      // Non-message records also consume the physical temporary-space budget.
-      let auxiliary = new_stream_writer(
-        new_write_sink(fn(data) {
-          if data.length().to_uint64() > options.spool_bytes - session.spool {
-            raise Invalid("auxiliary MCAP exceeds spool budget")
-          }
-          raw.write(data)
-          session.spool += data.length().to_uint64()
-          if session.spool > session.peak_spool {
-            session.peak_spool = session.spool
-          }
-        }),
+      for schema in global.schemas {
+        session.reserve_declaration(encode_schema(schema).length())
+      }
+      for channel in global.channels {
+        session.reserve_declaration(encode_channel(channel).length())
+      }
+    }
+    for i = state.completed; i < sources.length(); i = i + 1 {
+      session.check_cancel()
+      let writer = new_stream_writer(
+        session.auxiliary_sink(-2 - i),
         profile=global.header.profile,
         options=options.output,
         limits=options.limits,
       )
-      let runs = []
-      for source in sources {
-        session.ingest(source, global, auxiliary, runs)
+      for schema in global.schemas {
+        writer.add_schema(schema)
       }
+      for channel in global.channels {
+        writer.add_channel(channel)
+      }
+      session.ingest(sources[i], global, writer, state.runs)
       if session.flush_run() is Some(id) {
-        runs.push(id)
+        state.runs.push(id)
       }
-      ignore(auxiliary.finish())
-      if session.spool > session.peak_spool {
-        session.peak_spool = session.spool
+      ignore(writer.finish())
+      for id in state.runs {
+        if !state.hashes.contains(id) {
+          state.hashes[id] = fingerprint((storage.open)(id))
+        }
       }
-      let hashes : Map[Int, String] = Map([])
-      for id in runs {
-        hashes[id] = fingerprint((storage.open)(id))
-      }
-      let state : MergeState = {
-        runs,
-        hashes,
-        inputs: fingerprints,
-        auxiliary: fingerprint((storage.open)(-1)),
-      }
+      state.input_auxiliary.push(fingerprint((storage.open)(-2 - i)))
+      state = { ..state, completed: i + 1, }
       save(merge_checkpoint(session, state))
-      state
     }
+    let writer = new_stream_writer(
+      session.auxiliary_sink(-1),
+      profile=global.header.profile,
+      options=options.output,
+      limits=options.limits,
+    )
+    for i = 0; i < state.input_auxiliary.length(); i = i + 1 {
+      copy_merge_auxiliary((storage.open)(-2 - i), writer, options, cancelled)
+    }
+    ignore(writer.finish())
+    let next = {
+      ..state,
+      auxiliary: fingerprint((storage.open)(-1)),
+      input_auxiliary: [],
+    }
+    save(merge_checkpoint(session, next))
+    for i = 0; i < state.input_auxiliary.length(); i = i + 1 {
+      let size = (storage.open)(-2 - i).size
+      (storage.remove)(-2 - i)
+      session.spool -= size
+    }
+    state = next
   }
   let auxiliary = (storage.open)(-1)
   if fingerprint(auxiliary) != state.auxiliary {
     raise Invalid("merge auxiliary fingerprint changed")
-  }
-  // Restored counters cover runs; add auxiliary bytes exactly once.
-  if checkpoint is Some(_) {
-    if auxiliary.size > options.spool_bytes - session.spool {
-      raise Invalid("merge auxiliary exceeds spool budget")
-    }
-    session.spool += auxiliary.size
   }
   let mut total = 0UL
   for id in state.runs {

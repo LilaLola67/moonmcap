@@ -19,6 +19,8 @@ pub fn build_query_index(Log) -> QueryIndex raise McapError
 
 pub fn build_sidecar(ReadSource, (ReadSource) -> String raise McapError, identity? : String, limits? : Limits, index_bytes? : Int, declaration_bytes? : Int, cancelled? : () -> Bool) -> Bytes raise McapError
 
+pub fn checkpoint_progress(Bytes) -> Json raise McapError
+
 pub fn checkpoint_run_ids(Bytes) -> Array[Int] raise McapError
 
 pub fn compress_payload(Bytes, Compression) -> Bytes

@@ -18,7 +18,7 @@ extern "js" fn job_operation(
   #| (path,key,op,payload)=>{const fs=process.getBuiltinModule('node:fs'),p=process.getBuiltinModule('node:path');try{
   #|   if(!fs.lstatSync(path).isDirectory()||fs.lstatSync(path).isSymbolicLink()||fs.readFileSync(p.join(path,'owner.json'),'utf8')!=='MoonMCAP merge job 1\n')throw new Error('job ownership changed');
   #|   const lock=p.join(path,'lock');if(JSON.parse(fs.readFileSync(lock,'utf8')).key!==key)throw new Error('job lock ownership changed');
-  #|   const names=fs.readdirSync(path);for(const name of names){if(!/^(?:-1|0|[1-9][0-9]*)\.run$/.test(name)&&!['owner.json','lock','checkpoint.bin','checkpoint.tmp','result.part','complete.json'].includes(name))throw new Error('unrecognized file in job directory');const s=fs.lstatSync(p.join(path,name));if(!s.isFile()||s.isSymbolicLink())throw new Error('job contains nonregular entry');}
+  #|   const names=fs.readdirSync(path);for(const name of names){if(!/^(?:-(?:[1-9]|[1-5][0-9]|6[0-5])|0|[1-9][0-9]*)\.run$/.test(name)&&!['owner.json','lock','checkpoint.bin','checkpoint.tmp','result.part','complete.json'].includes(name))throw new Error('unrecognized file in job directory');const s=fs.lstatSync(p.join(path,name));if(!s.isFile()||s.isSymbolicLink())throw new Error('job contains nonregular entry');}
   #|   const syncdir=()=>{let fd;try{fd=fs.openSync(path,'r');fs.fsyncSync(fd);}catch(e){if(process.platform!=='win32')throw e;}finally{if(fd!==undefined)fs.closeSync(fd);}};
   #|   const checkpoint=p.join(path,'checkpoint.bin');
   #|   if(op==='load'){if(fs.existsSync(p.join(path,'complete.json')))throw new Error('merge job already published');if(!fs.existsSync(checkpoint))return '';if(fs.statSync(checkpoint).size>8388608)throw new Error('checkpoint exceeds budget');return fs.readFileSync(checkpoint).toString('hex');}
@@ -134,7 +134,15 @@ pub fn MergeJob::complete(
 
 ///|
 pub fn MergeJob::inspect(self : MergeJob) -> String raise @mcap.McapError {
-  self.operation("inspect", "")
+  let value = @json.parse(self.operation("inspect", "")[:]) catch {
+    _ => raise @mcap.io_error("invalid job status")
+  }
+  if value is Object(fields) && fields.get("checkpoint") is Some(True) {
+    fields["progress"] = @mcap.checkpoint_progress(
+      read_file("\{self.path}/checkpoint.bin", maximum=8 * 1024 * 1024),
+    )
+  }
+  value.stringify()
 }
 
 ///|
