@@ -1,4 +1,15 @@
 ///|
+/// Physical scan evidence. Accepted records can still fail the final data CRC.
+pub(all) enum SourceScanEvent {
+  RecordStart(UInt64)
+  RecordRead(UInt64, Byte, Int)
+  RecordAccepted(UInt64, Byte, Int)
+  DataChecksum(UInt64, UInt, UInt)
+  DataValidated(UInt64, Bool)
+  SummaryStart(UInt64)
+}
+
+///|
 pub(all) struct MessageLocation {
   offset : UInt64
   span : Int
@@ -36,6 +47,7 @@ pub fn scan_source(
   limits? : Limits = default_limits(),
   declaration_bytes? : Int = 8 * 1024 * 1024,
   cancelled? : () -> Bool = fn() { false },
+  trace? : (SourceScanEvent) -> Unit = fn(_) { () },
 ) -> UInt64 raise McapError {
   if declaration_bytes < 0 {
     raise Invalid("negative scan declaration budget")
@@ -55,6 +67,7 @@ pub fn scan_source(
   let options = { ..external_options(), limits, declaration_bytes, }
   let session : SortSession = {
     observer: Some(visitor),
+    trace: Some(trace),
     preserve_ids: true,
     storage,
     options,

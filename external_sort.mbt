@@ -72,6 +72,7 @@ fn compare_rows(a : SortRow, b : SortRow) -> Int {
 ///|
 struct SortSession {
   observer : SourceVisitor?
+  trace : ((SourceScanEvent) -> Unit)?
   preserve_ids : Bool
   storage : SortStorage
   options : ExternalOptions
@@ -87,6 +88,16 @@ struct SortSession {
   mut peak_merge : Int
   mut passes : Int
   mut declared : Int
+}
+
+///|
+fn SortSession::trace_event(
+  self : SortSession,
+  event : SourceScanEvent,
+) -> Unit {
+  if self.trace is Some(callback) {
+    callback(event)
+  }
 }
 
 ///|

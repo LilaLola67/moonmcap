@@ -347,6 +347,7 @@ pub fn resumable_merge(
   validate_log(empty_log(), limits=options.limits)
   let session : SortSession = {
     observer: None,
+    trace: None,
     preserve_ids: false,
     storage,
     options,

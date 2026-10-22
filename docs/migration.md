@@ -1,5 +1,7 @@
 # 0.8 到 0.14 的接口与行为
 
+0.15.12 新增 diagnose_source、SourceScanEvent/scan_source(trace~)、BlockRecoveryEvidence/recover_blocks(on_block~)、recover_blocks_detailed 与 cmd/diagnose。原有签名增加可选参数，既有调用不变。diagnosis_json 的可选字段修正为标量或 null，曾依赖数组形状的调用方需调整。见 [大文件诊断](source-diagnostics.md)。
+
 0.15.11 写出版本 2 检查点并继续读取版本 1；输入阶段增加逐文件保存点，新增 checkpoint_progress，job-inspect 展示已提交进度。resumable_merge 签名不变，自定义存储需允许 -2..-65 的专有输入辅助段。见 [恢复任务](resumable-merge.md)。
 
 0.15.10 新增 AsyncQuerySource/AsyncDataset/AsyncSidecarReader、异步内容哈希和 NDJSON；SidecarCursor 增加 poll/feed，next 保持兼容；Dataset.remap_message/QuerySource.declaration_log 供提供方复用核心校验。见 [统一异步查询](async-dataset.md)。

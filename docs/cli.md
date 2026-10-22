@@ -1,5 +1,7 @@
 # 通用命令行
 
+`cmd/diagnose validate|recover` 提供有资源预算的大文件完整校验和带时间证据的部分恢复，详见 [大文件诊断](source-diagnostics.md)。它按记录读取，不使用下文的完整文件载入预算。
+
 内容条件与字段投影见 [JSON 查询](json-query.md)；持久任务、恢复、查看和清理见 [可恢复合并](resumable-merge.md)。输入句柄的关闭与有界预读见 [文件 I/O](file-io.md)。
 
 大文件有序合并使用 `external-merge`，按输入读取、排序段和归并预算处理，不受整文件载入限制。参数和失败清理约定见 [外部排序与合并](external-merge.md)。

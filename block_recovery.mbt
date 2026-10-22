@@ -1,4 +1,17 @@
 ///|
+pub(all) struct BlockRecoveryEvidence {
+  start : UInt64
+  end : UInt64
+  recovered : Bool
+  messages : Int
+  actual_start : UInt64?
+  actual_end : UInt64?
+  advertised_start : UInt64
+  advertised_end : UInt64
+  reason : String?
+}
+
+///|
 pub(all) struct RecoveredBlock {
   start : UInt64
   end : UInt64
@@ -30,6 +43,7 @@ pub fn recover_blocks(
   limits? : Limits = default_limits(),
   options? : StreamOptions = stream_options(),
   summary_bytes? : Int = 8 * 1024 * 1024,
+  on_block? : (BlockRecoveryEvidence) -> Unit raise McapError = fn(_) { () },
 ) -> BlockRecoveryReport raise McapError {
   let reader = open_reader(
     source,
@@ -79,6 +93,17 @@ pub fn recover_blocks(
     } catch {
       Invalid(reason) => {
         skipped.push({ start: index.chunk_start, end, reason, })
+        on_block({
+          start: index.chunk_start,
+          end,
+          recovered: false,
+          messages: 0,
+          actual_start: None,
+          actual_end: None,
+          advertised_start: index.start_time,
+          advertised_end: index.end_time,
+          reason: Some(reason),
+        })
         None
       }
     }
@@ -88,14 +113,50 @@ pub fn recover_blocks(
       }
       records += chunk.records.length()
       let mut count = 0
+      let mut first : UInt64? = None
+      let mut last : UInt64? = None
       for record in chunk.records {
         if record.opcode == 0x05 {
-          writer.append(decode_message(record.body, limits~))
+          let message = decode_message(record.body, limits~)
+          writer.append(message)
+          first = Some(
+            match first {
+              Some(value) =>
+                if value < message.log_time {
+                  value
+                } else {
+                  message.log_time
+                }
+              None => message.log_time
+            },
+          )
+          last = Some(
+            match last {
+              Some(value) =>
+                if value > message.log_time {
+                  value
+                } else {
+                  message.log_time
+                }
+              None => message.log_time
+            },
+          )
           count += 1
         }
       }
       messages += count
       recovered.push({ start: index.chunk_start, end, messages: count, })
+      on_block({
+        start: index.chunk_start,
+        end,
+        recovered: true,
+        messages: count,
+        actual_start: first,
+        actual_end: last,
+        advertised_start: index.start_time,
+        advertised_end: index.end_time,
+        reason: None,
+      })
     }
   }
   if recovered.is_empty() {
@@ -108,6 +169,49 @@ pub fn recover_blocks(
     messages,
     output_bytes: sink.position(),
     source_complete: false,
+  }
+}
+
+///|
+pub fn recover_blocks_detailed(
+  source : ReadSource,
+  sink : WriteSink,
+  limits? : Limits = default_limits(),
+  options? : StreamOptions = stream_options(),
+  summary_bytes? : Int = 8 * 1024 * 1024,
+  max_ranges? : Int = 10000,
+) -> Json raise McapError {
+  if max_ranges <= 0 || limits.max_record_bytes > 2147483638 {
+    raise Invalid("invalid recovery range or record budget")
+  }
+  let evidence : Array[Json] = []
+  let report = recover_blocks(source, sink, limits~, options~, summary_bytes~, on_block=fn(
+    block,
+  ) {
+    if evidence.length() >= max_ranges {
+      raise Invalid("recovery evidence range budget exceeded")
+    }
+    evidence.push({
+      "start": block.start.to_string(),
+      "end": block.end.to_string(),
+      "recovered": block.recovered,
+      "recovered_messages": block.messages,
+      "actual_time_start": evidence_time(block.actual_start),
+      "actual_time_end": evidence_time(block.actual_end),
+      "advertised_time_start": block.advertised_start.to_string(),
+      "advertised_time_end": block.advertised_end.to_string(),
+      "unknown_lost_messages": Json::null(),
+      "reason": match block.reason {
+        Some(value) => Json::string(value)
+        None => Json::null()
+      },
+    })
+  })
+  {
+    "summary": block_recovery_json(report),
+    "ranges": evidence,
+    "advertised_time_basis": "CRC-checked ChunkIndex claims; not proof of exact missing times or counts",
+    "actual_time_basis": "decoded messages in independently verified chunks",
   }
 }
 

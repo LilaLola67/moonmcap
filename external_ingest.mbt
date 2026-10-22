@@ -320,7 +320,11 @@ fn SortSession::ingest(
     if count >= limits.max_records {
       raise Invalid("external input record budget exceeded")
     }
+    self.trace_event(RecordStart(position))
     let record = source.record(position, reader.data_end + 13UL, limits)
+    self.trace_event(
+      RecordRead(position, record.opcode, record.body.length() + 9),
+    )
     if position == 8UL && record.opcode != 0x01 {
       raise Invalid("external input first record is not Header")
     }
@@ -437,6 +441,7 @@ fn SortSession::ingest(
         let value = cursor(record.body, limits)
         let expected = value.u32()
         value.finish()
+        self.trace_event(DataChecksum(position, expected, crc))
         if expected != 0U && expected != crc {
           raise Invalid("external input data CRC mismatch")
         }
@@ -444,6 +449,8 @@ fn SortSession::ingest(
           tables.chunks.to_uint64() != indexes.length().to_uint64() {
           raise Invalid("external input orphan ChunkIndex")
         }
+        self.trace_event(DataValidated(position, expected != 0U))
+        self.trace_event(SummaryStart(position + 13UL))
         self.check_input_summary(source, reader, tables, count + 1)
         return
       }
@@ -451,6 +458,9 @@ fn SortSession::ingest(
         raise Invalid("external input summary record inside data")
       _ => ()
     }
+    self.trace_event(
+      RecordAccepted(position, record.opcode, record.body.length() + 9),
+    )
     crc = crc32_extend(crc, frame(record.opcode, record.body))
     position += (record.body.length() + 9).to_uint64()
     count += 1
@@ -470,6 +480,7 @@ pub fn external_merge(
 ) -> ExternalReport raise McapError {
   let session : SortSession = {
     observer: None,
+    trace: None,
     preserve_ids,
     storage,
     options,

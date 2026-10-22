@@ -83,6 +83,8 @@ moon run cmd/interop --target js -- examples/files/truncated-zstd.mcap _interop/
 
 ## 更多兼容检查
 
+大文件诊断的 [百万条消息及超过 2 GiB 实测报告](validation/large-source-0.15.12.json) 和 [复现命令](../docs/source-diagnostics.md) 也随仓库提供；测试文件由脚本实际生成，不将大体积输入提交到仓库。
+
 这三个样例展示完整操作流程。完整压缩矩阵、无消息索引、无摘要偏移、混合压缩块及大消息等 **30 项**验证可运行：
 
 ```sh

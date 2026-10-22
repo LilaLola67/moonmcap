@@ -1,0 +1,93 @@
+{
+  "large": true,
+  "fixture": "official MCAP Python writer, actual bytes written to disk, CRCs enabled",
+  "rss_note": "OS process high-water RSS includes runtime and temporary allocations; read/record budgets are not an RSS ceiling",
+  "cases": [
+    {
+      "case": "million-messages",
+      "messages": 1000000,
+      "source_bytes": 63006257,
+      "sha256": "eeb765ae70883b05f1bcc9c1a10d3f153323e20761a8e7ce62f3b9950eca048f",
+      "elapsed_seconds": 4.8246,
+      "max_rss_kib": 217384,
+      "final_rss_bytes": 214450176,
+      "node": "v24.15.0",
+      "platform": "win32",
+      "arch": "x64",
+      "diagnosis": {
+        "valid": true,
+        "source_complete": true,
+        "source_bytes": "63006257",
+        "data_valid": true,
+        "data_crc_verified": true,
+        "observed_messages": "1000000",
+        "accepted_chunks": "121",
+        "observed_time_start": "0",
+        "observed_time_end": "9999990",
+        "parsed_data_prefix_end": "63006043",
+        "prefix_is_integrity_proof": false,
+        "failed_record_range": null,
+        "unchecked_range": null,
+        "unknown_lost_messages": null,
+        "issues": [],
+        "io": {
+          "bytes_read": "63006808",
+          "read_calls": "262",
+          "peak_read_bytes": 524389,
+          "peak_record_span": 524398
+        },
+        "budgets": {
+          "read_bytes": 1048576,
+          "record_bytes": 16777216,
+          "decoded_chunk_bytes": 67108864,
+          "summary_bytes": 8388608,
+          "total_records": 3000000
+        },
+        "memory_mode": "bounded records, decoded chunks and declaration tables; not an RSS cap"
+      }
+    },
+    {
+      "case": "over-2gib",
+      "messages": 2049,
+      "source_bytes": 2148621208,
+      "sha256": "ccf2c2c4b8b7c695fd896d9a3ca33bf84132dbbfc88e91a68582f0379170ae39",
+      "elapsed_seconds": 137.1662,
+      "max_rss_kib": 132356,
+      "final_rss_bytes": 64856064,
+      "node": "v24.15.0",
+      "platform": "win32",
+      "arch": "x64",
+      "diagnosis": {
+        "valid": true,
+        "source_complete": true,
+        "source_bytes": "2148621208",
+        "data_valid": true,
+        "data_crc_verified": true,
+        "observed_messages": "2049",
+        "accepted_chunks": "513",
+        "observed_time_start": "0",
+        "observed_time_end": "20480",
+        "parsed_data_prefix_end": "2148620994",
+        "prefix_is_integrity_proof": false,
+        "failed_record_range": null,
+        "unchecked_range": null,
+        "unknown_lost_messages": null,
+        "issues": [],
+        "io": {
+          "bytes_read": "2148621759",
+          "read_calls": "3095",
+          "peak_read_bytes": 1048576,
+          "peak_record_span": 4194511
+        },
+        "budgets": {
+          "read_bytes": 1048576,
+          "record_bytes": 16777216,
+          "decoded_chunk_bytes": 67108864,
+          "summary_bytes": 8388608,
+          "total_records": 3000000
+        },
+        "memory_mode": "bounded records, decoded chunks and declaration tables; not an RSS cap"
+      }
+    }
+  ]
+}

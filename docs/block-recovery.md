@@ -1,5 +1,7 @@
 # 独立块部分恢复
 
+0.15.12 新增 `recover_blocks_detailed` 和 `cmd/diagnose recover`，给出实际恢复时间、索引声明时间及明确的未知丢失数量，支持范围数量预算。见 [恢复证据](source-diagnostics.md)。原命令和返回结构保持兼容。
+
 `recover` 继续只恢复连续前缀，遇到损坏就停止。`recover-blocks` 是另一个显式操作：依靠已通过非零 CRC 校验的摘要 ChunkIndex 定位每个块，接受完整通过解压、非零 Chunk CRC、声明副本、时间/压缩属性和消息索引验证的块。坏块不会阻止检查后面的独立块，不扫描坏字节猜测下一条记录。
 
 ```sh

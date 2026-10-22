@@ -403,15 +403,18 @@ pub fn diagnosis_json(report : FileDiagnosis) -> Json {
     "data_crc_verified": report.data_crc_verified,
     "messages": report.messages,
     "chunks": report.chunks,
-    "data_end": report.data_end.map(fn(v) { v.to_string() }),
+    "data_end": evidence_time(report.data_end),
     "issues": report.issues.map(fn(d) -> Json {
       {
         "code": d.code.name(),
-        "offset": d.offset.map(fn(v) { v.to_string() }),
-        "opcode": d.opcode.map(fn(v) { v.to_int() }),
+        "offset": evidence_time(d.offset),
+        "opcode": match d.opcode {
+          Some(value) => Json::number(value.to_int().to_double())
+          None => Json::null()
+        },
         "message": d.message,
-        "expected": d.expected.map(fn(v) { v.to_string() }),
-        "actual": d.actual.map(fn(v) { v.to_string() }),
+        "expected": evidence_time(d.expected),
+        "actual": evidence_time(d.actual),
       }
     }),
   }

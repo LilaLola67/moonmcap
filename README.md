@@ -1,8 +1,10 @@
 # MoonMCAP
 
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.15.11**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
+MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.15.12**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
 
 ## 安装与运行
+
+[大文件诊断](docs/source-diagnostics.md)按记录完整校验，提供首错范围、读取统计和实际恢复消息时间证据。
 
 [统一异步查询](docs/async-dataset.md)组合本地/HTTP、侧车、JSON 条件、跨文件分页和 NDJSON 导出。
 
@@ -37,7 +39,7 @@ JS 目标：`moon test --target js`、`moon run cmd/main --target js`。内存�
 安装 Mooncakes 发行版本：
 
 ```sh
-moon add LilaLola67/moonmcap@0.15.11
+moon add LilaLola67/moonmcap@0.15.12
 ```
 
 也可从 GitHub 克隆复现全部样例；[发布包校验](docs/distribution.md) 可生成经过文件清单检查的模块归档。运行库依赖固定版本的 `bikallem/compress 0.3.4`、`bikallem/blit 0.2.2`，异步包使用 `moonbitlang/async 0.20.2`；[第三方来源与许可证](third_party/README.md) 说明了来源。运行时不需要 Python，也不调用外部压缩进程。
@@ -126,9 +128,10 @@ python tools/conformance.py
 python tools/count_source.py
 ```
 
-- MoonBit 单元/回归测试：Wasm 138 项、JS 153 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
+- MoonBit 单元/回归测试：Wasm 142 项、JS 157 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
 - 真实文件验证：30 项；包含 `3 输入压缩 × 2 摘要布局 × 3 输出压缩 = 18` 组双向读写检查，以及顺序文件、无消息索引、无摘要偏移、混合压缩和查询/合并/恢复工作流。
 - 真实文件验证还覆盖按需读取、三种流式输出、8 项 CLI、4 项批量变换、8 项诊断修复，以及 5 项异步录制、15 项 HTTP 故障、5 项磁盘排序、9 项独立块恢复、108 项固定种子差分检查和 4 组进程 RSS 测量。执行命令见下方，结果位于 `_interop/` 各子目录的 `report.json`。GitHub Actions 完整执行并上传报告。
+- 新增 45 项大文件诊断与恢复故障用例，百万条消息与实际超过 2 GiB 文件的本地验证见 [规模报告](docs/performance.md)。常规 CI 使用缩小规模，完整规模测试可手动启用。
 
 ```sh
 python tools/range_benchmark.py
@@ -143,6 +146,16 @@ python tools/block_workflows.py
 python tools/transform_stream_workflows.py
 python tools/dataset_workflows.py
 python tools/sidecar_workflows.py
+python tools/json_workflows.py
+python tools/checkpoint_workflows.py
+python tools/input_checkpoint_workflows.py
+python tools/io_workflows.py
+python tools/aggregate_workflows.py
+python tools/diff_workflows.py
+python tools/replay_workflows.py
+python tools/async_dataset_workflows.py
+python tools/source_diagnostic_workflows.py
+python tools/large_source_workflows.py
 python tools/fuzz_workflows.py
 python tools/memory_benchmark.py
 python tools/package_audit.py

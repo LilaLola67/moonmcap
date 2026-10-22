@@ -1,5 +1,7 @@
 # 结构化诊断与索引修复
 
+大文件按记录校验及更详细的独立块恢复证据见 [大文件诊断](source-diagnostics.md)。本页的 Bytes 接口仍受完整文件读取预算限制。
+
 ```sh
 moon run cmd/mcap --target js -- validate input.mcap
 moon run cmd/mcap --target js -- reindex damaged-summary.mcap --output rebuilt.mcap --compression zstd
