@@ -8,11 +8,34 @@ import struct
 import subprocess
 import sys
 import time
+import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "_interop_deps"))
 from mcap.writer import Writer, CompressionType
 from mcap.reader import NonSeekingReader
+
+
+def committed_run_ids(checkpoint):
+    """Read only committed run entries, excluding files orphaned by a crash."""
+    assert checkpoint[:8] in (b"MJOB1\r\n\0", b"MJOB2\r\n\0")
+    assert zlib.crc32(checkpoint[:-4]) == struct.unpack_from("<I", checkpoint, len(checkpoint) - 4)[0]
+    position = 8 + 65
+    inputs = struct.unpack_from("<I", checkpoint, position)[0]
+    position += 4
+    for _ in range(inputs + 1):
+        length = struct.unpack_from("<I", checkpoint, position)[0]
+        position += 4 + length
+    position += 32
+    count = struct.unpack_from("<I", checkpoint, position)[0]
+    position += 4
+    ids = []
+    for _ in range(count):
+        ids.append(struct.unpack_from("<I", checkpoint, position)[0])
+        position += 12
+        length = struct.unpack_from("<I", checkpoint, position)[0]
+        position += 4 + length
+    return ids
 
 
 def run():
@@ -89,7 +112,11 @@ def run():
     rows.append({"case": "settings-mismatch", "result": "passed"})
     damaged = work / ("damaged-"+suffix)
     shutil.copytree(job, damaged)
-    runfile = next(p for p in damaged.glob("*.run") if p.name != "-1.run")
+    # A kill between journal publication and old-run removal can leave validly
+    # unreferenced .run files. Resume must discard those, rather than verify them.
+    live_ids = committed_run_ids((damaged / "checkpoint.bin").read_bytes())
+    assert live_ids
+    runfile = damaged / f"{live_ids[0]}.run"
     data = bytearray(runfile.read_bytes())
     data[-1] ^= 1
     runfile.write_bytes(data)
