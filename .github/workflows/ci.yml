@@ -75,6 +75,9 @@ jobs:
         run: python tools/sidecar_workflows.py
       - name: Verify byte IO bridges bounded read ahead and measurements
         if: matrix.target == 'js'
+        run: python tools/replay_workflows.py
+      - name: Verify byte IO bridges bounded read ahead and measurements
+        if: matrix.target == 'js'
         run: python tools/diff_workflows.py
       - name: Verify byte IO bridges bounded read ahead and measurements
         if: matrix.target == 'js'
@@ -122,6 +125,7 @@ jobs:
             _interop/io/report.json
             _interop/aggregate/report.json
             _interop/diff/report.json
+            _interop/replay/report.json
             _interop/fuzz/report.json
             _interop/memory/report.json
             _interop/package/report.json

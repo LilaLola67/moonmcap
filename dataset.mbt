@@ -39,6 +39,11 @@ pub fn query_source(
 }
 
 ///|
+pub fn QuerySource::declaration_log(self : QuerySource) -> Log {
+  copy_log(self.declarations)
+}
+
+///|
 pub fn RangeReader::query_source(
   self : RangeReader,
 ) -> QuerySource raise McapError {

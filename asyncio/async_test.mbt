@@ -1,4 +1,50 @@
 ///|
+async test "timed playback injects clock waits backpressure and cancellation" {
+  let builder = @mcap.new_builder()
+  let id = builder.register_channel("/replay", "raw")
+  for time in [100000000UL, 200000000UL, 300000000UL] {
+    builder.append(id, time, b"x")
+  }
+  let replay = @mcap.replay(
+    @mcap.build_query_index(builder.snapshot()).query_source(),
+  )
+  let clock = [0UL]
+  let emitted = []
+  @asyncio.playback(
+    replay,
+    fn() { clock[0] },
+    async fn(delay) {
+      @async.pause()
+      clock[0] += delay
+    },
+    async fn(message) {
+      emitted.push((message.log_time, clock[0]))
+      @async.pause()
+      if emitted.length() == 1 {
+        replay.set_rate(2, 1, clock[0])
+      }
+    },
+  )
+  assert_eq(emitted, [
+    (100000000UL, 0UL),
+    (200000000UL, 50000000UL),
+    (300000000UL, 100000000UL),
+  ])
+  let replay = @mcap.replay(
+    @mcap.build_query_index(builder.snapshot()).query_source(),
+  )
+  let stopped = [false]
+  @asyncio.playback(
+    replay,
+    fn() { clock[0] },
+    async fn(_) { @async.pause() },
+    async fn(_) { stopped[0] = true },
+    cancelled=fn() { stopped[0] },
+  )
+  assert_eq(replay.progress(clock[0]).state, @mcap.ReplayCancelled)
+}
+
+///|
 extern "js" fn binary_test_path() -> String =
   #| ()=>{const fs=process.getBuiltinModule('node:fs'),p=process.getBuiltinModule('node:path');return p.join(fs.mkdtempSync(p.join(process.getBuiltinModule('node:os').tmpdir(),'moonmcap-bytes-')),'data');}
 

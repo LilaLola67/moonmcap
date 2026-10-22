@@ -173,6 +173,8 @@ pub fn recover_prefix(Bytes, limits? : Limits) -> RecoveryReport raise McapError
 
 pub fn repair_prefix(Bytes, limits? : Limits) -> (Bytes, RecoveryReport) raise McapError
 
+pub fn replay(QuerySource, query? : Query, rate_numerator? : Int, rate_denominator? : Int, pending_bytes? : Int) -> Replay raise McapError
+
 pub fn resumable_merge(Array[ReadSource], SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, cancelled? : () -> Bool) -> ExternalReport raise McapError
 
 pub fn scan_file(Bytes, limits? : Limits) -> Array[Record] raise McapError
@@ -739,6 +741,7 @@ pub struct QuerySource {
   open : (Query, Int) -> MessageStream raise McapError
   materialized : Bool
 }
+pub fn QuerySource::declaration_log(Self) -> Log
 pub fn QuerySource::filter_json(Self, JsonFilter) -> Self raise McapError
 
 pub struct RangeReader {
@@ -813,6 +816,56 @@ pub(all) struct RecoveryReport {
   complete : Bool
   reason : String
 }
+
+pub struct Replay {
+  source : QuerySource
+  query : Query
+  budget : Int
+  mut stream : MessageStream
+  mut pending : Message?
+  mut state : ReplayState
+  mut position : UInt64
+  mut wall : UInt64
+  mut last_clock : UInt64?
+  mut numerator : Int
+  mut denominator : Int
+  mut emitted : Int
+  mut generation : Int
+  mut previous : UInt64?
+}
+pub fn Replay::cancel(Self) -> Unit
+pub fn Replay::pause(Self, UInt64) -> Unit raise McapError
+pub fn Replay::poll(Self, UInt64) -> ReplayPoll raise McapError
+pub fn Replay::progress(Self, UInt64) -> ReplayProgress raise McapError
+pub fn Replay::resume(Self, UInt64) -> Unit raise McapError
+pub fn Replay::seek(Self, UInt64, UInt64) -> Unit raise McapError
+pub fn Replay::set_rate(Self, Int, Int, UInt64) -> Unit raise McapError
+pub fn Replay::step(Self, UInt64) -> Message? raise McapError
+
+pub(all) enum ReplayPoll {
+  ReplayWait(UInt64)
+  ReplayIdle
+  ReplayEvent(Message)
+  ReplayEnd
+}
+
+pub(all) struct ReplayProgress {
+  state : ReplayState
+  position : UInt64
+  emitted : Int
+  rate_numerator : Int
+  rate_denominator : Int
+  generation : Int
+}
+
+pub(all) enum ReplayState {
+  ReplayReady
+  ReplayRunning
+  ReplayPaused
+  ReplayDone
+  ReplayCancelled
+  ReplayFailed
+} derive(Eq, @debug.Debug)
 
 type RunHead
 
