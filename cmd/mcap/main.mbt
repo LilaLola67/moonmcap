@@ -83,6 +83,9 @@ fn run(
 ) -> Unit raise @mcap.McapError {
   if options.command == "help" {
     println(
+      "diff LEFT RIGHT [--json-payloads --bucket-bytes N --aux-bytes N --max-details N --detail-bytes N]; exit 0 equal, 1 different, 2 invalid",
+    )
+    println(
       "aggregate INPUT... [--value /number --group /field --window NS --origin NS --no-topic-group --max-groups N --group-bytes N] [query filters]",
     )
     println(
@@ -124,6 +127,18 @@ fn run(
         options=options.aggregate,
       ).stringify(),
     )
+    return
+  }
+  if options.command == "diff" {
+    let report = @mcap.diff_sources(
+      scope.open(options.inputs[0]),
+      scope.open(options.inputs[1]),
+      options=options.diff,
+    )
+    text_output(options.output, report.stringify())
+    if report is Object(fields) && fields["equal"] is False {
+      set_exit_code(1)
+    }
     return
   }
   if ["job-inspect", "job-clean"].contains(options.command) {

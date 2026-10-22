@@ -1,5 +1,7 @@
 # 0.8 到 0.14 的接口与行为
 
+0.15.8 新增 DiffOptions/diff_sources 和 diff 命令，CommandOptions 增加 diff 字段。diff 以退出码 1 表示合法文件存在内容差异；错误仍为 2。见 [日志比较](semantic-diff.md)。
+
 0.15.7 新增 AggregateOptions/aggregate_json 和 aggregate 命令；CommandOptions 增加 aggregate 字段，使用 parse_command 的旧调用保持兼容。平均值提供精确分数及明确舍入的小数，见 [聚合](aggregation.md)。
 
 0.15.6 新增可显式关闭的 ManagedFile/FileScope；已有 open_file、异步文件接口和查询签名保持兼容。CLI 运行期间持有输入句柄，最多 1024 个；每文件默认 64 KiB 预读。见 [文件 I/O](file-io.md)。

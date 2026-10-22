@@ -73,6 +73,10 @@ pub fn diagnose_file(Bytes, limits? : Limits) -> FileDiagnosis
 
 pub fn diagnosis_json(FileDiagnosis) -> Json
 
+pub fn diff_options() -> DiffOptions
+
+pub fn diff_sources(ReadSource, ReadSource, options? : DiffOptions) -> Json raise McapError
+
 pub fn empty_log(profile? : String) -> Log
 
 pub fn encode_attachment(Attachment, checksums? : Bool) -> Bytes
@@ -320,6 +324,7 @@ pub(all) struct CommandOptions {
   job_dir : String
   resume_job : Bool
   aggregate : AggregateOptions
+  diff : DiffOptions
 }
 
 pub(all) enum Compression {
@@ -410,6 +415,20 @@ pub(all) enum DiagnosticCode {
   LimitExceeded
 } derive(Eq, @debug.Debug)
 pub fn DiagnosticCode::name(Self) -> String
+
+type DiffBag
+
+pub(all) struct DiffOptions {
+  json_payloads : Bool
+  bucket_bytes : Int
+  auxiliary_bytes : Int
+  max_details : Int
+  detail_bytes : Int
+  fallback_bytes : Int
+  limits : Limits
+}
+
+type DiffResult
 
 type ExactDecimal
 

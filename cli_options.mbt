@@ -20,6 +20,7 @@ pub(all) struct CommandOptions {
   job_dir : String
   resume_job : Bool
   aggregate : AggregateOptions
+  diff : DiffOptions
 }
 
 ///|
@@ -51,6 +52,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       job_dir: "",
       resume_job: false,
       aggregate: aggregate_options(),
+      diff: diff_options(),
     }
   }
   let command = args[0]
@@ -58,7 +60,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       "inspect", "query", "slice", "merge", "recover", "rewrite", "transform", "validate",
       "reindex", "external-merge", "recover-blocks", "stream-transform", "dataset-query",
       "aggregate", "index-build", "index-rebuild", "index-check", "index-query",
-      "job-inspect", "job-clean",
+      "job-inspect", "job-clean", "diff",
     ].contains(command) {
     raise Invalid("unknown command: \{command}")
   }
@@ -86,7 +88,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     if !positional && arg.has_prefix("--") {
       if [
           "--descending", "--full", "--fast-index", "--skip-invalid-json", "--resume",
-          "--no-topic-group",
+          "--no-topic-group", "--json-payloads",
         ].contains(arg) {
         if flags.contains(arg) {
           raise Invalid("duplicate option: \{arg}")
@@ -101,7 +103,8 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
             "--metadata-name", "--metadata-match", "--temp-dir", "--run-bytes", "--merge-bytes",
             "--fan-in", "--spool-bytes", "--run-limit", "--declaration-bytes", "--index",
             "--index-bytes", "--where", "--select", "--job", "--value", "--group",
-            "--window", "--origin", "--max-groups", "--group-bytes",
+            "--window", "--origin", "--max-groups", "--group-bytes", "--bucket-bytes",
+            "--aux-bytes", "--max-details", "--detail-bytes",
           ].contains(arg) {
           raise Invalid("unknown option: \{arg}")
         }
@@ -147,8 +150,9 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   }
   if (["merge", "external-merge"].contains(command) && inputs.length() < 2) ||
     (["dataset-query", "aggregate"].contains(command) && inputs.is_empty()) ||
+    (command == "diff" && inputs.length() != 2) ||
     (
-      !["merge", "external-merge", "dataset-query", "aggregate"].contains(
+      !["merge", "external-merge", "dataset-query", "aggregate", "diff"].contains(
         command,
       ) &&
       inputs.length() != 1
@@ -250,6 +254,20 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     raise Invalid("CSV/NDJSON is available for query")
   }
   let output = values.get("--output").unwrap_or("")
+  if command != "diff" &&
+    (
+      flags.contains("--json-payloads") ||
+      ["--bucket-bytes", "--aux-bytes", "--max-details", "--detail-bytes"].any(fn(
+        k,
+      ) {
+        values.contains(k)
+      })
+    ) {
+    raise Invalid("diff options require diff command")
+  }
+  if command == "diff" && format != "json" {
+    raise Invalid("diff produces JSON")
+  }
   if command != "aggregate" &&
     (
       !group_paths.is_empty() ||
@@ -297,7 +315,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   }
   if ![
       "query", "dataset-query", "aggregate", "index-query", "index-check", "inspect",
-      "validate", "job-inspect", "job-clean",
+      "validate", "job-inspect", "job-clean", "diff",
     ].contains(command) &&
     output == "" {
     raise Invalid("--output is required")
@@ -348,6 +366,23 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     content,
     job_dir: values.get("--job").unwrap_or(""),
     resume_job: flags.contains("--resume"),
+    diff: {
+      ..diff_options(),
+      json_payloads: flags.contains("--json-payloads"),
+      bucket_bytes: decimal_int(
+        values.get("--bucket-bytes").unwrap_or("8388608"),
+      ),
+      auxiliary_bytes: decimal_int(
+        values.get("--aux-bytes").unwrap_or("8388608"),
+      ),
+      max_details: decimal_int(values.get("--max-details").unwrap_or("64")),
+      detail_bytes: decimal_int(
+        values.get("--detail-bytes").unwrap_or("262144"),
+      ),
+      fallback_bytes: decimal_int(
+        values.get("--max-file-bytes").unwrap_or("67108864"),
+      ),
+    },
     aggregate: {
       ..aggregate_options(),
       value_path: values.get("--value").unwrap_or(""),
