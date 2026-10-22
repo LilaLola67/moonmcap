@@ -1,4 +1,9 @@
 ///|
+pub async fn source_sha256(_source : AsyncSource) -> String {
+  raise @mcap.io_error("async SHA-256 requires JS host")
+}
+
+///|
 pub async fn open_file(_path : String) -> AsyncSource {
   raise @mcap.io_error("async Node file adapter requires JS")
 }

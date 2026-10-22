@@ -3,6 +3,7 @@ import {
   "moonbitlang/async",
   "moonbitlang/async/js_async",
   "moonbitlang/core/buffer",
+  "moonbitlang/core/encoding/utf8",
 }
 
 options(

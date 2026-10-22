@@ -1,5 +1,7 @@
 # 0.8 到 0.14 的接口与行为
 
+0.15.10 新增 AsyncQuerySource/AsyncDataset/AsyncSidecarReader、异步内容哈希和 NDJSON；SidecarCursor 增加 poll/feed，next 保持兼容；Dataset.remap_message/QuerySource.declaration_log 供提供方复用核心校验。见 [统一异步查询](async-dataset.md)。
+
 0.15.9 新增 Replay、ReplayPoll/Progress 和 asyncio.playback，以及 cmd/replay 定时导出示例；QuerySource.declaration_log 返回独立声明副本。原查询和录制接口不变。见 [回放](replay.md)。
 
 0.15.8 新增 DiffOptions/diff_sources 和 diff 命令，CommandOptions 增加 diff 字段。diff 以退出码 1 表示合法文件存在内容差异；错误仍为 2。见 [日志比较](semantic-diff.md)。

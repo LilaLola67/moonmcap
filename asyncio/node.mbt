@@ -1,4 +1,36 @@
 ///|
+#external
+type SourceDigest
+
+///|
+extern "js" fn source_digest() -> SourceDigest =
+  #| ()=>process.getBuiltinModule('node:crypto').createHash('sha256')
+
+///|
+extern "js" fn digest_bytes(state : SourceDigest, bytes : Bytes) -> Unit =
+  #| (s,b)=>{s.update(b);}
+
+///|
+extern "js" fn digest_finish(state : SourceDigest) -> String =
+  #| s=>s.digest('hex')
+
+///|
+pub async fn source_sha256(source : AsyncSource) -> String {
+  let digest = source_digest()
+  let mut offset = 0UL
+  while offset < source.size {
+    let length = if source.size - offset > 1048576UL {
+      1048576
+    } else {
+      (source.size - offset).to_int()
+    }
+    digest_bytes(digest, source.read_exact(offset, length))
+    offset += length.to_uint64()
+  }
+  digest_finish(digest)
+}
+
+///|
 extern "js" fn file_identity(path : String) -> @js_async.Promise[String] =
   #| async path => { try { const s=await process.getBuiltinModule('node:fs/promises').stat(path,{bigint:true}); if(!s.isFile()) throw new Error('not a regular file'); return `${s.size}|${s.dev}|${s.ino}|${s.mtimeNs}|${s.ctimeNs}`; } catch(e) { return '!'+e.message; } }
 

@@ -353,6 +353,7 @@ pub struct Dataset {
 }
 pub fn Dataset::channels(Self) -> Array[Channel]
 pub fn Dataset::cursor(Self, Query, pending_bytes? : Int) -> DatasetCursor raise McapError
+pub fn Dataset::remap_message(Self, Int, Message) -> Message raise McapError
 pub fn Dataset::schemas(Self) -> Array[Schema]
 
 pub struct DatasetCursor {
@@ -892,10 +893,15 @@ pub struct SidecarCursor {
   mut offset_left : Int
   mut emitted : Int
   mut skipped : Int
+  mut waiting : ReadSpan?
+  mut ready : Message?
 }
 pub fn SidecarCursor::cancel(Self) -> Unit
+pub fn SidecarCursor::feed(Self, Bytes) -> Unit raise McapError
 pub fn SidecarCursor::next(Self) -> Message? raise McapError
 pub fn SidecarCursor::next_page(Self, Int) -> Array[Message] raise McapError
+pub fn SidecarCursor::pending_bytes(Self) -> Int
+pub fn SidecarCursor::poll(Self) -> FilePoll raise McapError
 pub fn SidecarCursor::progress(Self) -> Json
 pub fn SidecarCursor::seek(Self, UInt64) -> Unit raise McapError
 pub fn SidecarCursor::write_ndjson(Self, WriteSink) -> Int raise McapError
@@ -920,6 +926,7 @@ pub struct SidecarReader {
 pub fn SidecarReader::channels(Self) -> Array[Channel]
 pub fn SidecarReader::clear_cache(Self) -> Unit
 pub fn SidecarReader::cursor(Self, Query) -> SidecarCursor raise McapError
+pub fn SidecarReader::declaration_log(Self) -> Log
 pub fn SidecarReader::info(Self) -> Json
 pub fn SidecarReader::query_source(Self) -> QuerySource raise McapError
 pub fn SidecarReader::validate_entries(Self) -> Unit raise McapError

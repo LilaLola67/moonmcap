@@ -1,4 +1,129 @@
 ///|
+async test "unified async datasets combine sidecars JSON filtering paging and seek" {
+  let builder = @mcap.new_builder()
+  let id = builder.register_channel("/json", "json")
+  for i = 0; i < 20; i = i + 1 {
+    builder.append(id, (19 - i).to_uint64(), @utf8.encode("{\"n\":\{i}}"[:]))
+  }
+  let bytes = builder.finish(compression=@mcap.Zstd, messages_per_chunk=3)
+  let source = @asyncio.new_source(bytes.length().to_uint64(), async fn(
+    offset,
+    length,
+  ) {
+    @async.pause()
+    bytes[offset.to_int():offset.to_int() + length].to_owned()
+  })
+  let digest = @asyncio.source_sha256(source)
+  let index = @mcap.build_sidecar(@mcap.memory_source(bytes), fn(_) { digest })
+  let sidecar = @asyncio.open_sidecar(
+    source,
+    index,
+    @asyncio.AsyncVerifyContent(@asyncio.source_sha256),
+    cache_bytes=0,
+  )
+  let ordinary = @asyncio.open_reader(source)
+  let filter = @mcap.json_filter("{\"path\":\"/n\",\"op\":\">=\",\"value\":10}")
+  let dataset = @asyncio.open_dataset([
+    sidecar.query_source().filter_json(filter),
+    ordinary.query_source().filter_json(filter),
+  ])
+  let expected = @mcap.open_dataset([
+    @mcap.build_query_index(builder.snapshot())
+    .query_source()
+    .filter_json(filter),
+    @mcap.build_query_index(builder.snapshot())
+    .query_source()
+    .filter_json(filter),
+  ])
+  for descending in [false, true] {
+    let query = { ..@mcap.all_query(), descending, offset: 3, limit: 7, }
+    let cursor = dataset.cursor(query)
+    let actual = cursor.next_page(2) + cursor.next_page(5)
+    assert_eq(actual, expected.cursor(query).next_page(7))
+    cursor.seek(5UL)
+    let adjusted = {
+      ..query,
+      offset: 0,
+      start_time: if descending {
+        0UL
+      } else {
+        5UL
+      },
+      end_time: if descending {
+        5UL
+      } else {
+        18446744073709551615UL
+      },
+    }
+    assert_eq(cursor.next_page(7), expected.cursor(adjusted).next_page(7))
+    cursor.cancel()
+    assert_eq(cursor.next(), None)
+  }
+  let output = @buffer.Buffer::Buffer()
+  let count = dataset
+    .cursor({ ..@mcap.all_query(), limit: 3, })
+    .write_ndjson(
+      @asyncio.new_sink(async fn(bytes) {
+        @async.pause()
+        output.write_bytes(bytes[:])
+      }),
+      content=filter,
+    )
+  assert_eq(count, 3)
+  let tiny = sidecar.cursor(@mcap.all_query(), pending_bytes=1)
+  try tiny.next() catch {
+    _ => ()
+  } noraise {
+    _ => fail("sidecar span budget")
+  }
+}
+
+///|
+async test "async dataset cancellation rejects concurrency and unordered providers" {
+  let builder = @mcap.new_builder()
+  let id = builder.register_channel("/raw", "raw")
+  builder.append(id, 2UL, b"a")
+  builder.append(id, 1UL, b"b")
+  let log = builder.snapshot()
+  let declarations = { ..log, messages: [], }
+  let provider = @asyncio.async_query_source(declarations, fn(_, _) {
+    let index = [0]
+    @asyncio.async_message_stream(
+      async fn() {
+        @async.pause()
+        if index[0] >= 2 {
+          None
+        } else {
+          let value = log.messages[index[0]]
+          index[0] += 1
+          Some(value)
+        }
+      },
+      fn() { () },
+    )
+  })
+  let cursor = @asyncio.open_dataset([provider]).cursor(@mcap.all_query())
+  ignore(cursor.next())
+  try cursor.next() catch {
+    _ => ()
+  } noraise {
+    _ => fail("unordered provider accepted")
+  }
+  let cursor = @asyncio.open_dataset([provider]).cursor(@mcap.all_query())
+  @async.with_task_group(async fn(group) {
+    let task = group.spawn(async fn() { cursor.next() })
+    @async.pause()
+    try cursor.next() catch {
+      _ => ()
+    } noraise {
+      _ => fail("concurrent read accepted")
+    }
+    cursor.cancel()
+    assert_eq(task.wait(), None)
+  })
+}
+
+///|
 async test "timed playback injects clock waits backpressure and cancellation" {
   let builder = @mcap.new_builder()
   let id = builder.register_channel("/replay", "raw")

@@ -145,6 +145,21 @@ pub fn open_dataset(
 }
 
 ///|
+pub fn Dataset::remap_message(
+  self : Dataset,
+  source_index : Int,
+  message : Message,
+) -> Message raise McapError {
+  if source_index < 0 || source_index >= self.remaps.length() {
+    raise Invalid("dataset source index out of bounds")
+  }
+  guard self.remaps[source_index].get(message.channel_id) is Some(id) else {
+    raise Invalid("dataset message channel not declared")
+  }
+  { ..message, channel_id: id, }
+}
+
+///|
 pub fn Dataset::channels(self : Dataset) -> Array[Channel] {
   self.declarations.channels.map(fn(c) { { ..c, metadata: c.metadata.copy(), } })
 }

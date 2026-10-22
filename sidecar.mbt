@@ -383,10 +383,14 @@ pub struct SidecarCursor {
   mut offset_left : Int
   mut emitted : Int
   mut skipped : Int
+  mut waiting : ReadSpan?
+  mut ready : Message?
 }
 
 ///|
 fn SidecarCursor::reset(self : SidecarCursor, query : Query) -> Unit {
+  self.waiting = None
+  self.ready = None
   self.query = query
   self.remaining = query.limit
   self.offset_left = query.offset
@@ -434,50 +438,143 @@ pub fn SidecarReader::cursor(
     offset_left: 0,
     emitted: 0,
     skipped: 0,
+    waiting: None,
+    ready: None,
   }
   cursor.reset(query)
   cursor
 }
 
 ///|
-pub fn SidecarCursor::next(self : SidecarCursor) -> Message? raise McapError {
+pub fn SidecarCursor::poll(self : SidecarCursor) -> FilePoll raise McapError {
   if self.state == FileFailed {
     raise Invalid("sidecar cursor failed")
   }
   if self.state != FileActive {
-    return None
+    return FileDone
   }
   try {
     while self.position >= 0 && self.position < self.reader.positions.length() {
       let entry = self.reader.entries[self.reader.positions[self.position]]
-      self.position += if self.query.descending { -1 } else { 1 }
       if entry.time < self.query.start_time || entry.time > self.query.end_time {
         break
       }
       if !self.allowed.contains(entry.channel) {
+        self.position += if self.query.descending { -1 } else { 1 }
         continue
       }
       if self.offset_left > 0 {
         self.offset_left -= 1
         self.skipped += 1
+        self.position += if self.query.descending { -1 } else { 1 }
         continue
       }
-      let message = self.reader.load(entry)
+      let message = match self.ready {
+        Some(message) => message
+        None =>
+          if entry.location.inner is Some(_) &&
+            self.reader.cached_offset == Some(entry.location.offset) &&
+            self.reader.cached_span == entry.location.span {
+            self.reader.load(entry)
+          } else {
+            let span : ReadSpan = {
+              offset: entry.location.offset,
+              length: entry.location.span,
+            }
+            self.waiting = Some(span)
+            return FileRead(span)
+          }
+      }
+      self.ready = None
+      self.waiting = None
+      self.position += if self.query.descending { -1 } else { 1 }
       self.emitted += 1
       self.remaining -= 1
       if self.remaining == 0 {
         self.state = FileExhausted
       }
-      return Some(message)
+      return FileMessage(message)
     }
     self.state = FileExhausted
-    None
+    FileDone
   } catch {
     Invalid(reason) => {
       self.state = FileFailed
       raise Invalid(reason)
     }
   }
+}
+
+///|
+pub fn SidecarCursor::feed(
+  self : SidecarCursor,
+  bytes : Bytes,
+) -> Unit raise McapError {
+  try {
+    guard self.state == FileActive &&
+      self.waiting is Some(span) &&
+      bytes.length() == span.length else {
+      raise Invalid("unexpected sidecar feed")
+    }
+    let entry = self.reader.entries[self.reader.positions[self.position]]
+    let mirror = new_read_source(self.reader.source.size, fn(offset, length) {
+      if offset < span.offset ||
+        offset - span.offset > bytes.length().to_uint64() {
+        raise Invalid("sidecar feed range mismatch")
+      }
+      let start = (offset - span.offset).to_int()
+      if length > bytes.length() - start {
+        raise Invalid("sidecar feed length mismatch")
+      }
+      bytes[start:start + length].to_owned()
+    })
+    let staged = { ..self.reader, source: mirror, }
+    self.ready = Some(staged.load(entry))
+    self.reader.cached = staged.cached
+    self.reader.cached_offset = staged.cached_offset
+    self.reader.cached_span = staged.cached_span
+    self.reader.cached_bytes = staged.cached_bytes
+    self.waiting = None
+  } catch {
+    error => {
+      self.state = FileFailed
+      self.waiting = None
+      self.ready = None
+      raise error
+    }
+  }
+}
+
+///|
+pub fn SidecarCursor::next(self : SidecarCursor) -> Message? raise McapError {
+  try {
+    while true {
+      match self.poll() {
+        FileDone => return None
+        FileMessage(message) => return Some(message)
+        FileRead(span) =>
+          self.feed(self.reader.source.read_exact(span.offset, span.length))
+      }
+    }
+    None
+  } catch {
+    error => {
+      self.state = FileFailed
+      self.waiting = None
+      self.ready = None
+      raise error
+    }
+  }
+}
+
+///|
+pub fn SidecarCursor::pending_bytes(self : SidecarCursor) -> Int {
+  self.ready.map(fn(m) { m.data.length() + 31 }).unwrap_or(0)
+}
+
+///|
+pub fn SidecarReader::declaration_log(self : SidecarReader) -> Log {
+  copy_log(self.declarations)
 }
 
 ///|
@@ -527,6 +624,8 @@ pub fn SidecarCursor::seek(
 
 ///|
 pub fn SidecarCursor::cancel(self : SidecarCursor) -> Unit {
+  self.ready = None
+  self.waiting = None
   if self.state != FileFailed {
     self.state = FileCancelled
   }

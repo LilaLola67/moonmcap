@@ -6,6 +6,10 @@ import {
 }
 
 // Values
+pub fn async_message_stream(async () -> @moonmcap.Message?, () -> Unit, pending_bytes? : () -> Int) -> AsyncMessageStream
+
+pub fn async_query_source(@moonmcap.Log, (@moonmcap.Query, Int) -> AsyncMessageStream raise @moonmcap.McapError, materialized? : Bool) -> AsyncQuerySource raise @moonmcap.McapError
+
 pub async fn create_sink(String) -> AsyncSink
 
 pub fn new_sink(async (Bytes) -> Unit, abort? : () -> Unit) -> AsyncSink
@@ -14,15 +18,21 @@ pub fn new_source(UInt64, async (UInt64, Int) -> Bytes, abort? : () -> Unit) -> 
 
 pub async fn new_writer(AsyncSink, profile? : String, options? : @moonmcap.StreamOptions, limits? : @moonmcap.Limits, queue_bytes? : Int) -> AsyncWriter
 
+pub fn open_dataset(Array[AsyncQuerySource], limits? : @moonmcap.Limits, declaration_bytes? : Int, max_sources? : Int) -> AsyncDataset raise @moonmcap.McapError
+
 pub async fn open_file(String) -> AsyncSource
 
 pub async fn open_http(String, timeout_ms? : Int, retries? : Int, max_range_bytes? : Int) -> AsyncSource
 
 pub async fn open_reader(AsyncSource, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int, limits? : @moonmcap.Limits) -> AsyncReader
 
+pub async fn open_sidecar(AsyncSource, Bytes, AsyncIndexVerification, limits? : @moonmcap.Limits, index_bytes? : Int, cache_bytes? : Int) -> AsyncSidecarReader
+
 pub async fn playback(@moonmcap.Replay, () -> UInt64, async (UInt64) -> Unit, async (@moonmcap.Message) -> Unit, cancelled? : () -> Bool) -> Unit
 
 pub fn rotating_writer(@moonmcap.Log, async (Int) -> AsyncSink, options? : @moonmcap.StreamOptions, queue_bytes? : Int, segment_messages? : Int, segment_bytes_target? : UInt64, segment_span? : UInt64, segment_limit? : Int) -> RotatingWriter raise @moonmcap.McapError
+
+pub async fn source_sha256(AsyncSource) -> String
 
 // Errors
 
@@ -38,6 +48,57 @@ pub async fn AsyncCursor::next_page(Self, Int) -> Array[@moonmcap.Message]
 pub fn AsyncCursor::progress(Self) -> @moonmcap.FileProgress
 pub fn AsyncCursor::seek(Self, UInt64) -> Unit raise @moonmcap.McapError
 
+pub struct AsyncDataset {
+  providers : Array[AsyncQuerySource]
+  metadata : @moonmcap.Dataset
+  limits : @moonmcap.Limits
+}
+pub fn AsyncDataset::channels(Self) -> Array[@moonmcap.Channel]
+pub fn AsyncDataset::cursor(Self, @moonmcap.Query, pending_bytes? : Int) -> AsyncDatasetCursor raise @moonmcap.McapError
+
+pub struct AsyncDatasetCursor {
+  dataset : AsyncDataset
+  original : @moonmcap.Query
+  budget : Int
+  streams : Array[AsyncMessageStream]
+  heap : Array[@moonmcap.DatasetMessage]
+  previous : Array[UInt64?]
+  mut query : @moonmcap.Query
+  mut state : @moonmcap.FileCursorState
+  mut initialized : Bool
+  mut advance : Int?
+  mut remaining : Int
+  mut offset : Int
+  mut emitted : Int
+  mut skipped : Int
+  mut peak : Int
+  mut busy : Bool
+}
+pub fn AsyncDatasetCursor::cancel(Self) -> Unit
+pub async fn AsyncDatasetCursor::next(Self) -> @moonmcap.DatasetMessage?
+pub async fn AsyncDatasetCursor::next_page(Self, Int) -> Array[@moonmcap.DatasetMessage]
+pub fn AsyncDatasetCursor::progress(Self) -> @moonmcap.DatasetProgress
+pub fn AsyncDatasetCursor::seek(Self, UInt64) -> Unit raise @moonmcap.McapError
+pub async fn AsyncDatasetCursor::write_ndjson(Self, AsyncSink, content? : @moonmcap.JsonFilter) -> Int
+
+pub(all) enum AsyncIndexVerification {
+  AsyncVerifyContent(async (AsyncSource) -> String)
+  AsyncTrustIdentity(String)
+}
+
+pub struct AsyncMessageStream {
+  next : async () -> @moonmcap.Message?
+  stop : () -> Unit
+  pending : () -> Int
+}
+
+pub struct AsyncQuerySource {
+  declarations : @moonmcap.Log
+  open : (@moonmcap.Query, Int) -> AsyncMessageStream raise @moonmcap.McapError
+  materialized : Bool
+}
+pub fn AsyncQuerySource::filter_json(Self, @moonmcap.JsonFilter) -> Self raise @moonmcap.McapError
+
 pub(all) struct AsyncReadMetrics {
   read_calls : Int
   bytes_read : UInt64
@@ -50,6 +111,25 @@ pub struct AsyncReader {
 }
 pub fn AsyncReader::channels(Self) -> Array[@moonmcap.Channel]
 pub fn AsyncReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int, span_bytes? : Int) -> AsyncCursor raise @moonmcap.McapError
+pub fn AsyncReader::query_source(Self, abort_source_on_cancel? : Bool) -> AsyncQuerySource raise @moonmcap.McapError
+
+pub struct AsyncSidecarCursor {
+  source : AsyncSource
+  cursor : @moonmcap.SidecarCursor
+  budget : Int
+  mut busy : Bool
+}
+pub fn AsyncSidecarCursor::cancel(Self) -> Unit
+pub async fn AsyncSidecarCursor::next(Self) -> @moonmcap.Message?
+pub fn AsyncSidecarCursor::seek(Self, UInt64) -> Unit raise @moonmcap.McapError
+
+pub struct AsyncSidecarReader {
+  source : AsyncSource
+  reader : @moonmcap.SidecarReader
+}
+pub fn AsyncSidecarReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int) -> AsyncSidecarCursor raise @moonmcap.McapError
+pub fn AsyncSidecarReader::info(Self) -> Json
+pub fn AsyncSidecarReader::query_source(Self, abort_source_on_cancel? : Bool) -> AsyncQuerySource raise @moonmcap.McapError
 
 pub struct AsyncSink {
   write_all : async (Bytes) -> Unit
