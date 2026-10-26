@@ -19,6 +19,8 @@ pub fn block_recovery_json(BlockRecoveryReport) -> Json
 
 pub fn build_disk_sidecar(ReadSource, SortStorage, WriteSink, (ReadSource) -> String raise McapError, identity? : String, page_entries? : Int, options? : ExternalOptions, cancelled? : () -> Bool) -> Json raise McapError
 
+pub fn build_field_index(ReadSource, Array[String], (ReadSource) -> String raise McapError, String, decoder? : PayloadDecoder, limits? : Limits, max_zones? : Int, state_bytes? : Int, cancelled? : () -> Bool) -> FieldIndex raise McapError
+
 pub fn build_query_index(Log) -> QueryIndex raise McapError
 
 pub fn build_sidecar(ReadSource, (ReadSource) -> String raise McapError, identity? : String, limits? : Limits, index_bytes? : Int, declaration_bytes? : Int, cancelled? : () -> Bool) -> Bytes raise McapError
@@ -162,6 +164,8 @@ pub fn new_write_sink((Bytes) -> Unit raise McapError) -> WriteSink
 pub fn open_dataset(Array[QuerySource], limits? : Limits, declaration_bytes? : Int, max_sources? : Int) -> Dataset raise McapError
 
 pub fn open_disk_sidecar(ReadSource, ReadSource, IndexVerification, limits? : Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64) -> DiskSidecarReader raise McapError
+
+pub fn open_field_index(ReadSource, Bytes, (ReadSource) -> String raise McapError, String, max_bytes? : Int, max_zones? : Int) -> FieldIndex raise McapError
 
 pub fn open_reader(ReadSource, limits? : Limits, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int) -> RangeReader raise McapError
 
@@ -609,6 +613,32 @@ pub(all) struct ExternalReport {
   output_bytes : UInt64
 }
 
+type FieldBounds
+
+pub struct FieldIndex {
+  digest : String
+  size : UInt64
+  decoder_identity : String
+  paths : Array[String]
+  zones : Map[UInt64, FieldZone]
+}
+pub fn FieldIndex::info(Self) -> Json
+pub fn FieldIndex::to_bytes(Self, max_bytes? : Int) -> Bytes raise McapError
+
+pub struct FieldQueryPlan {
+  reader : RangeReader
+  filter : JsonFilter
+  decoder : PayloadDecoder
+  all_skipped : Bool
+  total : Int
+  skipped : Int
+  start_bytes : UInt64
+}
+pub fn FieldQueryPlan::info(Self) -> Json
+pub fn FieldQueryPlan::query_source(Self) -> QuerySource raise McapError
+
+type FieldZone
+
 pub struct FileCursor {
   reader : RangeReader
   original : Query
@@ -955,6 +985,7 @@ pub fn RangeReader::channels(Self) -> Array[Channel]
 pub fn RangeReader::clear_cache(Self) -> Unit
 pub fn RangeReader::cursor(Self, Query, pending_bytes? : Int, span_bytes? : Int) -> FileCursor raise McapError
 pub fn RangeReader::diagnostics(Self) -> ReadDiagnostics
+pub fn RangeReader::plan_field_query(Self, FieldIndex, JsonFilter, (ReadSource) -> String raise McapError, String, decoder? : PayloadDecoder) -> FieldQueryPlan raise McapError
 pub fn RangeReader::query(Self, Query) -> Array[Message] raise McapError
 pub fn RangeReader::query_source(Self) -> QuerySource raise McapError
 pub fn RangeReader::validate_all(Self) -> Unit raise McapError

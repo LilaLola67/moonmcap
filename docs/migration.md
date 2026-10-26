@@ -1,5 +1,7 @@
 # 接口与行为迁移
 
+0.15.22 新增独立 MFLD1 字段范围侧车、build_field_index/open_field_index、FieldQueryPlan 与 field 命令；现有 MIDX1/MIDX2 和 JSON 条件行为不变。只排除可证明不命中的候选块，保留最终精确过滤，见 [字段索引](field-index.md)。
+
 0.15.21 新增 AsyncDiskSidecarReader/open_disk_sidecar、asyncpaged 命令及核心索引审核/查询 poll-feed 协议；MIDX2 格式和同步入口不变。首次打开仍完整核对源指纹与全索引，见 [异步磁盘索引](async-disk-sidecar.md)。
 
 0.15.20 新增 CdrOptions/CdrDecoder/cdr_decoder，standard_payload_decoder 增加可选 cdr 配置并自动识别 ros2msg/cdr，Protobuf 与 CDR 共用总缓存预算；新增 raw-cdr 命令。既有 Protobuf/JSON 模式保持兼容，见 [CDR 解码](cdr-decoding.md)。
