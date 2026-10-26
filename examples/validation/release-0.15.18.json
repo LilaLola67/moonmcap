@@ -1,0 +1,438 @@
+{
+  "version": "0.15.18",
+  "environment": {
+    "platform": "Windows",
+    "node": "24.15.0",
+    "moonc": "0.10.14+7d59c7ec9"
+  },
+  "tests": {
+    "wasm": 153,
+    "js": 170,
+    "failed": 0
+  },
+  "handwritten_root_core_nonblank_noncomment_lines": 13312,
+  "count_excludes": [
+    "tests",
+    "generated interfaces",
+    "vendored codecs",
+    "subpackages",
+    "commands",
+    "Python reference tools"
+  ],
+  "regression_workflows": [
+    {
+      "script": "tools/interop.py",
+      "seconds": 3.628,
+      "passed": true
+    },
+    {
+      "script": "tools/conformance.py",
+      "seconds": 9.36,
+      "passed": true
+    },
+    {
+      "script": "examples/run.py",
+      "seconds": 1.299,
+      "passed": true
+    },
+    {
+      "script": "tools/range_benchmark.py",
+      "seconds": 0.539,
+      "passed": true
+    },
+    {
+      "script": "tools/stream_workflows.py",
+      "seconds": 1.352,
+      "passed": true
+    },
+    {
+      "script": "tools/cli_workflows.py",
+      "seconds": 3.741,
+      "passed": true
+    },
+    {
+      "script": "tools/batch_workflows.py",
+      "seconds": 1.333,
+      "passed": true
+    },
+    {
+      "script": "tools/repair_workflows.py",
+      "seconds": 4.196,
+      "passed": true
+    },
+    {
+      "script": "tools/async_workflows.py",
+      "seconds": 1.468,
+      "passed": true
+    },
+    {
+      "script": "tools/http_workflows.py",
+      "seconds": 3.127,
+      "passed": true
+    },
+    {
+      "script": "tools/external_workflows.py",
+      "seconds": 3.602,
+      "passed": true
+    },
+    {
+      "script": "tools/block_workflows.py",
+      "seconds": 1.414,
+      "passed": true
+    },
+    {
+      "script": "tools/transform_stream_workflows.py",
+      "seconds": 5.726,
+      "passed": true
+    },
+    {
+      "script": "tools/dataset_workflows.py",
+      "seconds": 2.351,
+      "passed": true
+    },
+    {
+      "script": "tools/sidecar_workflows.py",
+      "seconds": 10.283,
+      "passed": true
+    },
+    {
+      "script": "tools/json_workflows.py",
+      "seconds": 3.388,
+      "passed": true
+    },
+    {
+      "script": "tools/checkpoint_workflows.py",
+      "seconds": 20.927,
+      "passed": true
+    },
+    {
+      "script": "tools/input_checkpoint_workflows.py",
+      "seconds": 17.849,
+      "passed": true
+    },
+    {
+      "script": "tools/io_workflows.py",
+      "seconds": 2.841,
+      "passed": true
+    },
+    {
+      "script": "tools/aggregate_workflows.py",
+      "seconds": 1.197,
+      "passed": true
+    },
+    {
+      "script": "tools/diff_workflows.py",
+      "seconds": 1.179,
+      "passed": true
+    },
+    {
+      "script": "tools/replay_workflows.py",
+      "seconds": 1.197,
+      "passed": true
+    },
+    {
+      "script": "tools/async_dataset_workflows.py",
+      "seconds": 1.895,
+      "passed": true
+    },
+    {
+      "script": "tools/source_diagnostic_workflows.py",
+      "seconds": 5.128,
+      "passed": true
+    },
+    {
+      "script": "tools/large_source_workflows.py",
+      "seconds": 2.883,
+      "passed": true
+    },
+    {
+      "script": "tools/fuzz_workflows.py",
+      "seconds": 11.545,
+      "passed": true
+    },
+    {
+      "script": "tools/memory_benchmark.py",
+      "seconds": 19.724,
+      "passed": true
+    },
+    {
+      "script": "tools/corpus_workflows.py",
+      "seconds": 29.508,
+      "passed": true
+    },
+    {
+      "script": "tools/disk_index_workflows.py",
+      "seconds": 7.117,
+      "passed": true
+    },
+    {
+      "script": "tools/disk_index_scale.py",
+      "seconds": 1.875,
+      "passed": true
+    },
+    {
+      "script": "tools/aggregate_external_workflows.py",
+      "seconds": 12.799,
+      "passed": true
+    },
+    {
+      "script": "tools/chunk_checkpoint_workflows.py",
+      "seconds": 2.661,
+      "passed": true
+    },
+    {
+      "script": "tools/protobuf_workflows.py",
+      "seconds": 1.975,
+      "passed": true
+    },
+    {
+      "script": "tools/cached_http_workflows.py",
+      "seconds": 5.379,
+      "passed": true
+    }
+  ],
+  "public_corpus": {
+    "synthetic_cases": 9,
+    "public_recordings": [
+      {
+        "case": "so101-real",
+        "kind": "physical-robot-recording",
+        "source": "https://foxglove.dev/blog/record-and-replay-with-a-ros-2-powered-so-101",
+        "url": "https://assets.foxglove.dev/website/blog/record-and-replay-with-a-ros-2-powered-so-101/replay_capture_2026_10_14_15_10_26_0.mcap",
+        "conversion": null,
+        "origin_sha256": null,
+        "sha256": "e11ebd97b793b101b91237dcb4ceac32540aa2adb515df97650ad22116f6ac84",
+        "bytes": 2592733,
+        "messages": 4719,
+        "topics": [
+          "/dynamic_joint_states",
+          "/joint_commands_replay",
+          "/joint_states",
+          "/tf",
+          "/tf_static"
+        ],
+        "checks": [
+          "official physical-order oracle and CRC",
+          "bounded diagnosis",
+          "sidecar validation",
+          "forward reverse topic paging through two providers",
+          "input unchanged"
+        ],
+        "data_crc_verified": false,
+        "result": "passed"
+      },
+      {
+        "case": "driving-real",
+        "kind": "public-driving-recording-converted-from-rosbag1",
+        "source": "https://assets.foxglove.dev/demo.bag",
+        "url": "https://assets.foxglove.dev/demo.bag",
+        "conversion": "rosbag1-raw-v1",
+        "origin_sha256": "3e6e0049cc2567afe437da3f019debfcf1d96bd33f8c12d3680353a0329b6510",
+        "sha256": "cc941e50af6a0411071abcebafca764e4002898801a01b5c85ea04d4fef161cd",
+        "bytes": 60236244,
+        "messages": 1606,
+        "topics": [
+          "/diagnostics",
+          "/image_color/compressed",
+          "/radar/points",
+          "/radar/range",
+          "/radar/tracks",
+          "/tf",
+          "/velodyne_points"
+        ],
+        "checks": [
+          "official physical-order oracle and CRC",
+          "bounded diagnosis",
+          "sidecar validation",
+          "forward reverse topic paging through two providers",
+          "input unchanged"
+        ],
+        "data_crc_verified": true,
+        "result": "passed"
+      }
+    ],
+    "total_cases": 11
+  },
+  "protobuf": {
+    "result": "passed",
+    "reference": "Google protobuf 6.33.0",
+    "wire_variants": 7,
+    "malformed_cases": 6,
+    "compressions": 3,
+    "integer_precision": "UInt64 full range retained; exact filter before global pagination",
+    "atomic_failures": 1
+  },
+  "persistent_http_cache": {
+    "result": "passed",
+    "cases": [
+      {
+        "case": "deduplicated parallel cold and warm independent process",
+        "cold": {
+          "requests": 6,
+          "response_bytes": 20481,
+          "disk_hits": 3,
+          "disk_misses": 5,
+          "corrupt_pages": 0,
+          "evictions": 0,
+          "cache_bytes": 20900,
+          "peak_disk_bytes": 20900,
+          "active_peak": 4,
+          "pending_peak": 4,
+          "prefetched_pages": 4,
+          "closed": false
+        },
+        "warm": {
+          "requests": 1,
+          "response_bytes": 1,
+          "disk_hits": 8,
+          "disk_misses": 0,
+          "corrupt_pages": 0,
+          "evictions": 0,
+          "cache_bytes": 20900,
+          "peak_disk_bytes": 20900,
+          "active_peak": 4,
+          "pending_peak": 4,
+          "prefetched_pages": 0,
+          "closed": false
+        }
+      },
+      {
+        "case": "checksum refetch and owned orphan cleanup",
+        "metrics": {
+          "requests": 2,
+          "response_bytes": 4097,
+          "disk_hits": 3,
+          "disk_misses": 1,
+          "corrupt_pages": 1,
+          "evictions": 0,
+          "cache_bytes": 20900,
+          "peak_disk_bytes": 20900,
+          "active_peak": 4,
+          "pending_peak": 4,
+          "prefetched_pages": 0,
+          "closed": false
+        }
+      },
+      {
+        "case": "bounded disk including staged page writes",
+        "metrics": {
+          "requests": 5,
+          "response_bytes": 16385,
+          "disk_hits": 0,
+          "disk_misses": 4,
+          "corrupt_pages": 0,
+          "evictions": 2,
+          "cache_bytes": 8360,
+          "peak_disk_bytes": 8360,
+          "active_peak": 4,
+          "pending_peak": 4,
+          "prefetched_pages": 2,
+          "closed": false
+        }
+      },
+      {
+        "case": "new ETag uses a new cache identity"
+      },
+      {
+        "case": "ignore",
+        "result": "rejected"
+      },
+      {
+        "case": "noetag",
+        "result": "rejected"
+      },
+      {
+        "case": "weak",
+        "result": "rejected"
+      },
+      {
+        "case": "bad-range",
+        "result": "rejected"
+      },
+      {
+        "case": "bad-length",
+        "result": "rejected"
+      },
+      {
+        "case": "oversize",
+        "result": "rejected"
+      },
+      {
+        "case": "short",
+        "result": "rejected"
+      },
+      {
+        "case": "encoding",
+        "result": "rejected"
+      },
+      {
+        "case": "size-change",
+        "result": "rejected"
+      },
+      {
+        "case": "etag-change",
+        "result": "rejected"
+      },
+      {
+        "case": "timeout",
+        "result": "rejected"
+      },
+      {
+        "case": "bounded retry",
+        "metrics": {
+          "requests": 6,
+          "response_bytes": 16385,
+          "disk_hits": 0,
+          "disk_misses": 4,
+          "corrupt_pages": 0,
+          "evictions": 0,
+          "cache_bytes": 16720,
+          "peak_disk_bytes": 16720,
+          "active_peak": 4,
+          "pending_peak": 4,
+          "prefetched_pages": 3,
+          "closed": false
+        }
+      },
+      {
+        "case": "412 never publishes partial output"
+      },
+      {
+        "case": "async MCAP query and atomic output"
+      },
+      {
+        "case": "foreign files preserved and directory refused"
+      },
+      {
+        "case": "live lease exclusion and killed process lease recovery"
+      }
+    ],
+    "server_peaks": {
+      "ok": 4,
+      "eviction": 4,
+      "version": 4,
+      "ignore": 1,
+      "noetag": 1,
+      "weak": 1,
+      "bad-range": 1,
+      "bad-length": 1,
+      "oversize": 1,
+      "short": 1,
+      "encoding": 1,
+      "size-change": 4,
+      "etag-change": 4,
+      "timeout": 1,
+      "retry": 4,
+      "changed": 4,
+      "mcap": 4,
+      "crash": 8
+    }
+  },
+  "scope_notes": [
+    "Million-message paged-index construction was executed in 0.15.14; the checked-in report identifies generated data and measured process RSS. This release reruns the small scale matrix.",
+    "Public driving input is a raw-payload-preserving conversion from a ROS1 bag; the robot input is a native MCAP recording. Raw public data is not redistributed.",
+    "Chunk checkpoints require independently checked indexed Chunks; input completion still scans the complete original, and an interrupted final sort restarts from committed parts.",
+    "Protobuf decoding covers the documented generic message model, not all ProtoJSON well-known-type mappings or CDR.",
+    "Persistent HTTP cache is a Node.js adapter; disk/page state budgets do not claim a process RSS bound."
+  ]
+}

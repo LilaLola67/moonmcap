@@ -4,13 +4,16 @@ import {
   "moonbitlang/async/js_async",
   "moonbitlang/core/buffer",
   "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/json",
 }
 
 options(
   targets: {
     "node.mbt": [ "js" ],
     "http.mbt": [ "js" ],
+    "cached_js.mbt": [ "js" ],
     "async_test.mbt": [ "js" ],
+    "cache_test.mbt": [ "js" ],
     "unsupported.mbt": [ "not", "js" ],
   },
 )

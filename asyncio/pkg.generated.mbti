@@ -12,11 +12,15 @@ pub fn async_query_source(@moonmcap.Log, (@moonmcap.Query, Int) -> AsyncMessageS
 
 pub async fn create_sink(String) -> AsyncSink
 
+pub fn http_cache_options() -> HttpCacheOptions
+
 pub fn new_sink(async (Bytes) -> Unit, abort? : () -> Unit) -> AsyncSink
 
 pub fn new_source(UInt64, async (UInt64, Int) -> Bytes, abort? : () -> Unit) -> AsyncSource
 
 pub async fn new_writer(AsyncSink, profile? : String, options? : @moonmcap.StreamOptions, limits? : @moonmcap.Limits, queue_bytes? : Int) -> AsyncWriter
+
+pub async fn open_cached_http(String, String, options? : HttpCacheOptions) -> CachedHttpSource
 
 pub fn open_dataset(Array[AsyncQuerySource], limits? : @moonmcap.Limits, declaration_bytes? : Int, max_sources? : Int) -> AsyncDataset raise @moonmcap.McapError
 
@@ -186,6 +190,24 @@ pub(all) enum AsyncWriterState {
   AsyncFailed
   AsyncCancelled
 } derive(Eq)
+
+pub struct CachedHttpSource {
+  source : AsyncSource
+  snapshot : () -> String
+  shutdown : async () -> Unit
+}
+pub async fn CachedHttpSource::close(Self) -> Unit
+pub fn CachedHttpSource::metrics(Self) -> Json raise @moonmcap.McapError
+pub fn CachedHttpSource::source(Self) -> AsyncSource
+
+pub(all) struct HttpCacheOptions {
+  page_bytes : Int
+  cache_bytes : Int
+  concurrency : Int
+  prefetch_pages : Int
+  timeout_ms : Int
+  retries : Int
+}
 
 type OutputQueue
 

@@ -1,4 +1,14 @@
 ///|
+pub async fn open_cached_http(
+  _url : String,
+  _directory : String,
+  options? : HttpCacheOptions = http_cache_options(),
+) -> CachedHttpSource {
+  ignore(options)
+  raise @mcap.io_error("persistent HTTP cache requires Node.js")
+}
+
+///|
 pub async fn source_sha256(_source : AsyncSource) -> String {
   raise @mcap.io_error("async SHA-256 requires JS host")
 }
