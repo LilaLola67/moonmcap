@@ -99,6 +99,9 @@ jobs:
       - name: Verify input stage checkpoint recovery
         if: matrix.target == 'js'
         run: python tools/input_checkpoint_workflows.py
+      - name: Verify Chunk stage and final sort crash recovery
+        if: matrix.target == 'js'
+        run: python tools/chunk_checkpoint_workflows.py
       - name: Verify unified async datasets
         if: matrix.target == 'js'
         run: python tools/async_dataset_workflows.py
@@ -164,6 +167,7 @@ jobs:
             _interop/json/report.json
             _interop/checkpoint/report.json
             _interop/input-checkpoint/report.json
+            _interop/chunk-checkpoint/report.json
             _interop/io/report.json
             _interop/aggregate/report.json
             _interop/aggregate-external/report.json

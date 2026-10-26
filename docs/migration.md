@@ -1,5 +1,7 @@
 # 0.8 到 0.14 的接口与行为
 
+0.15.16 新增 resumable_chunk_merge、CJOB1 和 cmd/chunkmerge；checkpoint_run_ids/progress 增加识别新引擎，原 MJOB1/MJOB2 不变。新任务须独立校验的索引块，完成输入时仍整体校验，最终归并失败从副本重做。见 [Chunk 保存点](chunk-checkpoint.md)。
+
 0.15.15 增加 aggregate_external 与 cmd/spill，逐组输出 NDJSON；max_groups 在新接口中约束缓冲段而非总输出。原内存接口签名不变，状态预算补计极值字符串，接近预算上限的调用可能更早明确失败。见 [外部聚合](external-aggregation.md)。
 
 0.15.14 新增 MIDX2 分页磁盘索引、build_disk_sidecar/open_disk_sidecar、DiskSidecarReader/Cursor 和 cmd/paged；MIDX1 保持兼容，新格式采用新建索引。另修正引用 Zstd 解码器五字节 Huffman literal 头的 18 位长度掩码，增加真实驾驶日志验证，见 [磁盘索引](disk-sidecar.md)。
