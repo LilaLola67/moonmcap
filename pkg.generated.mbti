@@ -7,6 +7,8 @@ import {
 }
 
 // Values
+pub fn aggregate_external(DatasetCursor, Array[Channel], SortStorage, WriteSink, aggregate? : AggregateOptions, external? : ExternalOptions, cancelled? : () -> Bool) -> Json raise McapError
+
 pub fn aggregate_json(DatasetCursor, Array[Channel], options? : AggregateOptions) -> Json raise McapError
 
 pub fn aggregate_options() -> AggregateOptions
@@ -252,6 +254,12 @@ pub(all) struct AggregateOptions {
   group_bytes : Int
   invalid : JsonInvalidPolicy
 }
+
+type AggregateRow
+
+type AggregateRun
+
+type AggregateSpill
 
 type AggregateState
 

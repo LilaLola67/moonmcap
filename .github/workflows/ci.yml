@@ -111,6 +111,9 @@ jobs:
       - name: Verify bounded exact aggregation
         if: matrix.target == 'js'
         run: python tools/aggregate_workflows.py
+      - name: Verify exact external group aggregation
+        if: matrix.target == 'js'
+        run: python tools/aggregate_external_workflows.py
       - name: Verify byte IO bridges bounded read ahead and measurements
         if: matrix.target == 'js'
         run: python tools/io_workflows.py
@@ -163,6 +166,7 @@ jobs:
             _interop/input-checkpoint/report.json
             _interop/io/report.json
             _interop/aggregate/report.json
+            _interop/aggregate-external/report.json
             _interop/diff/report.json
             _interop/replay/report.json
             _interop/async-dataset/report.json

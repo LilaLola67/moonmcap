@@ -1,5 +1,7 @@
 # 流式聚合分析（0.15.7）
 
+大量分组可以使用 [aggregate_external](external-aggregation.md) 的磁盘溢写模式，本页内存入口的总分组限制保持不变。
+
 `aggregate_json` 消费 DatasetCursor，逐条解析 JSON；不保存历史消息。可组合主题/时间筛选、跨文件分页、侧车索引以及已有 JSON 条件。原始 MCAP 不修改。
 
 ```sh

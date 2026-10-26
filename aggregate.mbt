@@ -269,9 +269,7 @@ pub fn aggregate_json(
         Some(Number(_, ..) as value) => state.number(value.stringify())
         Some(_) => state.non_numeric += 1
       }
-      let charge = @utf8.encode(key[:]).length() * 2 +
-        state.coefficient.to_string().length() +
-        1024
+      let charge = state.charge(key)
       let old = charges.get(key).unwrap_or(0)
       if charge - old > options.group_bytes - retained {
         raise Invalid("aggregate retained group byte budget exceeded")
