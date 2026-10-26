@@ -24,6 +24,8 @@ pub async fn open_cached_http(String, String, options? : HttpCacheOptions) -> Ca
 
 pub fn open_dataset(Array[AsyncQuerySource], limits? : @moonmcap.Limits, declaration_bytes? : Int, max_sources? : Int) -> AsyncDataset raise @moonmcap.McapError
 
+pub async fn open_disk_sidecar(AsyncSource, AsyncSource, AsyncIndexVerification, limits? : @moonmcap.Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64) -> AsyncDiskSidecarReader
+
 pub async fn open_file(String) -> AsyncSource
 
 pub async fn open_http(String, timeout_ms? : Int, retries? : Int, max_range_bytes? : Int) -> AsyncSource
@@ -84,6 +86,25 @@ pub async fn AsyncDatasetCursor::next_page(Self, Int) -> Array[@moonmcap.Dataset
 pub fn AsyncDatasetCursor::progress(Self) -> @moonmcap.DatasetProgress
 pub fn AsyncDatasetCursor::seek(Self, UInt64) -> Unit raise @moonmcap.McapError
 pub async fn AsyncDatasetCursor::write_ndjson(Self, AsyncSink, content? : @moonmcap.JsonFilter) -> Int
+
+pub struct AsyncDiskSidecarCursor {
+  owner : AsyncDiskSidecarReader
+  cursor : @moonmcap.DiskSidecarPollCursor
+  budget : Int
+  mut busy : Bool
+}
+pub fn AsyncDiskSidecarCursor::cancel(Self) -> Unit
+pub async fn AsyncDiskSidecarCursor::next(Self) -> @moonmcap.Message?
+pub fn AsyncDiskSidecarCursor::seek(Self, UInt64) -> Unit raise @moonmcap.McapError
+
+pub struct AsyncDiskSidecarReader {
+  source : AsyncSource
+  index : AsyncSource
+  reader : @moonmcap.DiskSidecarReader
+}
+pub fn AsyncDiskSidecarReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int) -> AsyncDiskSidecarCursor raise @moonmcap.McapError
+pub fn AsyncDiskSidecarReader::info(Self) -> Json
+pub fn AsyncDiskSidecarReader::query_source(Self, abort_sources_on_cancel? : Bool) -> AsyncQuerySource raise @moonmcap.McapError
 
 pub(all) enum AsyncIndexVerification {
   AsyncVerifyContent(async (AsyncSource) -> String)

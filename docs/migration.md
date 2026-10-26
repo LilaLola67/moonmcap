@@ -1,5 +1,7 @@
 # 接口与行为迁移
 
+0.15.21 新增 AsyncDiskSidecarReader/open_disk_sidecar、asyncpaged 命令及核心索引审核/查询 poll-feed 协议；MIDX2 格式和同步入口不变。首次打开仍完整核对源指纹与全索引，见 [异步磁盘索引](async-disk-sidecar.md)。
+
 0.15.20 新增 CdrOptions/CdrDecoder/cdr_decoder，standard_payload_decoder 增加可选 cdr 配置并自动识别 ros2msg/cdr，Protobuf 与 CDR 共用总缓存预算；新增 raw-cdr 命令。既有 Protobuf/JSON 模式保持兼容，见 [CDR 解码](cdr-decoding.md)。
 
 0.15.19 增加 protobuf_json_options、ProtobufOptions.protojson/emit_defaults 与可选规范映射，默认数值模式保持不变；结构体建议用 protobuf_options() 更新字段。描述符更严格拒绝非法 oneof/optional、保留编号、重复字段名和包名，见 [消息解码](payload-decoding.md)。

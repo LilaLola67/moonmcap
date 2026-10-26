@@ -126,6 +126,9 @@ jobs:
       - name: Verify ROS2 XCDR1 alignment types and decoding queries
         if: matrix.target == 'js'
         run: python tools/cdr_workflows.py
+      - name: Verify async paged local and cached remote indexes
+        if: matrix.target == 'js'
+        run: python tools/async_paged_workflows.py
       - name: Verify persistent HTTP pages concurrency faults and crash recovery
         if: matrix.target == 'js'
         run: python tools/cached_http_workflows.py
@@ -186,6 +189,7 @@ jobs:
             _interop/protobuf/report.json
             _interop/protojson/report.json
             _interop/cdr/report.json
+            _interop/async-paged/report.json
             _interop/cached-http/report.json
             _interop/diff/report.json
             _interop/replay/report.json

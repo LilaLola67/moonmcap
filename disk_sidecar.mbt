@@ -349,6 +349,21 @@ fn DiskSidecarReader::page(
     self.start + number.to_uint64() * span.to_uint64(),
     span,
   )
+  self.accept_page(number, bytes)
+}
+
+///|
+fn DiskSidecarReader::accept_page(
+  self : DiskSidecarReader,
+  number : Int,
+  bytes : Bytes,
+) -> Array[DiskIndexEntry] raise McapError {
+  let span = self.width * 36 + 4
+  if number < 0 ||
+    number.to_uint64() * self.width.to_uint64() >= self.count.to_uint64() ||
+    bytes.length() != span {
+    raise Invalid("unexpected disk index page feed")
+  }
   let data = bytes[0:span - 4].to_owned()
   let ending = cursor(bytes[span - 4:].to_owned(), self.base.limits)
   if crc32(data) != ending.u32() {
@@ -405,7 +420,7 @@ fn DiskSidecarReader::entry(
 ///|
 /// Full index ordering/CRC audit uses bounded pages. Source content verification
 /// remains explicit and does not replace per-message location checks.
-pub fn open_disk_sidecar(
+fn open_disk_sidecar_internal(
   source : ReadSource,
   index : ReadSource,
   verification : IndexVerification,
@@ -414,6 +429,7 @@ pub fn open_disk_sidecar(
   cache_pages? : Int = 4,
   chunk_cache_bytes? : Int = 8 * 1024 * 1024,
   index_bytes? : UInt64 = 1099511627776UL,
+  audit? : Bool = true,
 ) -> DiskSidecarReader raise McapError {
   validate_log(empty_log(), limits~)
   if index.size() < 16UL ||
@@ -522,6 +538,9 @@ pub fn open_disk_sidecar(
     page_reads: 0,
     cache_hits: 0,
     peak_pages: 0,
+  }
+  if !audit {
+    return reader
   }
   let mut previous : DiskIndexEntry? = None
   for page = 0; page < page_count.to_int(); page = page + 1 {

@@ -217,6 +217,8 @@ pub fn source_visitor(schema? : (Schema) -> Unit raise McapError, channel? : (Ch
 
 pub fn standard_payload_decoder(options? : ProtobufOptions, cdr? : CdrOptions, cache_bytes? : Int, max_schemas? : Int) -> PayloadDecoder raise McapError
 
+pub fn start_disk_sidecar_audit(ReadSource, ReadSource, IndexVerification, limits? : Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64) -> DiskSidecarAudit raise McapError
+
 pub fn stats_report(LogStats) -> String
 
 pub fn stream_options() -> StreamOptions
@@ -507,6 +509,16 @@ type DiffResult
 
 type DiskIndexEntry
 
+pub struct DiskSidecarAudit {
+  reader : DiskSidecarReader
+  mut page : Int
+  mut previous : DiskIndexEntry?
+  mut failed : Bool
+}
+pub fn DiskSidecarAudit::feed(Self, Bytes) -> Unit raise McapError
+pub fn DiskSidecarAudit::finish(Self) -> DiskSidecarReader raise McapError
+pub fn DiskSidecarAudit::poll(Self) -> ReadSpan? raise McapError
+
 pub struct DiskSidecarCursor {
   reader : DiskSidecarReader
   original : Query
@@ -522,6 +534,37 @@ pub fn DiskSidecarCursor::next(Self) -> Message? raise McapError
 pub fn DiskSidecarCursor::next_page(Self, Int) -> Array[Message] raise McapError
 pub fn DiskSidecarCursor::seek(Self, UInt64) -> Unit raise McapError
 
+pub(all) enum DiskSidecarPoll {
+  DiskDone
+  DiskMessage(Message)
+  DiskIndexRead(ReadSpan)
+  DiskSourceRead(ReadSpan)
+}
+
+pub struct DiskSidecarPollCursor {
+  reader : DiskSidecarReader
+  original : Query
+  allowed : Map[Int, Bool]
+  mut query : Query
+  mut low : Int
+  mut high : Int
+  mut searching : Bool
+  mut position : Int
+  mut offset : Int
+  mut remaining : Int
+  mut state : FileCursorState
+  mut current : (Int, Array[DiskIndexEntry])?
+  mut waiting_page : Int?
+  mut waiting_entry : SidecarEntry?
+  mut ready : Message?
+}
+pub fn DiskSidecarPollCursor::cancel(Self) -> Unit
+pub fn DiskSidecarPollCursor::feed_index(Self, Bytes) -> Unit raise McapError
+pub fn DiskSidecarPollCursor::feed_source(Self, Bytes) -> Unit raise McapError
+pub fn DiskSidecarPollCursor::pending_bytes(Self) -> Int
+pub fn DiskSidecarPollCursor::poll(Self) -> DiskSidecarPoll raise McapError
+pub fn DiskSidecarPollCursor::seek(Self, UInt64) -> Unit raise McapError
+
 pub struct DiskSidecarReader {
   index : ReadSource
   base : SidecarReader
@@ -536,7 +579,9 @@ pub struct DiskSidecarReader {
 }
 pub fn DiskSidecarReader::channels(Self) -> Array[Channel]
 pub fn DiskSidecarReader::cursor(Self, Query) -> DiskSidecarCursor raise McapError
+pub fn DiskSidecarReader::declaration_log(Self) -> Log
 pub fn DiskSidecarReader::info(Self) -> Json
+pub fn DiskSidecarReader::poll_cursor(Self, Query) -> DiskSidecarPollCursor raise McapError
 pub fn DiskSidecarReader::query_source(Self) -> QuerySource raise McapError
 pub fn DiskSidecarReader::validate_entries(Self) -> Unit raise McapError
 

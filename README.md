@@ -1,12 +1,14 @@
 # MoonMCAP
 
+[异步分页索引](docs/async-disk-sidecar.md)可组合本地/远程 MIDX2、持久 HTTP 缓存和消息解码，完整审核后按页查询。
+
 HTTP 远程日志支持有界持久页缓存、并发预取、ETag 快照校验、校验失败重取与中断恢复，见[HTTP 缓存](docs/http-cache.md)。
 
 消息结构解码：内置 JSON、Protobuf FileDescriptorSet 和 ROS 2 ros2msg / XCDR1 解码，可接入同步、异步筛选、投影与精确聚合，支持自定义插件。见[消息解码](docs/payload-decoding.md)和 [CDR 范围与样例](docs/cdr-decoding.md)。
 
 [0.15.18 本地验证报告](examples/validation/release-0.15.18.json)记录 34 组完整回归、11 个语料案例和 20 项持久缓存故障场景，区分真实录制、转换数据与合成样例。
 
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.15.20**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
+MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.15.21**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
 
 ## 安装与运行
 
@@ -53,7 +55,7 @@ JS 目标：`moon test --target js`、`moon run cmd/main --target js`。内存�
 安装 Mooncakes 发行版本：
 
 ```sh
-moon add LilaLola67/moonmcap@0.15.20
+moon add LilaLola67/moonmcap@0.15.21
 ```
 
 也可从 GitHub 克隆复现全部样例；[发布包校验](docs/distribution.md) 可生成经过文件清单检查的模块归档。运行库依赖固定版本的 `bikallem/compress 0.3.4`、`bikallem/blit 0.2.2`，异步包使用 `moonbitlang/async 0.20.2`；[第三方来源与许可证](third_party/README.md) 说明了来源。运行时不需要 Python，也不调用外部压缩进程。
@@ -142,7 +144,7 @@ python tools/conformance.py
 python tools/count_source.py
 ```
 
-- MoonBit 单元/回归测试：Wasm 157 项、JS 174 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
+- MoonBit 单元/回归测试：Wasm 158 项、JS 176 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
 - 真实文件验证：30 项；包含 `3 输入压缩 × 2 摘要布局 × 3 输出压缩 = 18` 组双向读写检查，以及顺序文件、无消息索引、无摘要偏移、混合压缩和查询/合并/恢复工作流。
 - 真实文件验证还覆盖按需读取、三种流式输出、8 项 CLI、4 项批量变换、8 项诊断修复，以及 5 项异步录制、15 项 HTTP 故障、5 项磁盘排序、9 项独立块恢复、108 项固定种子差分检查和 4 组进程 RSS 测量。执行命令见下方，结果位于 `_interop/` 各子目录的 `report.json`。GitHub Actions 完整执行并上传报告。
 - 新增 45 项大文件诊断与恢复故障用例，百万条消息与实际超过 2 GiB 文件的本地验证见 [规模报告](docs/performance.md)。常规 CI 使用缩小规模，完整规模测试可手动启用。

@@ -1,4 +1,107 @@
 ///|
+async test "asynchronous MIDX2 reads pages and participates in decoded dataset paging" {
+  let builder = @mcap.new_builder()
+  let channel = builder.register_channel("/n", "json")
+  for i = 0; i < 50; i = i + 1 {
+    builder.append(
+      channel,
+      (i * 17 % 31).to_uint64(),
+      @utf8.encode("{\"n\":\{i}}"[:]),
+    )
+  }
+  let raw = builder.finish(compression=@mcap.Zstd, messages_per_chunk=7)
+  let files : Map[Int, @buffer.Buffer] = Map([])
+  let storage = @mcap.sort_storage(
+    fn(id) {
+      let buffer = @buffer.Buffer::Buffer()
+      files[id] = buffer
+      @mcap.new_write_sink(fn(data) { buffer.write_bytes(data[:]) })
+    },
+    fn(id) { @mcap.memory_source(files[id].to_bytes()) },
+    fn(id) { files.remove(id) },
+  )
+  let bytes = @buffer.Buffer::Buffer()
+  let fingerprint = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  ignore(
+    @mcap.build_disk_sidecar(
+      @mcap.memory_source(raw),
+      storage,
+      @mcap.new_write_sink(fn(data) { bytes.write_bytes(data[:]) }),
+      fn(_) { fingerprint },
+      page_entries=3,
+    ),
+  )
+  let index = bytes.to_bytes()
+  let source = @asyncio.new_source(raw.length().to_uint64(), async fn(
+    offset,
+    length,
+  ) {
+    @async.pause()
+    raw[offset.to_int():offset.to_int() + length].to_owned()
+  })
+  let pages = @asyncio.new_source(index.length().to_uint64(), async fn(
+    offset,
+    length,
+  ) {
+    @async.pause()
+    index[offset.to_int():offset.to_int() + length].to_owned()
+  })
+  let reader = @asyncio.open_disk_sidecar(
+    source,
+    pages,
+    @asyncio.AsyncVerifyContent(async fn(_) { fingerprint }),
+    cache_pages=0,
+  )
+  let filter = @mcap.json_filter("{\"path\":\"/n\",\"op\":\">\",\"value\":10}")
+  let expected = @mcap.open_dataset([
+    @mcap.build_query_index(builder.snapshot())
+    .query_source()
+    .filter_json(filter),
+  ])
+  let dataset = @asyncio.open_dataset([
+    reader
+    .query_source()
+    .decode_payload(@mcap.standard_payload_decoder())
+    .filter_json(filter),
+  ])
+  for descending in [false, true] {
+    let query = { ..@mcap.all_query(), descending, offset: 3, limit: 11, }
+    assert_eq(
+      dataset.cursor(query).next_page(20),
+      expected.cursor(query).next_page(20),
+    )
+  }
+  let cursor = reader.cursor(@mcap.all_query())
+  cursor.seek(12UL)
+  assert_true(cursor.next() is Some(message) && message.log_time >= 12UL)
+  cursor.cancel()
+  assert_eq(cursor.next(), None)
+  let tiny = reader.cursor(@mcap.all_query(), pending_bytes=1)
+  try tiny.next() catch {
+    _ => ()
+  } noraise {
+    _ => fail("async page span budget ignored")
+  }
+  let cancellable = reader.cursor(@mcap.all_query())
+  @async.with_task_group(async fn(group) {
+    let task = group.spawn(
+      async fn() { cancellable.next() },
+      allow_failure=true,
+    )
+    @async.pause()
+    try cancellable.next() catch {
+      _ => ()
+    } noraise {
+      _ => fail("concurrent cursor operation accepted")
+    }
+    cancellable.cancel()
+    ignore(task.wait() catch { _ => None })
+  })
+  source.cancel()
+  pages.cancel()
+}
+
+///|
 async test "custom payload decoder composes with async filtering before global pagination" {
   let builder = @mcap.new_builder()
   let id = builder.register_channel("/custom", "application/test")
