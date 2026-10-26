@@ -23,6 +23,10 @@ pub fn build_query_index(Log) -> QueryIndex raise McapError
 
 pub fn build_sidecar(ReadSource, (ReadSource) -> String raise McapError, identity? : String, limits? : Limits, index_bytes? : Int, declaration_bytes? : Int, cancelled? : () -> Bool) -> Bytes raise McapError
 
+pub fn cdr_decoder(String, Bytes, options? : CdrOptions) -> CdrDecoder raise McapError
+
+pub fn cdr_options() -> CdrOptions
+
 pub fn checkpoint_progress(Bytes) -> Json raise McapError
 
 pub fn checkpoint_run_ids(Bytes) -> Array[Int] raise McapError
@@ -211,7 +215,7 @@ pub fn sort_storage((Int) -> WriteSink raise McapError, (Int) -> ReadSource rais
 
 pub fn source_visitor(schema? : (Schema) -> Unit raise McapError, channel? : (Channel) -> Unit raise McapError, message? : (Message, MessageLocation) -> Unit raise McapError, attachment? : (Attachment) -> Unit raise McapError, metadata? : (Metadata) -> Unit raise McapError) -> SourceVisitor
 
-pub fn standard_payload_decoder(options? : ProtobufOptions, cache_bytes? : Int, max_schemas? : Int) -> PayloadDecoder raise McapError
+pub fn standard_payload_decoder(options? : ProtobufOptions, cdr? : CdrOptions, cache_bytes? : Int, max_schemas? : Int) -> PayloadDecoder raise McapError
 
 pub fn stats_report(LogStats) -> String
 
@@ -317,6 +321,28 @@ pub(all) struct BlockRecoveryReport {
 }
 
 type CachedChunk
+
+pub struct CdrDecoder {
+  name : String
+  definitions : Map[String, Array[CdrField]]
+  options : CdrOptions
+  field_count : Int
+}
+pub fn CdrDecoder::decode(Self, Bytes) -> Json raise McapError
+
+type CdrField
+
+pub(all) struct CdrOptions {
+  schema_bytes : Int
+  message_bytes : Int
+  string_bytes : Int
+  items : Int
+  fields : Int
+  depth : Int
+  int64_as_string : Bool
+}
+
+type CdrWire
 
 pub(all) struct Channel {
   id : Int
@@ -1001,6 +1027,8 @@ pub(all) struct Schema {
 pub fn Schema::equal(Self, Self) -> Bool
 pub fn Schema::not_equal(Self, Self) -> Bool
 pub fn Schema::to_repr(Self) -> @debug.Repr
+
+type SchemaDecoder
 
 pub struct SidecarCursor {
   reader : SidecarReader

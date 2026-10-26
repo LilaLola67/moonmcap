@@ -13,7 +13,7 @@ fn run(
 ) -> Unit raise @mcap.McapError {
   if values.is_empty() || values == ["--help"] {
     println(
-      "decode INPUT... [--where JSON --select /field --offset N --limit N --index SIDECAR --output NEW.ndjson --int64-strings] | raw DESCRIPTOR PAYLOAD TYPE [--int64-strings]",
+      "decode INPUT... [--where JSON --select /field --offset N --limit N --index SIDECAR --output NEW.ndjson --int64-strings --protojson --emit-defaults] | raw DESCRIPTOR PAYLOAD TYPE | raw-cdr ROS2MSG PAYLOAD TYPE",
     )
     return
   }
@@ -43,6 +43,28 @@ fn run(
   }
   if defaults && !canonical {
     raise @mcap.io_error("emit-defaults requires ProtoJSON mode")
+  }
+  if clean.is_empty() {
+    raise @mcap.io_error("decode requires an input")
+  }
+  let cdr = { ..@mcap.cdr_options(), int64_as_string: strings, }
+  if clean[0] == "raw-cdr" {
+    if clean.length() != 4 {
+      raise @mcap.io_error(
+        "raw-cdr requires ros2msg definition, payload and type",
+      )
+    }
+    let decoder = @mcap.cdr_decoder(
+      clean[3],
+      @nodeio.read_file(clean[1], maximum=cdr.schema_bytes),
+      options=cdr,
+    )
+    println(
+      decoder
+      .decode(@nodeio.read_file(clean[2], maximum=cdr.message_bytes))
+      .stringify(),
+    )
+    return
   }
   let options = {
     ..@mcap.protobuf_options(),
@@ -80,7 +102,7 @@ fn run(
     parsed.indexes.length() != parsed.inputs.length() {
     raise @mcap.io_error("provide one index per input")
   }
-  let decoder = @mcap.standard_payload_decoder(options~)
+  let decoder = @mcap.standard_payload_decoder(options~, cdr~)
   let projection = match parsed.content {
     Some(filter) => filter
     None => @mcap.json_filter("true")

@@ -1,6 +1,6 @@
 # MCAP 0 compatibility
 
-MoonMCAP **0.15.19** targets MCAP major version **0**, identified by the `MCAP0`
+MoonMCAP **0.15.20** targets MCAP major version **0**, identified by the `MCAP0`
 magic bytes. The official Python `mcap==1.3.0` package is the interoperability
 reference; this is a package version, not an MCAP format version.
 
@@ -106,8 +106,9 @@ the reference encoder's output.
 
 The library preserves message/schema/channel/attachment/metadata contents
 within its declared semantic model. Optional [payload adapters](payload-decoding.md)
-decode JSON and descriptor-backed Protobuf for queries; CDR and complete ROS
-profile semantics are outside the default decoder. Rewrites are not byte-identical.
+decode JSON, descriptor-backed Protobuf and the documented [ros2msg/XCDR1 subset](cdr-decoding.md)
+for queries. XCDR2 and complete ROS profile semantics remain outside the default
+decoder. Rewrites are not byte-identical.
 [RangeReader](range-reader.md) performs selective file I/O using summary indexes;
 fast mode validates the summary and loaded chunks, not unread data or full index
 coverage. Full validation and unindexed fallback have an explicit encoded-file
@@ -121,7 +122,7 @@ attachments and metadata, with separate limits for declarations, input chunks an
 [Independent recovery](block-recovery.md) requires CRC-checked summary indexes and individual
 chunks and explicitly reports partial extraction; prefix recovery remains unchanged.
 These additions retain the container/compression boundary above. The module is distributed as
-`LilaLola67/moonmcap@0.15.19` on Mooncakes; GitHub contains the complete source and reproduction tools.
+`LilaLola67/moonmcap@0.15.20` on Mooncakes; GitHub contains the complete source and reproduction tools.
 
 Sources: [MCAP specification](https://mcap.dev/spec),
 [compression registry](https://mcap.dev/spec/registry),

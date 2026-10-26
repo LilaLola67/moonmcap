@@ -11,10 +11,29 @@ pub fn payload_decoder(
 }
 
 ///|
+enum SchemaDecoder {
+  Proto(ProtobufDecoder)
+  Cdr(CdrDecoder)
+}
+
+///|
+fn SchemaDecoder::decode(
+  self : SchemaDecoder,
+  name : String,
+  bytes : Bytes,
+) -> Json raise McapError {
+  match self {
+    Proto(decoder) => decoder.decode(name, bytes)
+    Cdr(decoder) => decoder.decode(bytes)
+  }
+}
+
+///|
 struct ProtoCache {
   name : String
   data : Bytes
-  decoder : ProtobufDecoder
+  encoding : String
+  decoder : SchemaDecoder
   charge : Int
 }
 
@@ -22,6 +41,7 @@ struct ProtoCache {
 /// Schema identity includes descriptor bytes, not just a source-local schema ID.
 pub fn standard_payload_decoder(
   options? : ProtobufOptions = protobuf_options(),
+  cdr? : CdrOptions = cdr_options(),
   cache_bytes? : Int = 8 * 1024 * 1024,
   max_schemas? : Int = 64,
 ) -> PayloadDecoder raise McapError {
@@ -34,34 +54,55 @@ pub fn standard_payload_decoder(
     if channel.message_encoding == "json" {
       return parse_json_document(bytes, options.message_bytes, options.depth)
     }
-    if channel.message_encoding != "protobuf" {
+    if channel.message_encoding != "protobuf" &&
+      channel.message_encoding != "cdr" {
       raise Invalid(
         "no decoder for message encoding: \{channel.message_encoding}",
       )
     }
-    guard schema is Some(schema) && schema.encoding == "protobuf" else {
+    guard schema is Some(schema) &&
+      (
+        (
+          schema.encoding == "protobuf" &&
+          channel.message_encoding == "protobuf"
+        ) ||
+        (schema.encoding == "ros2msg" && channel.message_encoding == "cdr")
+      ) else {
       raise Invalid(
-        "protobuf channel requires a protobuf FileDescriptorSet schema",
+        "payload channel requires a matching protobuf or ros2msg schema",
       )
     }
     for i = 0; i < entries.length(); i = i + 1 {
-      if entries[i].name == schema.name && entries[i].data == schema.data {
+      if entries[i].name == schema.name &&
+        entries[i].data == schema.data &&
+        entries[i].encoding == schema.encoding {
         let entry = entries.remove(i)
         entries.push(entry)
         return entry.decoder.decode(schema.name, bytes)
       }
     }
-    let decoder = protobuf_decoder(schema.data, options~)
-    let size = schema.data.length().to_uint64() +
-      decoder.field_count[0].to_uint64() * 128UL
+    let (decoder, fields) = if schema.encoding == "protobuf" {
+      let decoder = protobuf_decoder(schema.data, options~)
+      (SchemaDecoder::Proto(decoder), decoder.field_count[0])
+    } else {
+      let decoder = cdr_decoder(schema.name, schema.data, options=cdr)
+      (SchemaDecoder::Cdr(decoder), decoder.field_count)
+    }
+    let size = schema.data.length().to_uint64() + fields.to_uint64() * 128UL
     if size > cache_bytes.to_uint64() {
-      raise Invalid("single protobuf schema exceeds decoder cache budget")
+      raise Invalid("single payload schema exceeds decoder cache budget")
     }
     let charge = size.to_int()
     while entries.length() >= max_schemas || charge > cache_bytes - retained[0] {
       retained[0] -= entries.remove(0).charge
     }
-    entries.push({ name: schema.name, data: schema.data, decoder, charge, })
+    entries.push({
+      name: schema.name,
+      encoding: schema.encoding,
+      data: schema.data,
+      decoder,
+      charge,
+    })
     retained[0] += charge
     decoder.decode(schema.name, bytes)
   })

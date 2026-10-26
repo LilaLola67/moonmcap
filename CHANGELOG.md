@@ -1,5 +1,9 @@
 # 更新记录
 
+## 0.15.20
+
+新增原创 ros2msg/XCDR1 大小端解码、对齐、数组/序列与嵌套消息，接入同步/异步筛选及精确聚合；与独立工具核对公开机械臂日志全部 4719 条消息，明确排除 XCDR2/IDL/wstring。
+
 ## 0.15.19
 
 新增可选 ProtoJSON 规范映射，支持 Timestamp、Duration、Any、FieldMask、Struct/Value/ListValue 和包装类型；完善字段存在性、默认值及描述符检查，与官方运行库核对 77 项输出并保留原精确数值模式。

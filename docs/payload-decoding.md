@@ -20,7 +20,7 @@ let dataset = @mcap.open_dataset([provider.filter_json(filter)])
 - 默认将 64 位整数写成精确十进制 JSON 数字，筛选和聚合使用原始数字表示，避免 Double 舍入。JS 消费者直接 JSON.parse 可能损失精度，可选 `int64_as_string: true` / CLI `--int64-strings`。字符串模式下这些字段不参与数值聚合。
 - 非有限浮点输出 `NaN`、`Infinity`、`-Infinity` 字符串；有限浮点遵循其 IEEE 精度。
 
-默认仍为通用 wire 消息结构解码。可选 `protobuf_json_options()` / CLI `--protojson` 使用规范化映射：Timestamp、Duration、Any、FieldMask、Struct/Value/ListValue 及九种包装类型，见下节。尚不支持扩展字段、Editions 和已声明的 GROUP 字段。描述符解析检查结构、重复定义、字段编号、oneof/optional 关系和引用，但不是 protoc 的完整 schema 语义校验器。CDR、ROS1 等编码仍需要自行提供插件，默认解码器明确报不支持。
+默认仍为通用 wire 消息结构解码。可选 `protobuf_json_options()` / CLI `--protojson` 使用规范化映射：Timestamp、Duration、Any、FieldMask、Struct/Value/ListValue 及九种包装类型，见下节。尚不支持扩展字段、Editions 和已声明的 GROUP 字段。描述符解析检查结构、重复定义、字段编号、oneof/optional 关系和引用，但不是 protoc 的完整 schema 语义校验器。标准解码器另支持明确范围的 [ROS 2 ros2msg/XCDR1](cdr-decoding.md)；ROS1、XCDR2 等编码仍需插件。
 
 ## 可选 ProtoJSON 模式（0.15.19）
 

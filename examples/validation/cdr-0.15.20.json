@@ -1,0 +1,45 @@
+{
+  "result": "passed",
+  "reference": "rosbags 0.11.0",
+  "endianness": [
+    "big",
+    "little"
+  ],
+  "malformed_payloads": 5,
+  "invalid_definitions": 6,
+  "compressions": 3,
+  "public_messages": [
+    {
+      "topic": "/tf_static",
+      "type": "tf2_msgs/msg/TFMessage",
+      "bytes": 684,
+      "result": "passed"
+    },
+    {
+      "topic": "/joint_states",
+      "type": "sensor_msgs/msg/JointState",
+      "bytes": 340,
+      "result": "passed"
+    },
+    {
+      "topic": "/tf",
+      "type": "tf2_msgs/msg/TFMessage",
+      "bytes": 108,
+      "result": "passed"
+    },
+    {
+      "topic": "/dynamic_joint_states",
+      "type": "control_msgs/msg/DynamicJointState",
+      "bytes": 1180,
+      "result": "passed"
+    },
+    {
+      "topic": "/joint_commands_replay",
+      "type": "sensor_msgs/msg/JointState",
+      "bytes": 228,
+      "result": "passed"
+    }
+  ],
+  "public_all_messages": 4719,
+  "int64_exact": true
+}

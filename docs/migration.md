@@ -1,5 +1,7 @@
 # 接口与行为迁移
 
+0.15.20 新增 CdrOptions/CdrDecoder/cdr_decoder，standard_payload_decoder 增加可选 cdr 配置并自动识别 ros2msg/cdr，Protobuf 与 CDR 共用总缓存预算；新增 raw-cdr 命令。既有 Protobuf/JSON 模式保持兼容，见 [CDR 解码](cdr-decoding.md)。
+
 0.15.19 增加 protobuf_json_options、ProtobufOptions.protojson/emit_defaults 与可选规范映射，默认数值模式保持不变；结构体建议用 protobuf_options() 更新字段。描述符更严格拒绝非法 oneof/optional、保留编号、重复字段名和包名，见 [消息解码](payload-decoding.md)。
 
 0.15.18 增加可选 Node.js CachedHttpSource/open_cached_http，所有原 HTTP API 不变；新缓存须独立目录并在使用后 close，见 [HTTP 缓存](http-cache.md)。
