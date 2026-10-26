@@ -9,6 +9,11 @@ on:
         required: false
         default: false
         type: boolean
+      public_corpus:
+        description: Download and verify fingerprint-pinned public recordings
+        required: false
+        default: false
+        type: boolean
 permissions:
   contents: read
 jobs:
@@ -43,6 +48,9 @@ jobs:
       - name: Verify compressed container workflows
         if: matrix.target == 'js'
         run: python tools/conformance.py
+      - name: Verify adversarial corpus distributions
+        if: matrix.target == 'js'
+        run: python tools/corpus_workflows.py
       - name: Verify checked-in file examples
         if: matrix.target == 'js'
         run: python examples/run.py
@@ -128,6 +136,7 @@ jobs:
           name: conformance-report
           path: |
             _interop/conformance/report.json
+            _interop/corpus/report.json
             _interop/examples/report.json
             _interop/range/report.json
             _interop/stream/report.json
@@ -173,3 +182,22 @@ jobs:
         with:
           name: large-source-report
           path: _interop/large-source/report-large.json
+  public-corpus:
+    if: github.event_name == 'workflow_dispatch' && inputs.public_corpus
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install tested toolchain and reference codecs
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.14+7d59c7ec9'
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+          python -m pip install mcap==1.3.0 lz4==4.4.5 zstandard==0.25.0
+      - run: moon update
+      - run: python tools/corpus_workflows.py --public
+      - uses: actions/upload-artifact@v4
+        with:
+          name: public-corpus-report
+          path: _interop/corpus/report-public.json

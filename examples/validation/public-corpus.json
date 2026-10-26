@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "files": [
+    {
+      "name": "so101-real.mcap",
+      "kind": "physical-robot-recording",
+      "description": "SO-101 physical arm joint and transform feedback; ROS 2 CDR. Camera is not included.",
+      "url": "https://assets.foxglove.dev/website/blog/record-and-replay-with-a-ros-2-powered-so-101/replay_capture_2026_10_14_15_10_26_0.mcap",
+      "source": "https://foxglove.dev/blog/record-and-replay-with-a-ros-2-powered-so-101",
+      "bytes": 2592733,
+      "sha256": "e11ebd97b793b101b91237dcb4ceac32540aa2adb515df97650ad22116f6ac84",
+      "redistribution": "Original is publicly linked by its publisher. No dataset redistribution license is asserted here; fetch the original separately. The project MIT license does not relicense this recording."
+    }
+  ]
+}
