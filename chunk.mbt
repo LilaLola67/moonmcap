@@ -40,22 +40,23 @@ pub fn encode_chunk(
 }
 
 ///|
-pub fn decode_chunk(
+fn decode_chunk_internal(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits : Limits,
+  wire_limit : Int,
 ) -> Chunk raise McapError {
-  let input = cursor(bytes, limits)
+  let input = cursor(bytes, { ..limits, max_record_bytes: wire_limit, })
   let start_time = input.u64()
   let end_time = input.u64()
   let expected_size = input.u64()
   let checksum = input.u32()
   let compression = input.text()
-  let size = bounded_length(input.u64(), limits.max_record_bytes, "chunk")
+  let size = bounded_length(input.u64(), wire_limit, "chunk")
   let payload = decompress_payload(
     input.take(size),
     compression,
     expected_size,
-    limits~,
+    limits={ ..limits, max_record_bytes: wire_limit, },
   )
   input.finish()
   if start_time > end_time {

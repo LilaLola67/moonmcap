@@ -231,6 +231,7 @@ fn RangeReader::load_chunk(
   self : RangeReader,
   index : ChunkIndex,
   provided? : Bytes? = None,
+  expanded? : Bytes,
 ) -> Chunk raise McapError {
   for i = 0; i < self.cache.length(); i = i + 1 {
     if self.cache[i].offset == index.chunk_start {
@@ -263,7 +264,7 @@ fn RangeReader::load_chunk(
   let properties = cursor(record.body, self.limits)
   ignore(properties.take(16))
   let uncompressed_size = properties.u64()
-  ignore(properties.u32())
+  let checksum = properties.u32()
   let compression = properties.text()
   let compressed_size = properties.u64()
   if index.uncompressed_size != uncompressed_size ||
@@ -271,7 +272,31 @@ fn RangeReader::load_chunk(
     index.compressed_size != compressed_size {
     raise Invalid("ChunkIndex compression properties mismatch")
   }
-  let chunk = decode_chunk(record.body, limits=self.limits)
+  let chunk = match expanded {
+    None => decode_chunk(record.body, limits=self.limits)
+    Some(bytes) => {
+      if self.limits.max_decompressed_bytes > 2147483607 ||
+        bytes.length() > self.limits.max_decompressed_bytes + 40 {
+        raise Invalid("expanded worker Chunk exceeds budget")
+      }
+      let metadata = cursor(bytes, {
+        ..self.limits,
+        max_record_bytes: self.limits.max_decompressed_bytes + 40,
+      })
+      ignore(metadata.take(16))
+      if metadata.u64() != uncompressed_size ||
+        metadata.u32() != checksum ||
+        metadata.text() != "" ||
+        metadata.u64() != uncompressed_size {
+        raise Invalid("expanded Chunk differs from original properties")
+      }
+      decode_chunk_internal(
+        bytes,
+        self.limits,
+        self.limits.max_decompressed_bytes + 40,
+      )
+    }
+  }
   if chunk.start_time != index.start_time || chunk.end_time != index.end_time {
     raise Invalid("ChunkIndex time range mismatch")
   }

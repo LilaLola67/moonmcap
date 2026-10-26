@@ -1,4 +1,18 @@
 ///|
+pub async fn open_worker_pool(
+  _path : String,
+  options? : WorkerOptions = worker_options(),
+) -> WorkerPool {
+  ignore(options)
+  raise @mcap.io_error("codec worker pool requires Node.js")
+}
+
+///|
+pub fn run_codec_worker() -> Unit raise @mcap.McapError {
+  raise @mcap.io_error("codec worker host requires Node.js")
+}
+
+///|
 pub async fn open_cached_http(
   _url : String,
   _directory : String,

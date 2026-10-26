@@ -1,5 +1,7 @@
 # 接口与行为迁移
 
+0.15.24 新增可选 Node.js WorkerPool、ParallelReader、decode_parallel、编译线程入口及 parallel 命令，核心增加有界展开与 feed_expanded 协议。旧查询路径默认不启动线程，输出语义不变；线程池须显式关闭，见 [并行处理](parallel-codecs.md)。
+
 0.15.23 新增 resumable_chunk_pipeline、CJOB2 与 chunkmerge --checkpoint-final，checkpoint_run_ids/progress 识别组合状态；旧 CJOB1/MJOB1/MJOB2 保持兼容。新模式支持最终排序段与归并组复用，最终输出仍整体重写，见 [贯通恢复](chunk-pipeline.md)。
 
 0.15.22 新增独立 MFLD1 字段范围侧车、build_field_index/open_field_index、FieldQueryPlan 与 field 命令；现有 MIDX1/MIDX2 和 JSON 条件行为不变。只排除可证明不命中的候选块，保留最终精确过滤，见 [字段索引](field-index.md)。

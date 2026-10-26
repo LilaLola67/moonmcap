@@ -30,7 +30,7 @@ Timestamp 校验 0001–9999 年范围与纳秒，输出 UTC RFC3339；Duration 
 
 proto3 隐式标量默认值通常省略；显式 optional、oneof、消息字段保留出现性。proto2 optional 即使声明默认值，也不会因为缺失就被生成；`emit_defaults` 只输出不跟踪存在性的字段和空集合，遵循官方序列化语义。特殊类型保留旧模式时仍按普通结构展开。特殊映射校验描述符的必要字段类型，不仅检查消息名称。
 
-`python tools/protojson_workflows.py` 与 Google protobuf 6.33.0 核对 77 项规范输出，另覆盖非法时间/时长/Any/Value、无效字段编号、oneof 与 optional 关系。已有原始 wire 和数值精度对照同时保留。本模式提供序列化映射，不包含 ProtoJSON 文本到 Protobuf wire 的反向编码，也不宣称通过整个官方 conformance suite。
+`python tools/protojson_workflows.py` 与 Google protobuf 6.33.0 核对 79 项规范输出，包含映射中缺失消息值的特殊类型默认映射，另覆盖非法时间/时长/Any/Value、无效字段编号、oneof 与 optional 关系。已有原始 wire 和数值精度对照同时保留。本模式提供序列化映射，不包含 ProtoJSON 文本到 Protobuf wire 的反向编码，也不宣称通过整个官方 conformance suite。
 
 ## 预算与缓存
 

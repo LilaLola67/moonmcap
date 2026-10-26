@@ -12,8 +12,10 @@ options(
     "node.mbt": [ "js" ],
     "http.mbt": [ "js" ],
     "cached_js.mbt": [ "js" ],
+    "worker_js.mbt": [ "js" ],
     "async_test.mbt": [ "js" ],
     "cache_test.mbt": [ "js" ],
+    "worker_test.mbt": [ "js" ],
     "unsupported.mbt": [ "not", "js" ],
   },
 )

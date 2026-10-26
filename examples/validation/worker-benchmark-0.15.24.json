@@ -1,0 +1,319 @@
+{
+  "date": "2026-10-27",
+  "result": "measured",
+  "cases": [
+    {
+      "shape": "small",
+      "operation": "decompress",
+      "messages": 32,
+      "payload_bytes_each": 256,
+      "mode": "same pipeline main-thread thresholds",
+      "seconds": 0.229,
+      "max_rss_kib": 68724,
+      "final_rss_bytes": 62128128,
+      "node": "v24.15.0",
+      "platform": "win32",
+      "arch": "x64",
+      "pool": {
+        "submitted": 0,
+        "completed": 0,
+        "failed": 0,
+        "cancelled": 0,
+        "active": 0,
+        "active_peak": 0,
+        "pending_peak": 0,
+        "reserved_bytes": 0,
+        "peak_reserved_bytes": 0,
+        "threads": [],
+        "workers": 1,
+        "closed": false,
+        "failure": false
+      },
+      "readers": [
+        {
+          "peak_cursor_batch_bytes": 24302,
+          "cursor_batch_budget": 134217728,
+          "decoded_chunks": 1,
+          "async_source_bytes_read": "1279",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "shape": "small",
+      "operation": "decompress",
+      "messages": 32,
+      "payload_bytes_each": 256,
+      "mode": "2 codec workers",
+      "seconds": 0.2275,
+      "max_rss_kib": 86520,
+      "final_rss_bytes": 71888896,
+      "node": "v24.15.0",
+      "platform": "win32",
+      "arch": "x64",
+      "pool": {
+        "submitted": 1,
+        "completed": 1,
+        "failed": 0,
+        "cancelled": 0,
+        "active": 0,
+        "active_peak": 1,
+        "pending_peak": 1,
+        "reserved_bytes": 0,
+        "peak_reserved_bytes": 19262,
+        "threads": [
+          1
+        ],
+        "workers": 2,
+        "closed": false,
+        "failure": false
+      },
+      "readers": [
+        {
+          "peak_cursor_batch_bytes": 24302,
+          "cursor_batch_budget": 134217728,
+          "decoded_chunks": 1,
+          "async_source_bytes_read": "1279",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "shape": "small",
+      "operation": "decode",
+      "messages": 32,
+      "payload_bytes_each": 256,
+      "mode": "same pipeline main-thread thresholds",
+      "seconds": 1.3959,
+      "max_rss_kib": 68628,
+      "final_rss_bytes": 62070784,
+      "node": "v24.15.0",
+      "platform": "win32",
+      "arch": "x64",
+      "pool": {
+        "submitted": 0,
+        "completed": 0,
+        "failed": 0,
+        "cancelled": 0,
+        "active": 0,
+        "active_peak": 0,
+        "pending_peak": 0,
+        "reserved_bytes": 0,
+        "peak_reserved_bytes": 0,
+        "threads": [],
+        "workers": 1,
+        "closed": false,
+        "failure": false
+      },
+      "readers": [
+        {
+          "peak_cursor_batch_bytes": 44468,
+          "cursor_batch_budget": 134217728,
+          "decoded_chunks": 1,
+          "async_source_bytes_read": "10792",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "shape": "small",
+      "operation": "decode",
+      "messages": 32,
+      "payload_bytes_each": 256,
+      "mode": "2 codec workers",
+      "seconds": 0.9412,
+      "max_rss_kib": 86452,
+      "final_rss_bytes": 71606272,
+      "node": "v24.15.0",
+      "platform": "win32",
+      "arch": "x64",
+      "pool": {
+        "submitted": 32,
+        "completed": 32,
+        "failed": 0,
+        "cancelled": 0,
+        "active": 0,
+        "active_peak": 2,
+        "pending_peak": 2,
+        "reserved_bytes": 0,
+        "peak_reserved_bytes": 4196064,
+        "threads": [
+          1,
+          2
+        ],
+        "workers": 2,
+        "closed": false,
+        "failure": false
+      },
+      "readers": [
+        {
+          "peak_cursor_batch_bytes": 44468,
+          "cursor_batch_budget": 134217728,
+          "decoded_chunks": 1,
+          "async_source_bytes_read": "10792",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "shape": "larger",
+      "operation": "decompress",
+      "messages": 64,
+      "payload_bytes_each": 65536,
+      "mode": "same pipeline main-thread thresholds",
+      "seconds": 1.1766,
+      "max_rss_kib": 148232,
+      "final_rss_bytes": 140054528,
+      "node": "v24.15.0",
+      "platform": "win32",
+      "arch": "x64",
+      "pool": {
+        "submitted": 0,
+        "completed": 0,
+        "failed": 0,
+        "cancelled": 0,
+        "active": 0,
+        "active_peak": 0,
+        "pending_peak": 0,
+        "reserved_bytes": 0,
+        "peak_reserved_bytes": 0,
+        "threads": [],
+        "workers": 1,
+        "closed": false,
+        "failure": false
+      },
+      "readers": [
+        {
+          "peak_cursor_batch_bytes": 1058468,
+          "cursor_batch_budget": 134217728,
+          "decoded_chunks": 16,
+          "async_source_bytes_read": "5475",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "shape": "larger",
+      "operation": "decompress",
+      "messages": 64,
+      "payload_bytes_each": 65536,
+      "mode": "2 codec workers",
+      "seconds": 1.1346,
+      "max_rss_kib": 351548,
+      "final_rss_bytes": 336646144,
+      "node": "v24.15.0",
+      "platform": "win32",
+      "arch": "x64",
+      "pool": {
+        "submitted": 16,
+        "completed": 16,
+        "failed": 0,
+        "cancelled": 0,
+        "active": 0,
+        "active_peak": 2,
+        "pending_peak": 2,
+        "reserved_bytes": 0,
+        "peak_reserved_bytes": 1050188,
+        "threads": [
+          2,
+          1
+        ],
+        "workers": 2,
+        "closed": false,
+        "failure": false
+      },
+      "readers": [
+        {
+          "peak_cursor_batch_bytes": 1058468,
+          "cursor_batch_budget": 134217728,
+          "decoded_chunks": 16,
+          "async_source_bytes_read": "5475",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "shape": "larger",
+      "operation": "decode",
+      "messages": 64,
+      "payload_bytes_each": 65536,
+      "mode": "same pipeline main-thread thresholds",
+      "seconds": 3.1709,
+      "max_rss_kib": 146812,
+      "final_rss_bytes": 133541888,
+      "node": "v24.15.0",
+      "platform": "win32",
+      "arch": "x64",
+      "pool": {
+        "submitted": 0,
+        "completed": 0,
+        "failed": 0,
+        "cancelled": 0,
+        "active": 0,
+        "active_peak": 0,
+        "pending_peak": 0,
+        "reserved_bytes": 0,
+        "peak_reserved_bytes": 0,
+        "threads": [],
+        "workers": 1,
+        "closed": false,
+        "failure": false
+      },
+      "readers": [
+        {
+          "peak_cursor_batch_bytes": 2107692,
+          "cursor_batch_budget": 134217728,
+          "decoded_chunks": 16,
+          "async_source_bytes_read": "4201189",
+          "indexed": true
+        }
+      ]
+    },
+    {
+      "shape": "larger",
+      "operation": "decode",
+      "messages": 64,
+      "payload_bytes_each": 65536,
+      "mode": "2 codec workers",
+      "seconds": 2.0858,
+      "max_rss_kib": 295564,
+      "final_rss_bytes": 267108352,
+      "node": "v24.15.0",
+      "platform": "win32",
+      "arch": "x64",
+      "pool": {
+        "submitted": 64,
+        "completed": 64,
+        "failed": 0,
+        "cancelled": 0,
+        "active": 0,
+        "active_peak": 2,
+        "pending_peak": 2,
+        "reserved_bytes": 0,
+        "peak_reserved_bytes": 4457184,
+        "threads": [
+          1,
+          2
+        ],
+        "workers": 2,
+        "closed": false,
+        "failure": false
+      },
+      "readers": [
+        {
+          "peak_cursor_batch_bytes": 2107692,
+          "cursor_batch_budget": 134217728,
+          "decoded_chunks": 16,
+          "async_source_bytes_read": "4201189",
+          "indexed": true
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Includes worker startup, metadata IO, codec work, hexadecimal transport and NDJSON formatting; stdout is discarded by the OS.",
+    "Main-thread case opens one idle worker but executes codec work on the main thread; this isolates the same command pipeline rather than comparing unrelated CLIs.",
+    "RSS includes all process threads and runtime; configured payload/transport budgets do not cap RSS.",
+    "Each shape/mode is measured once; no universal speedup or statistical performance claim."
+  ]
+}

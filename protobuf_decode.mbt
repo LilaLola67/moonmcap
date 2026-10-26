@@ -168,7 +168,11 @@ fn ProtobufDecoder::message(
         raise Invalid("required protobuf field missing: \{field.name}")
       }
       if model.map_entry {
-        result[field.json_name] = self.default_value(field)
+        result[field.json_name] = if field.kind == 11 {
+          self.message(field.type_name, b"", budget, depth + 1)
+        } else {
+          self.default_value(field)
+        }
       } else if self.options.protojson &&
         self.options.emit_defaults &&
         (

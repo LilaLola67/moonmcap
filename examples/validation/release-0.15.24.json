@@ -1,0 +1,734 @@
+{
+  "version": "0.15.24",
+  "date": "2026-10-27",
+  "versions_completed": [
+    "0.15.19",
+    "0.15.20",
+    "0.15.21",
+    "0.15.22",
+    "0.15.23",
+    "0.15.24"
+  ],
+  "environment": {
+    "platform": "Windows",
+    "node": "24.15.0",
+    "moonc": "0.10.14+7d59c7ec9"
+  },
+  "tests": {
+    "wasm": 163,
+    "js": 182,
+    "failed": 0
+  },
+  "effective_handwritten_root_core_lines": 15745,
+  "count_excludes": [
+    "tests",
+    "generated interfaces",
+    "vendored codecs",
+    "subpackages and commands",
+    "Python tools"
+  ],
+  "regression_workflows": [
+    {
+      "script": "tools/interop.py",
+      "seconds": 4.338,
+      "passed": true
+    },
+    {
+      "script": "tools/conformance.py",
+      "seconds": 10.251,
+      "passed": true
+    },
+    {
+      "script": "examples/run.py",
+      "seconds": 1.281,
+      "passed": true
+    },
+    {
+      "script": "tools/range_benchmark.py",
+      "seconds": 0.567,
+      "passed": true
+    },
+    {
+      "script": "tools/stream_workflows.py",
+      "seconds": 1.211,
+      "passed": true
+    },
+    {
+      "script": "tools/cli_workflows.py",
+      "seconds": 3.053,
+      "passed": true
+    },
+    {
+      "script": "tools/batch_workflows.py",
+      "seconds": 1.192,
+      "passed": true
+    },
+    {
+      "script": "tools/repair_workflows.py",
+      "seconds": 3.834,
+      "passed": true
+    },
+    {
+      "script": "tools/async_workflows.py",
+      "seconds": 1.29,
+      "passed": true
+    },
+    {
+      "script": "tools/http_workflows.py",
+      "seconds": 2.814,
+      "passed": true
+    },
+    {
+      "script": "tools/external_workflows.py",
+      "seconds": 3.069,
+      "passed": true
+    },
+    {
+      "script": "tools/block_workflows.py",
+      "seconds": 1.412,
+      "passed": true
+    },
+    {
+      "script": "tools/transform_stream_workflows.py",
+      "seconds": 4.087,
+      "passed": true
+    },
+    {
+      "script": "tools/dataset_workflows.py",
+      "seconds": 2.156,
+      "passed": true
+    },
+    {
+      "script": "tools/sidecar_workflows.py",
+      "seconds": 10.088,
+      "passed": true
+    },
+    {
+      "script": "tools/json_workflows.py",
+      "seconds": 3.567,
+      "passed": true
+    },
+    {
+      "script": "tools/checkpoint_workflows.py",
+      "seconds": 23.349,
+      "passed": true
+    },
+    {
+      "script": "tools/input_checkpoint_workflows.py",
+      "seconds": 20.197,
+      "passed": true
+    },
+    {
+      "script": "tools/io_workflows.py",
+      "seconds": 3.007,
+      "passed": true
+    },
+    {
+      "script": "tools/aggregate_workflows.py",
+      "seconds": 1.234,
+      "passed": true
+    },
+    {
+      "script": "tools/diff_workflows.py",
+      "seconds": 1.267,
+      "passed": true
+    },
+    {
+      "script": "tools/replay_workflows.py",
+      "seconds": 1.255,
+      "passed": true
+    },
+    {
+      "script": "tools/async_dataset_workflows.py",
+      "seconds": 2.0,
+      "passed": true
+    },
+    {
+      "script": "tools/source_diagnostic_workflows.py",
+      "seconds": 5.352,
+      "passed": true
+    },
+    {
+      "script": "tools/large_source_workflows.py",
+      "seconds": 2.96,
+      "passed": true
+    },
+    {
+      "script": "tools/fuzz_workflows.py",
+      "seconds": 12.158,
+      "passed": true
+    },
+    {
+      "script": "tools/memory_benchmark.py",
+      "seconds": 21.716,
+      "passed": true
+    },
+    {
+      "script": "tools/corpus_workflows.py",
+      "seconds": 30.269,
+      "passed": true
+    },
+    {
+      "script": "tools/disk_index_workflows.py",
+      "seconds": 8.378,
+      "passed": true
+    },
+    {
+      "script": "tools/disk_index_scale.py",
+      "seconds": 2.219,
+      "passed": true
+    },
+    {
+      "script": "tools/aggregate_external_workflows.py",
+      "seconds": 15.64,
+      "passed": true
+    },
+    {
+      "script": "tools/chunk_checkpoint_workflows.py",
+      "seconds": 2.861,
+      "passed": true
+    },
+    {
+      "script": "tools/protobuf_workflows.py",
+      "seconds": 2.25,
+      "passed": true
+    },
+    {
+      "script": "tools/cached_http_workflows.py",
+      "seconds": 5.746,
+      "passed": true
+    },
+    {
+      "script": "tools/protojson_workflows.py",
+      "seconds": 9.814,
+      "passed": true
+    },
+    {
+      "script": "tools/cdr_workflows.py",
+      "seconds": 2.151,
+      "passed": true
+    },
+    {
+      "script": "tools/async_paged_workflows.py",
+      "seconds": 2.87,
+      "passed": true
+    },
+    {
+      "script": "tools/field_index_workflows.py",
+      "seconds": 7.124,
+      "passed": true
+    },
+    {
+      "script": "tools/chunk_pipeline_workflows.py",
+      "seconds": 8.023,
+      "passed": true
+    },
+    {
+      "script": "tools/worker_workflows.py",
+      "seconds": 18.42,
+      "passed": true
+    },
+    {
+      "script": "tools/worker_benchmark.py",
+      "seconds": 10.866,
+      "passed": true
+    }
+  ],
+  "protojson": {
+    "result": "passed",
+    "reference": "Google protobuf 6.33.0",
+    "canonical_cases": 79,
+    "invalid_cases": 8,
+    "invalid_descriptors": [
+      "reserved",
+      "oneof",
+      "required",
+      "optional",
+      "shared-optional",
+      "duplicate-name",
+      "package"
+    ],
+    "legacy_mode": "verified by existing protobuf_workflows and portable fixtures"
+  },
+  "cdr_public": {
+    "result": "passed",
+    "reference": "rosbags 0.11.0",
+    "endianness": [
+      "big",
+      "little"
+    ],
+    "malformed_payloads": 5,
+    "invalid_definitions": 6,
+    "compressions": 3,
+    "public_messages": [
+      {
+        "topic": "/tf_static",
+        "type": "tf2_msgs/msg/TFMessage",
+        "bytes": 684,
+        "result": "passed"
+      },
+      {
+        "topic": "/joint_states",
+        "type": "sensor_msgs/msg/JointState",
+        "bytes": 340,
+        "result": "passed"
+      },
+      {
+        "topic": "/tf",
+        "type": "tf2_msgs/msg/TFMessage",
+        "bytes": 108,
+        "result": "passed"
+      },
+      {
+        "topic": "/dynamic_joint_states",
+        "type": "control_msgs/msg/DynamicJointState",
+        "bytes": 1180,
+        "result": "passed"
+      },
+      {
+        "topic": "/joint_commands_replay",
+        "type": "sensor_msgs/msg/JointState",
+        "bytes": 228,
+        "result": "passed"
+      }
+    ],
+    "public_all_messages": 4719,
+    "int64_exact": true
+  },
+  "async_paged": {
+    "result": "passed",
+    "compressions": 3,
+    "messages": 768,
+    "order_tests": [
+      "ascending",
+      "descending"
+    ],
+    "providers": [
+      "local file",
+      "HTTP cached source and index"
+    ],
+    "remote": [
+      {
+        "warm": false,
+        "metrics": {
+          "indexes": [
+            {
+              "version": 2,
+              "entries": 256,
+              "page_entries": 3,
+              "page_reads": 86,
+              "cache_hits": 0,
+              "cached_pages": 0,
+              "peak_cached_pages": 4,
+              "page_cache_budget": 4,
+              "index_bytes": "9941",
+              "content_verified": true,
+              "source_sha256": "8fef137dc77518568c7434a5999b6fa93ca569aca2bc4150f4233369ff2a245b",
+              "index_audit": "all page CRCs and global order; bounded memory",
+              "async_source_bytes_read": "9255",
+              "async_index_bytes_read": "9941"
+            }
+          ],
+          "http_caches": [
+            {
+              "requests": 2,
+              "response_bytes": 9240,
+              "disk_hits": 17,
+              "disk_misses": 1,
+              "corrupt_pages": 0,
+              "evictions": 0,
+              "cache_bytes": 9323,
+              "peak_disk_bytes": 9323,
+              "active_peak": 1,
+              "pending_peak": 1,
+              "prefetched_pages": 0,
+              "closed": false
+            },
+            {
+              "requests": 2,
+              "response_bytes": 9942,
+              "disk_hits": 96,
+              "disk_misses": 1,
+              "corrupt_pages": 0,
+              "evictions": 0,
+              "cache_bytes": 10025,
+              "peak_disk_bytes": 10025,
+              "active_peak": 1,
+              "pending_peak": 1,
+              "prefetched_pages": 0,
+              "closed": false
+            }
+          ]
+        }
+      },
+      {
+        "warm": true,
+        "metrics": {
+          "indexes": [
+            {
+              "version": 2,
+              "entries": 256,
+              "page_entries": 3,
+              "page_reads": 86,
+              "cache_hits": 0,
+              "cached_pages": 0,
+              "peak_cached_pages": 4,
+              "page_cache_budget": 4,
+              "index_bytes": "9941",
+              "content_verified": true,
+              "source_sha256": "8fef137dc77518568c7434a5999b6fa93ca569aca2bc4150f4233369ff2a245b",
+              "index_audit": "all page CRCs and global order; bounded memory",
+              "async_source_bytes_read": "9255",
+              "async_index_bytes_read": "9941"
+            }
+          ],
+          "http_caches": [
+            {
+              "requests": 1,
+              "response_bytes": 1,
+              "disk_hits": 18,
+              "disk_misses": 0,
+              "corrupt_pages": 0,
+              "evictions": 0,
+              "cache_bytes": 9323,
+              "peak_disk_bytes": 9323,
+              "active_peak": 1,
+              "pending_peak": 1,
+              "prefetched_pages": 0,
+              "closed": false
+            },
+            {
+              "requests": 1,
+              "response_bytes": 1,
+              "disk_hits": 97,
+              "disk_misses": 0,
+              "corrupt_pages": 0,
+              "evictions": 0,
+              "cache_bytes": 10025,
+              "peak_disk_bytes": 10025,
+              "active_peak": 1,
+              "pending_peak": 1,
+              "prefetched_pages": 0,
+              "closed": false
+            }
+          ]
+        }
+      }
+    ],
+    "failure_cases": [
+      "page CRC",
+      "stale source SHA256"
+    ],
+    "requests": {
+      "/source": 4,
+      "/index": 3,
+      "/corrupt": 2
+    }
+  },
+  "field_index": {
+    "result": "passed",
+    "cases": [
+      {
+        "compression": "NONE",
+        "zones": 166,
+        "result": "passed"
+      },
+      {
+        "compression": "LZ4",
+        "zones": 166,
+        "result": "passed"
+      },
+      {
+        "compression": "ZSTD",
+        "zones": 166,
+        "result": "passed"
+      }
+    ],
+    "predicate_queries": 30,
+    "unknown_block_error_preserved": true,
+    "corrupt_index_atomic_failures": 3,
+    "integer_precision": "exact UInt64 JSON lexemes",
+    "notes": "SHA256 verification occurs before query metrics; summaries are trusted local artifacts, not signed proofs"
+  },
+  "chunk_pipeline": {
+    "result": "passed",
+    "actual_process_termination": true,
+    "committed_final_groups_at_stop": 1,
+    "reused_parts": 28,
+    "committed_final_run_ids": [
+      10002,
+      10003,
+      10004,
+      10005,
+      10006,
+      10007,
+      10008,
+      10009,
+      10010,
+      10011,
+      10012,
+      10013,
+      10014,
+      10015,
+      10016,
+      10017,
+      10018,
+      10019,
+      10020,
+      10021,
+      10022,
+      10023,
+      10024,
+      10025,
+      10026,
+      10027,
+      10028,
+      10029,
+      10030,
+      10031,
+      10032,
+      10033,
+      10034,
+      10035,
+      10036,
+      10037,
+      10038,
+      10039,
+      10040,
+      10041,
+      10042,
+      10043,
+      10044,
+      10045,
+      10046,
+      10047,
+      10048,
+      10049,
+      10050,
+      10051,
+      10052,
+      10053,
+      10054,
+      10055,
+      10056,
+      10057,
+      10058,
+      10059,
+      10060,
+      10061,
+      10062,
+      10063,
+      10064
+    ],
+    "messages": 320,
+    "attachments": 2,
+    "metadata": 2,
+    "checks": [
+      "real final-group crash",
+      "run fingerprint rejection",
+      "committed part hashes and mtimes unchanged",
+      "orphan pruning",
+      "official stable message oracle",
+      "owned job cleanup"
+    ]
+  },
+  "workers": {
+    "result": "passed",
+    "cases": [
+      {
+        "compression": "NONE",
+        "descending": false,
+        "result": "passed",
+        "pool": {
+          "submitted": 38,
+          "completed": 38,
+          "failed": 0,
+          "cancelled": 0,
+          "active": 0,
+          "active_peak": 2,
+          "pending_peak": 2,
+          "reserved_bytes": 0,
+          "peak_reserved_bytes": 4219680,
+          "threads": [
+            1,
+            2
+          ],
+          "workers": 2,
+          "closed": false,
+          "failure": false
+        }
+      },
+      {
+        "compression": "NONE",
+        "descending": true,
+        "result": "passed",
+        "pool": {
+          "submitted": 38,
+          "completed": 38,
+          "failed": 0,
+          "cancelled": 0,
+          "active": 0,
+          "active_peak": 2,
+          "pending_peak": 2,
+          "reserved_bytes": 0,
+          "peak_reserved_bytes": 4219680,
+          "threads": [
+            1,
+            2
+          ],
+          "workers": 2,
+          "closed": false,
+          "failure": false
+        }
+      },
+      {
+        "compression": "LZ4",
+        "descending": false,
+        "result": "passed",
+        "pool": {
+          "submitted": 47,
+          "completed": 47,
+          "failed": 0,
+          "cancelled": 0,
+          "active": 0,
+          "active_peak": 2,
+          "pending_peak": 2,
+          "reserved_bytes": 0,
+          "peak_reserved_bytes": 4219680,
+          "threads": [
+            1,
+            2
+          ],
+          "workers": 2,
+          "closed": false,
+          "failure": false
+        }
+      },
+      {
+        "compression": "LZ4",
+        "descending": true,
+        "result": "passed",
+        "pool": {
+          "submitted": 47,
+          "completed": 47,
+          "failed": 0,
+          "cancelled": 0,
+          "active": 0,
+          "active_peak": 2,
+          "pending_peak": 2,
+          "reserved_bytes": 0,
+          "peak_reserved_bytes": 4219680,
+          "threads": [
+            1,
+            2
+          ],
+          "workers": 2,
+          "closed": false,
+          "failure": false
+        }
+      },
+      {
+        "compression": "ZSTD",
+        "descending": false,
+        "result": "passed",
+        "pool": {
+          "submitted": 47,
+          "completed": 47,
+          "failed": 0,
+          "cancelled": 0,
+          "active": 0,
+          "active_peak": 2,
+          "pending_peak": 2,
+          "reserved_bytes": 0,
+          "peak_reserved_bytes": 4219680,
+          "threads": [
+            1,
+            2
+          ],
+          "workers": 2,
+          "closed": false,
+          "failure": false
+        }
+      },
+      {
+        "compression": "ZSTD",
+        "descending": true,
+        "result": "passed",
+        "pool": {
+          "submitted": 47,
+          "completed": 47,
+          "failed": 0,
+          "cancelled": 0,
+          "active": 0,
+          "active_peak": 2,
+          "pending_peak": 2,
+          "reserved_bytes": 0,
+          "peak_reserved_bytes": 4219680,
+          "threads": [
+            2,
+            1
+          ],
+          "workers": 2,
+          "closed": false,
+          "failure": false
+        }
+      }
+    ],
+    "failure_cases": [
+      "buffer bound",
+      "startup deadline",
+      "crash",
+      "malformed",
+      "invalid-expanded"
+    ],
+    "lazy_error_ordering": true,
+    "expanded_body_over_16MiB": true,
+    "unindexed_fallback": true,
+    "source_unchanged": true,
+    "note": "Actual worker thread IDs are reported; payload/cache reservations are distinct from total RSS."
+  },
+  "public_worker_sample": {
+    "result": "passed",
+    "source": "SO-101 public native MCAP",
+    "source_sha256": "e11ebd97b793b101b91237dcb4ceac32540aa2adb515df97650ad22116f6ac84",
+    "messages": 200,
+    "topics": [
+      "/dynamic_joint_states",
+      "/joint_states",
+      "/tf",
+      "/tf_static"
+    ],
+    "comparison": "parallel decoded records equal serial decoded records; full 4719-message independent CDR oracle is reported separately",
+    "pool": {
+      "submitted": 200,
+      "completed": 200,
+      "failed": 0,
+      "cancelled": 0,
+      "active": 0,
+      "active_peak": 2,
+      "pending_peak": 2,
+      "reserved_bytes": 0,
+      "peak_reserved_bytes": 4235768,
+      "threads": [
+        1,
+        2
+      ],
+      "workers": 2,
+      "closed": false,
+      "failure": false
+    }
+  },
+  "public_corpus_cases": 11,
+  "benchmark_snapshot": "worker-benchmark-0.15.24.json",
+  "scope_notes": [
+    "After the complete matrix, affected workflows additionally verified unindexed worker fallback and missing map-message ProtoJSON defaults; both-target checks, builds and tests were then rerun.",
+    "ProtoJSON is opt-in serialization mapping; no reverse JSON-to-wire encoder, GROUP, Editions or extension decoding.",
+    "CDR is the documented plain XCDR1/ros2msg subset; XCDR2, IDL and wstring are not claimed.",
+    "Async MIDX2 opens still audit all pages and hash the source by default. Warm HTTP cache reuse does not remove logical validation work.",
+    "MFLD1 summaries must come from a trusted producer; CRC and a source digest are not signatures proving summary completeness.",
+    "CJOB2 reuses committed final sorting/merge work, but final MCAP publication is restarted as a whole after interruption.",
+    "Node workers are opt-in, consume additional RSS, and do not universally accelerate end-to-end queries. Payload/transport budgets are not RSS bounds.",
+    "The complete 4719-message CDR comparison uses an independent serializer. The additional parallel-versus-serial comparison covers 200 messages and 4 topics.",
+    "Public source data remains under its own terms and is not redistributed; reports distinguish synthetic data, native MCAP and raw-preserving ROS1 conversion."
+  ]
+}

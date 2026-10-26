@@ -1,5 +1,7 @@
 # MoonMCAP
 
+[可选工作线程](docs/parallel-codecs.md)在 Node.js 中并行解压和解码，保留排序、预算和背压；附耗时及进程内存实测。
+
 [贯通恢复任务](docs/chunk-pipeline.md)把 Chunk 副本、最终排序段和归并组进度保存在同一任务中，支持进程中断后复用。
 
 [字段范围索引](docs/field-index.md)通过块级数值/字符串摘要保守排除不命中块，并保留最后的精确筛选与完整结果。
@@ -10,9 +12,9 @@ HTTP 远程日志支持有界持久页缓存、并发预取、ETag 快照校验�
 
 消息结构解码：内置 JSON、Protobuf FileDescriptorSet 和 ROS 2 ros2msg / XCDR1 解码，可接入同步、异步筛选、投影与精确聚合，支持自定义插件。见[消息解码](docs/payload-decoding.md)和 [CDR 范围与样例](docs/cdr-decoding.md)。
 
-[0.15.18 本地验证报告](examples/validation/release-0.15.18.json)记录 34 组完整回归、11 个语料案例和 20 项持久缓存故障场景，区分真实录制、转换数据与合成样例。
+[0.15.24 本地验证报告](examples/validation/release-0.15.24.json)记录 41 组回归、11 个语料案例、4719 条公开 CDR 消息的独立解码对照，以及 200 条消息的并行/串行对照，区分真实录制、转换数据与合成样例。
 
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.15.23**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
+MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.15.24**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
 
 ## 安装与运行
 
@@ -59,7 +61,7 @@ JS 目标：`moon test --target js`、`moon run cmd/main --target js`。内存�
 安装 Mooncakes 发行版本：
 
 ```sh
-moon add LilaLola67/moonmcap@0.15.23
+moon add LilaLola67/moonmcap@0.15.24
 ```
 
 也可从 GitHub 克隆复现全部样例；[发布包校验](docs/distribution.md) 可生成经过文件清单检查的模块归档。运行库依赖固定版本的 `bikallem/compress 0.3.4`、`bikallem/blit 0.2.2`，异步包使用 `moonbitlang/async 0.20.2`；[第三方来源与许可证](third_party/README.md) 说明了来源。运行时不需要 Python，也不调用外部压缩进程。
@@ -108,7 +110,7 @@ cursor.cancel()
 | [外部排序合并](docs/external-merge.md) | 乱序输入写临时排序段，多轮归并、稳定重复次序、声明重映射、临时空间预算及清理 |
 | [独立块恢复](docs/block-recovery.md) | 显式跳过坏块、校验后续索引块并输出范围清单；始终标为部分提取 |
 
-异步文件和 HTTP 宿主支持 JS/Node；同步核心、磁盘游标协议和排序算法支持 Wasm。解压/排序仍在当前执行线程运行，异步 I/O 不意味着多线程压缩。负载预算分别计账，不是总进程内存上限，见 [内存实测](docs/performance.md)。
+异步文件和 HTTP 宿主支持 JS/Node；同步核心、磁盘游标协议和排序算法支持 Wasm。原路径的解压/排序仍在当前线程运行，可选工作线程后端分担解压和负载解码；异步 I/O 本身不意味着多线程压缩。负载预算分别计账，不是总进程内存上限，见 [内存实测](docs/performance.md)。
 
 ## 容器与压缩
 
@@ -148,7 +150,7 @@ python tools/conformance.py
 python tools/count_source.py
 ```
 
-- MoonBit 单元/回归测试：Wasm 161 项、JS 179 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
+- MoonBit 单元/回归测试：Wasm 163 项、JS 182 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
 - 真实文件验证：30 项；包含 `3 输入压缩 × 2 摘要布局 × 3 输出压缩 = 18` 组双向读写检查，以及顺序文件、无消息索引、无摘要偏移、混合压缩和查询/合并/恢复工作流。
 - 真实文件验证还覆盖按需读取、三种流式输出、8 项 CLI、4 项批量变换、8 项诊断修复，以及 5 项异步录制、15 项 HTTP 故障、5 项磁盘排序、9 项独立块恢复、108 项固定种子差分检查和 4 组进程 RSS 测量。执行命令见下方，结果位于 `_interop/` 各子目录的 `report.json`。GitHub Actions 完整执行并上传报告。
 - 新增 45 项大文件诊断与恢复故障用例，百万条消息与实际超过 2 GiB 文件的本地验证见 [规模报告](docs/performance.md)。常规 CI 使用缩小规模，完整规模测试可手动启用。
@@ -189,6 +191,9 @@ python tools/protojson_workflows.py
 python tools/cdr_workflows.py
 python tools/async_paged_workflows.py
 python tools/field_index_workflows.py
+python tools/chunk_pipeline_workflows.py
+python tools/worker_workflows.py
+python tools/worker_benchmark.py
 python tools/package_audit.py
 ```
 
@@ -208,7 +213,7 @@ Python `mcap==1.3.0` 仅为开发阶段的官方参考工具，其包版本不�
 
 ## 边界
 
-不支持外部压缩字典、拼接帧、skippable frame 或自定义压缩算法。消息体可显式执行 JSON 条件和投影，Protobuf 可先按日志内描述符解码；CDR 等编码默认保留原始字节。原有文件 API 接收已加载的 Bytes；RangeReader 和 Node.js 文件适配器支持 [按需读取](docs/range-reader.md)，快速模式不校验未读取的数据。[StreamWriter](docs/stream-writer.md) 支持同步输出、增量校验和与分块/摘要预算；旧 LogBuilder 仍提供完整快照和原子添加。
+不支持外部压缩字典、拼接帧、skippable frame 或自定义压缩算法。消息体可显式执行 JSON 条件和投影，Protobuf 和受支持的 ros2msg/XCDR1 可先按日志内定义解码；其他编码保留原始字节。原有文件 API 接收已加载的 Bytes；RangeReader 和 Node.js 文件适配器支持 [按需读取](docs/range-reader.md)，快速模式不校验未读取的数据。[StreamWriter](docs/stream-writer.md) 支持同步输出、增量校验和与分块/摘要预算；旧 LogBuilder 仍提供完整快照和原子添加。
 
 `scan_file` 可取得未知原始记录；`Log` 是语义模型，重写会重建容器，不保留未知记录和扩展字段的原始字节。未提供 CRC 的内容无法仅凭解析证明未损坏。互操作结果限于已执行的矩阵与声明边界，不等于所有未来扩展格式都已验证。
 

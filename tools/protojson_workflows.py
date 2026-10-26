@@ -39,6 +39,13 @@ def vectors():
     # Also test a non-special Any: inline object fields rather than a value wrapper.
     packed=any_pb2.Any();packed.Pack(cls(n=7));samples.append(packed)
     default_pool=descriptor_pool.Default();default_pool.Add(f)
+    # A missing map message value is an empty message instance, including its WKT mapping.
+    fm=pb.FileDescriptorProto(name='mapped_time.proto',package='test',syntax='proto3',dependency=['google/protobuf/timestamp.proto'])
+    mm=fm.message_type.add(name='MappedTime');entry=mm.nested_type.add(name='TimesEntry');entry.options.map_entry=True
+    entry.field.add(name='key',number=1,type=9,label=1);entry.field.add(name='value',number=2,type=11,label=1,type_name='.google.protobuf.Timestamp')
+    mm.field.add(name='times',number=1,type=11,label=3,type_name='.test.MappedTime.TimesEntry')
+    default_pool.Add(fm);descriptors[fm.name]=fm
+    mapped=message_factory.GetMessageClass(default_pool.FindMessageTypeByName('test.MappedTime'))();mapped.ParseFromString(b'\x0a\x05\x0a\x03key');samples.append(mapped)
     result=[]
     for i,message in enumerate(samples):
         for defaults in (False,True):
@@ -69,7 +76,7 @@ def main():
         result=run(case['type'],bytes.fromhex(case['wire']),case['defaults'])
         assert result.returncode==0,(case,result.stderr)
         assert json.loads(result.stdout)==case['expected'],(case,result.stdout)
-    invalid=[timestamp_pb2.Timestamp(seconds=253402300800),timestamp_pb2.Timestamp(nanos=-1),duration_pb2.Duration(seconds=1,nanos=-1),field_mask_pb2.FieldMask(paths=['bad__name']),struct_pb2.Value(),struct_pb2.Value(number_value=float('nan')),any_pb2.Any(type_url='type/unknown.Type',value=b'')]
+    invalid=[timestamp_pb2.Timestamp(seconds=253402300800),timestamp_pb2.Timestamp(nanos=-1),duration_pb2.Duration(seconds=1,nanos=-1),field_mask_pb2.FieldMask(paths=['bad__name']),struct_pb2.Value(),struct_pb2.Value(number_value=float('nan')),any_pb2.Any(type_url='type/unknown.Type',value=b''),struct_pb2.Struct.FromString(b'\x0a\x03\x0a\x01x')]
     for message in invalid:
         result=run(message.DESCRIPTOR.full_name,message.SerializeToString());assert result.returncode==2,(message,result.stdout)
     invalid_descriptors=[]
