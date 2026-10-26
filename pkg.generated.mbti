@@ -167,6 +167,12 @@ pub fn parse_command(Array[String]) -> CommandOptions raise McapError
 
 pub fn parse_decimal(String) -> UInt64 raise McapError
 
+pub fn payload_decoder((Schema?, Channel, Bytes) -> Json raise McapError) -> PayloadDecoder
+
+pub fn protobuf_decoder(Bytes, options? : ProtobufOptions) -> ProtobufDecoder raise McapError
+
+pub fn protobuf_options() -> ProtobufOptions
+
 pub fn query_file(Bytes, Query, limits? : Limits) -> QueryResult raise McapError
 
 pub fn query_source(Log, (Query, Int) -> MessageStream raise McapError, materialized? : Bool) -> QuerySource raise McapError
@@ -202,6 +208,8 @@ pub fn slice_log(Log, Query) -> Log raise McapError
 pub fn sort_storage((Int) -> WriteSink raise McapError, (Int) -> ReadSource raise McapError, (Int) -> Unit raise McapError, finish? : () -> Unit raise McapError) -> SortStorage
 
 pub fn source_visitor(schema? : (Schema) -> Unit raise McapError, channel? : (Channel) -> Unit raise McapError, message? : (Message, MessageLocation) -> Unit raise McapError, attachment? : (Attachment) -> Unit raise McapError, metadata? : (Metadata) -> Unit raise McapError) -> SourceVisitor
+
+pub fn standard_payload_decoder(options? : ProtobufOptions, cache_bytes? : Int, max_schemas? : Int) -> PayloadDecoder raise McapError
 
 pub fn stats_report(LogStats) -> String
 
@@ -747,6 +755,42 @@ pub(all) struct MetadataIndex {
   name : String
 }
 
+pub struct PayloadDecoder {
+  decode_payload : (Schema?, Channel, Bytes) -> Json raise McapError
+}
+pub fn PayloadDecoder::decode_message(Self, Message, Log, max_bytes? : Int) -> Message raise McapError
+
+type ProtoCache
+
+type ProtoEnum
+
+type ProtoField
+
+type ProtoItem
+
+type ProtoMessage
+
+type ProtoValue
+
+type ProtoWire
+
+pub struct ProtobufDecoder {
+  messages : Map[String, ProtoMessage]
+  enums : Map[String, ProtoEnum]
+  options : ProtobufOptions
+  field_count : Array[Int]
+}
+pub fn ProtobufDecoder::decode(Self, String, Bytes) -> Json raise McapError
+
+pub(all) struct ProtobufOptions {
+  descriptor_bytes : Int
+  message_bytes : Int
+  depth : Int
+  items : Int
+  fields : Int
+  int64_as_string : Bool
+}
+
 pub(all) struct Query {
   topics : Array[String]
   start_time : UInt64
@@ -814,6 +858,7 @@ pub struct QuerySource {
   materialized : Bool
 }
 pub fn QuerySource::declaration_log(Self) -> Log
+pub fn QuerySource::decode_payload(Self, PayloadDecoder, max_bytes? : Int) -> Self raise McapError
 pub fn QuerySource::filter_json(Self, JsonFilter) -> Self raise McapError
 
 pub struct RangeReader {

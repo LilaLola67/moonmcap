@@ -97,6 +97,7 @@ pub struct AsyncQuerySource {
   open : (@moonmcap.Query, Int) -> AsyncMessageStream raise @moonmcap.McapError
   materialized : Bool
 }
+pub fn AsyncQuerySource::decode_payload(Self, @moonmcap.PayloadDecoder, max_bytes? : Int) -> Self raise @moonmcap.McapError
 pub fn AsyncQuerySource::filter_json(Self, @moonmcap.JsonFilter) -> Self raise @moonmcap.McapError
 
 pub(all) struct AsyncReadMetrics {

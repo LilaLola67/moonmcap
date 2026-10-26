@@ -1,4 +1,43 @@
 ///|
+async test "custom payload decoder composes with async filtering before global pagination" {
+  let builder = @mcap.new_builder()
+  let id = builder.register_channel("/custom", "application/test")
+  for i = 0; i < 9; i = i + 1 {
+    builder.append(id, i.to_uint64(), @utf8.encode("\{i}"[:]))
+  }
+  let bytes = builder.finish()
+  let source = @asyncio.new_source(bytes.length().to_uint64(), async fn(
+    offset,
+    length,
+  ) {
+    @async.pause()
+    bytes[offset.to_int():offset.to_int() + length].to_owned()
+  })
+  let decoder = @mcap.payload_decoder(fn(_, channel, data) {
+    if channel.message_encoding != "application/test" {
+      raise @mcap.io_error("original encoding lost")
+    }
+    let text = @utf8.decode(data[:]) catch {
+      _ => raise @mcap.io_error("bad custom bytes")
+    }
+    { "n": Json::number(@mcap.parse_decimal(text).to_double()) }
+  })
+  let filter = @mcap.json_filter("{\"path\":\"/n\",\"op\":\">=\",\"value\":5}")
+  let dataset = @asyncio.open_dataset([
+    @asyncio.open_reader(source)
+    .query_source()
+    .decode_payload(decoder)
+    .filter_json(filter),
+  ])
+  let cursor = dataset.cursor({ ..@mcap.all_query(), offset: 1, limit: 2, })
+  let rows = cursor.next_page(10)
+  assert_eq(rows.length(), 2)
+  assert_eq(rows[0].message.log_time, 6UL)
+  cursor.cancel()
+  source.cancel()
+}
+
+///|
 async test "unified async datasets combine sidecars JSON filtering paging and seek" {
   let builder = @mcap.new_builder()
   let id = builder.register_channel("/json", "json")
