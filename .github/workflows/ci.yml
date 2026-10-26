@@ -90,6 +90,12 @@ jobs:
       - name: Verify persistent sidecar indexes and source fingerprints
         if: matrix.target == 'js'
         run: python tools/sidecar_workflows.py
+      - name: Verify paged disk indexes
+        if: matrix.target == 'js'
+        run: python tools/disk_index_workflows.py
+      - name: Measure scaled disk index build and query
+        if: matrix.target == 'js'
+        run: python tools/disk_index_scale.py
       - name: Verify input stage checkpoint recovery
         if: matrix.target == 'js'
         run: python tools/input_checkpoint_workflows.py
@@ -150,6 +156,8 @@ jobs:
             _interop/transform-stream/report.json
             _interop/dataset/report.json
             _interop/sidecar/report.json
+            _interop/disk-index/report.json
+            _interop/disk-index-scale/report.json
             _interop/json/report.json
             _interop/checkpoint/report.json
             _interop/input-checkpoint/report.json
@@ -178,10 +186,13 @@ jobs:
           python -m pip install mcap==1.3.0 lz4==4.4.5 zstandard==0.25.0
       - run: moon update
       - run: python tools/large_source_workflows.py --large
+      - run: python tools/disk_index_scale.py --million
       - uses: actions/upload-artifact@v4
         with:
           name: large-source-report
-          path: _interop/large-source/report-large.json
+          path: |
+            _interop/large-source/report-large.json
+            _interop/disk-index-scale/report-million.json
   public-corpus:
     if: github.event_name == 'workflow_dispatch' && inputs.public_corpus
     runs-on: ubuntu-latest
@@ -196,6 +207,7 @@ jobs:
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
           python -m pip install mcap==1.3.0 lz4==4.4.5 zstandard==0.25.0
       - run: moon update
+      - run: python -m pip install rosbags==0.11.0
       - run: python tools/corpus_workflows.py --public
       - uses: actions/upload-artifact@v4
         with:

@@ -219,7 +219,7 @@ fn decode_huffman_literals_header(
     let b3 = src.unsafe_get(pos + 3).to_int()
     let b4 = src.unsafe_get(pos + 4).to_int()
     (
-      (lit_header >> 4) | (b1 << 4) | (b2 << 12) | ((b3 & 0x3F) << 20),
+      (lit_header >> 4) | (b1 << 4) | ((b2 & 0x3F) << 12),
       (b2 >> 6) | (b3 << 2) | (b4 << 10),
       5,
       4,

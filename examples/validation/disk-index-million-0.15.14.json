@@ -1,0 +1,167 @@
+{
+  "million": true,
+  "entries": 1000000,
+  "source_bytes": 35006869,
+  "index_bytes": 36020342,
+  "note": "RSS includes runtime; page and sorting payload budgets are separate. Opening audits all index pages and hashes the source.",
+  "cases": [
+    {
+      "operation": "build",
+      "seconds": 270.333,
+      "max_rss_kib": 367456,
+      "final_rss_bytes": 339492864,
+      "node": "v24.15.0",
+      "platform": "win32",
+      "arch": "x64",
+      "report": {
+        "version": 2,
+        "entries": "1000000",
+        "page_entries": 1024,
+        "index_bytes": "36020342",
+        "source_sha256": "3a4585fa805bdd99ec62b7e65cd6630547fe65a604c7ca33d9b19fba56c3f5dd",
+        "peak_spool_bytes": "245388748",
+        "sort": {
+          "input_files": 1,
+          "messages": "1000000",
+          "runs_created": 43,
+          "merge_passes": 2,
+          "peak_run_bytes": 2097134,
+          "peak_merge_bytes": 632,
+          "peak_spool_bytes": "95777696",
+          "output_bytes": "83574631"
+        }
+      }
+    },
+    {
+      "operation": "query",
+      "seconds": 1.8613,
+      "max_rss_kib": 187400,
+      "final_rss_bytes": 190107648,
+      "node": "v24.15.0",
+      "platform": "win32",
+      "arch": "x64",
+      "report": {
+        "messages": [
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 7725,
+            "log_time": "1234",
+            "publish_time": "7725",
+            "data_hex": "2d1e0000"
+          },
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 17732,
+            "log_time": "1234",
+            "publish_time": "17732",
+            "data_hex": "44450000"
+          },
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 27739,
+            "log_time": "1234",
+            "publish_time": "27739",
+            "data_hex": "5b6c0000"
+          },
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 37746,
+            "log_time": "1234",
+            "publish_time": "37746",
+            "data_hex": "72930000"
+          },
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 47753,
+            "log_time": "1234",
+            "publish_time": "47753",
+            "data_hex": "89ba0000"
+          },
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 57760,
+            "log_time": "1234",
+            "publish_time": "57760",
+            "data_hex": "a0e10000"
+          },
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 67767,
+            "log_time": "1234",
+            "publish_time": "67767",
+            "data_hex": "b7080100"
+          },
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 77774,
+            "log_time": "1234",
+            "publish_time": "77774",
+            "data_hex": "ce2f0100"
+          },
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 87781,
+            "log_time": "1234",
+            "publish_time": "87781",
+            "data_hex": "e5560100"
+          },
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 97788,
+            "log_time": "1234",
+            "publish_time": "97788",
+            "data_hex": "fc7d0100"
+          },
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 107795,
+            "log_time": "1234",
+            "publish_time": "107795",
+            "data_hex": "13a50100"
+          },
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 117802,
+            "log_time": "1234",
+            "publish_time": "117802",
+            "data_hex": "2acc0100"
+          },
+          {
+            "channel_id": 1,
+            "topic": "/scale",
+            "sequence": 127809,
+            "log_time": "1234",
+            "publish_time": "127809",
+            "data_hex": "41f30100"
+          }
+        ],
+        "index": {
+          "version": 2,
+          "entries": 1000000,
+          "page_entries": 1024,
+          "page_reads": 987,
+          "cache_hits": 23,
+          "cached_pages": 2,
+          "peak_cached_pages": 2,
+          "page_cache_budget": 2,
+          "index_bytes": "36020342",
+          "content_verified": true,
+          "source_sha256": "3a4585fa805bdd99ec62b7e65cd6630547fe65a604c7ca33d9b19fba56c3f5dd",
+          "index_audit": "all page CRCs and global order; bounded memory"
+        }
+      }
+    }
+  ]
+}

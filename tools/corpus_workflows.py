@@ -89,6 +89,42 @@ def main():
         public.mkdir(parents=True, exist_ok=True)
         for item in manifest["files"]:
             path = public / item["name"]
+            if item.get("conversion") == "rosbag1-raw-v1":
+                from rosbags.rosbag1 import Reader
+                origin = item["origin"]
+                original = public / origin["name"]
+                if not original.exists():
+                    temporary = original.with_suffix(".download")
+                    try:
+                        with urllib.request.urlopen(origin["url"], timeout=120) as response, temporary.open("wb") as output:
+                            size = 0
+                            for data in iter(lambda: response.read(1024 * 1024), b""):
+                                size += len(data)
+                                assert size <= origin["bytes"]
+                                output.write(data)
+                        assert size == origin["bytes"] and hashlib.sha256(temporary.read_bytes()).hexdigest() == origin["sha256"]
+                        temporary.replace(original)
+                    finally:
+                        temporary.unlink(missing_ok=True)
+                assert original.stat().st_size == origin["bytes"] and hashlib.sha256(original.read_bytes()).hexdigest() == origin["sha256"]
+                if not path.exists():
+                    with Reader(original) as reader, path.open("xb") as output:
+                        writer = Writer(output, compression=CompressionType.ZSTD, chunk_size=1024*1024, enable_data_crcs=True)
+                        writer.start(profile="ros1", library="official-python-mcap/1.3.0-preserved-rosbag1")
+                        channels = {}
+                        for connection in reader.connections:
+                            schema = writer.register_schema(connection.msgtype.replace("/msg/", "/"), "ros1msg", connection.msgdef.data.encode())
+                            channels[connection.id] = writer.register_channel(connection.topic, "ros1", schema)
+                        for i, (connection, timestamp, data) in enumerate(reader.messages()):
+                            writer.add_message(channels[connection.id], timestamp, bytes(data), timestamp, i)
+                        writer.finish()
+                with Reader(original) as reader, path.open("rb") as stream:
+                    messages = iter(NonSeekingReader(stream, validate_crcs=True).iter_messages(log_time_order=False))
+                    for i, (connection, timestamp, data) in enumerate(reader.messages()):
+                        schema, channel, message = next(messages)
+                        assert channel.topic == connection.topic and message.data == bytes(data)
+                        assert message.log_time == timestamp == message.publish_time and message.sequence == i
+                    assert next(messages, None) is None
             if not path.exists():
                 # Fixed manifest names and URLs only; no caller-controlled paths.
                 assert Path(item["name"]).name == item["name"]
@@ -106,7 +142,7 @@ def main():
                 finally:
                     temporary.unlink(missing_ok=True)
             assert path.stat().st_size == item["bytes"] and hashlib.sha256(path.read_bytes()).hexdigest() == item["sha256"], "public corpus fingerprint changed"
-            verify(path, {"kind": item["kind"], "source": item["source"], "url": item["url"]})
+            verify(path, {"kind": item["kind"], "source": item["source"], "url": item["url"], "conversion": item.get("conversion"), "origin_sha256": item.get("origin", {}).get("sha256")})
     result = {"public_enabled": args.public, "note": "Synthetic shapes are labelled separately. Public recordings remain under their own terms and are not redistributed.", "cases": rows}
     (work / ("report-public.json" if args.public else "report.json")).write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(f"Corpus workflows: {len(rows)} passed (public={args.public})")

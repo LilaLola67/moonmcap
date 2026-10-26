@@ -1,5 +1,7 @@
 # 0.8 到 0.14 的接口与行为
 
+0.15.14 新增 MIDX2 分页磁盘索引、build_disk_sidecar/open_disk_sidecar、DiskSidecarReader/Cursor 和 cmd/paged；MIDX1 保持兼容，新格式采用新建索引。另修正引用 Zstd 解码器五字节 Huffman literal 头的 18 位长度掩码，增加真实驾驶日志验证，见 [磁盘索引](disk-sidecar.md)。
+
 0.15.12 新增 diagnose_source、SourceScanEvent/scan_source(trace~)、BlockRecoveryEvidence/recover_blocks(on_block~)、recover_blocks_detailed 与 cmd/diagnose。原有签名增加可选参数，既有调用不变。diagnosis_json 的可选字段修正为标量或 null，曾依赖数组形状的调用方需调整。见 [大文件诊断](source-diagnostics.md)。
 
 0.15.11 写出版本 2 检查点并继续读取版本 1；输入阶段增加逐文件保存点，新增 checkpoint_progress，job-inspect 展示已提交进度。resumable_merge 签名不变，自定义存储需允许 -2..-65 的专有输入辅助段。见 [恢复任务](resumable-merge.md)。

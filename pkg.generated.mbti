@@ -15,6 +15,8 @@ pub fn all_query() -> Query
 
 pub fn block_recovery_json(BlockRecoveryReport) -> Json
 
+pub fn build_disk_sidecar(ReadSource, SortStorage, WriteSink, (ReadSource) -> String raise McapError, identity? : String, page_entries? : Int, options? : ExternalOptions, cancelled? : () -> Bool) -> Json raise McapError
+
 pub fn build_query_index(Log) -> QueryIndex raise McapError
 
 pub fn build_sidecar(ReadSource, (ReadSource) -> String raise McapError, identity? : String, limits? : Limits, index_bytes? : Int, declaration_bytes? : Int, cancelled? : () -> Bool) -> Bytes raise McapError
@@ -152,6 +154,8 @@ pub fn new_stream_writer(WriteSink, profile? : String, options? : StreamOptions,
 pub fn new_write_sink((Bytes) -> Unit raise McapError) -> WriteSink
 
 pub fn open_dataset(Array[QuerySource], limits? : Limits, declaration_bytes? : Int, max_sources? : Int) -> Dataset raise McapError
+
+pub fn open_disk_sidecar(ReadSource, ReadSource, IndexVerification, limits? : Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64) -> DiskSidecarReader raise McapError
 
 pub fn open_reader(ReadSource, limits? : Limits, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int) -> RangeReader raise McapError
 
@@ -450,6 +454,41 @@ pub(all) struct DiffOptions {
 }
 
 type DiffResult
+
+type DiskIndexEntry
+
+pub struct DiskSidecarCursor {
+  reader : DiskSidecarReader
+  original : Query
+  allowed : Map[Int, Bool]
+  mut query : Query
+  mut position : Int
+  mut offset : Int
+  mut remaining : Int
+  mut state : FileCursorState
+}
+pub fn DiskSidecarCursor::cancel(Self) -> Unit
+pub fn DiskSidecarCursor::next(Self) -> Message? raise McapError
+pub fn DiskSidecarCursor::next_page(Self, Int) -> Array[Message] raise McapError
+pub fn DiskSidecarCursor::seek(Self, UInt64) -> Unit raise McapError
+
+pub struct DiskSidecarReader {
+  index : ReadSource
+  base : SidecarReader
+  count : Int
+  width : Int
+  start : UInt64
+  cache_limit : Int
+  pages : Array[(Int, Array[DiskIndexEntry])]
+  mut page_reads : Int
+  mut cache_hits : Int
+  mut peak_pages : Int
+}
+pub fn DiskSidecarReader::channels(Self) -> Array[Channel]
+pub fn DiskSidecarReader::cursor(Self, Query) -> DiskSidecarCursor raise McapError
+pub fn DiskSidecarReader::info(Self) -> Json
+pub fn DiskSidecarReader::query_source(Self) -> QuerySource raise McapError
+pub fn DiskSidecarReader::validate_entries(Self) -> Unit raise McapError
 
 type ExactDecimal
 

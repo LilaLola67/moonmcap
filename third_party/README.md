@@ -24,6 +24,10 @@ Published module: https://mooncakes.io/docs/bikallem/compress
 - Local changes add bounded block expansion and cumulative output checks,
   enlarge the adapter's permitted window to 64 MiB after preflight validation,
   and encode independent, explicitly offset 128 KiB blocks to keep noisy and large inputs within the format limits.
+- The size-format-3 Huffman literal header decoder uses the specified 18-bit
+  regenerated-size field (not bits belonging to the compressed-size field).
+  This correction was exercised by a publicly sourced driving recording and
+  deterministic libzstd-generated literal blocks.
 - The upstream encoder accepts a level argument but does not implement distinct
   level strategies. MoonMCAP therefore offers a fixed Zstd encoding strategy,
   without claiming a configurable level or equivalence to libzstd level 3.

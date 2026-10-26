@@ -1,5 +1,7 @@
 # 持久化侧车索引（0.15.3）
 
+大规模定位表可使用新增 [MIDX2 分页磁盘索引](disk-sidecar.md)。本页 MIDX1 继续兼容，两个格式使用独立入口。
+
 ```sh
 moon run cmd/mcap --target js -- index-build input.mcap --output input.midx
 moon run cmd/mcap --target js -- index-check input.mcap --index input.midx
