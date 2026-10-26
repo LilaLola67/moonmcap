@@ -6,6 +6,8 @@ target
 .moonagent/
 _interop_deps/
 _interop/
+__pycache__/
+*.pyc
 *申报*
 *报名*
 AGENTS.md

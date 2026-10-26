@@ -1,5 +1,7 @@
 # 按完整 Chunk 保存录入进度
 
+需要同时保存最终排序/归并进度时，可使用新增的 [CJOB2 贯通任务](chunk-pipeline.md)（--checkpoint-final）。本页描述的 CJOB1 行为保持兼容。
+
 ```sh
 moon build --target js
 node _build/js/debug/build/cmd/chunkmerge/chunkmerge.js large.mcap --job chunk-work --output merged.mcap --compression zstd

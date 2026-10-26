@@ -1,5 +1,7 @@
 # 接口与行为迁移
 
+0.15.23 新增 resumable_chunk_pipeline、CJOB2 与 chunkmerge --checkpoint-final，checkpoint_run_ids/progress 识别组合状态；旧 CJOB1/MJOB1/MJOB2 保持兼容。新模式支持最终排序段与归并组复用，最终输出仍整体重写，见 [贯通恢复](chunk-pipeline.md)。
+
 0.15.22 新增独立 MFLD1 字段范围侧车、build_field_index/open_field_index、FieldQueryPlan 与 field 命令；现有 MIDX1/MIDX2 和 JSON 条件行为不变。只排除可证明不命中的候选块，保留最终精确过滤，见 [字段索引](field-index.md)。
 
 0.15.21 新增 AsyncDiskSidecarReader/open_disk_sidecar、asyncpaged 命令及核心索引审核/查询 poll-feed 协议；MIDX2 格式和同步入口不变。首次打开仍完整核对源指纹与全索引，见 [异步磁盘索引](async-disk-sidecar.md)。

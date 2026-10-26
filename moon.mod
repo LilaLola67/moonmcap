@@ -11,7 +11,7 @@
 
 name = "LilaLola67/moonmcap"
 
-version = "0.15.22"
+version = "0.15.23"
 
 readme = "README.md"
 

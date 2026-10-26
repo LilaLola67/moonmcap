@@ -141,6 +141,9 @@ jobs:
       - name: Verify durable merge checkpoints after process termination
         if: matrix.target == 'js'
         run: python tools/checkpoint_workflows.py
+      - name: Verify combined Chunk and final merge checkpoint recovery
+        if: matrix.target == 'js'
+        run: python tools/chunk_pipeline_workflows.py
       - name: Verify JSON predicates precision and projection
         if: matrix.target == 'js'
         run: python tools/json_workflows.py
@@ -186,6 +189,7 @@ jobs:
             _interop/checkpoint/report.json
             _interop/input-checkpoint/report.json
             _interop/chunk-checkpoint/report.json
+            _interop/chunk-pipeline/report.json
             _interop/io/report.json
             _interop/aggregate/report.json
             _interop/aggregate-external/report.json

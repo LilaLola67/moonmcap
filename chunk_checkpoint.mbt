@@ -168,7 +168,7 @@ fn chunk_job_progress(bytes : Bytes) -> Json raise McapError {
 ///|
 /// Indexed Chunk staging with a durable save point after each verified Chunk.
 /// Committed parts persist on failure. Caller owns locking, pruning and saves.
-pub fn resumable_chunk_merge(
+fn resumable_chunk_merge_internal(
   sources : Array[ReadSource],
   parts_storage : SortStorage,
   merge_storage : SortStorage,
@@ -179,6 +179,7 @@ pub fn resumable_chunk_merge(
   options? : ExternalOptions = external_options(),
   max_parts? : Int = 10000,
   cancelled? : () -> Bool = fn() { false },
+  finalize? : (ChunkJobState, UInt64) -> Json raise McapError,
 ) -> Json raise McapError {
   let result = try {
     if sources.is_empty() ||
@@ -395,32 +396,36 @@ pub fn resumable_chunk_merge(
     if spool >= options.spool_bytes {
       raise Invalid("chunk merge has no space left for final sorting")
     }
-    let sources = Array::makei(state.parts.length(), fn(i) {
-      (parts_storage.open)(i)
-    })
-    let temporary = sort_storage(
-      merge_storage.create,
-      merge_storage.open,
-      merge_storage.remove,
-    )
-    let report = external_merge(
-      sources,
-      buffered_sort_storage(temporary, 65536),
-      output,
-      options={ ..options, spool_bytes: options.spool_bytes - spool, },
-      cancelled~,
-    )
-    let value : Json = {
-      "engine": "indexed-chunk-ingest",
-      "input_files": inputs.length(),
-      "committed_parts": state.parts.length(),
-      "messages": report.messages.to_string(),
-      "retained_part_bytes": spool.to_string(),
-      "source_data_crc_verified": state.crcs,
-      "source_complete": true,
-      "final_merge": external_report_json(report),
+    if finalize is Some(callback) {
+      Ok(callback(state, spool))
+    } else {
+      let sources = Array::makei(state.parts.length(), fn(i) {
+        (parts_storage.open)(i)
+      })
+      let temporary = sort_storage(
+        merge_storage.create,
+        merge_storage.open,
+        merge_storage.remove,
+      )
+      let report = external_merge(
+        sources,
+        buffered_sort_storage(temporary, 65536),
+        output,
+        options={ ..options, spool_bytes: options.spool_bytes - spool, },
+        cancelled~,
+      )
+      let value : Json = {
+        "engine": "indexed-chunk-ingest",
+        "input_files": inputs.length(),
+        "committed_parts": state.parts.length(),
+        "messages": report.messages.to_string(),
+        "retained_part_bytes": spool.to_string(),
+        "source_data_crc_verified": state.crcs,
+        "source_complete": true,
+        "final_merge": external_report_json(report),
+      }
+      Ok(value)
     }
-    Ok(value)
   } catch {
     error => Err(error)
   }

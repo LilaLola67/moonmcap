@@ -211,6 +211,9 @@ fn checkpoint_input_state(
 ///|
 /// Read owned run IDs for a storage adapter's orphan cleanup. No path strings.
 pub fn checkpoint_run_ids(bytes : Bytes) -> Array[Int] raise McapError {
+  if bytes.length() >= 8 && bytes[0:8].to_owned() == b"CJOB2\r\n\x00" {
+    return chunk_pipeline_ids(bytes)
+  }
   if bytes.length() >= 8 && bytes[0:8].to_owned() == b"CJOB1\r\n\x00" {
     return chunk_job_ids(bytes)
   }
@@ -241,6 +244,9 @@ pub fn checkpoint_run_ids(bytes : Bytes) -> Array[Int] raise McapError {
 
 ///|
 pub fn checkpoint_progress(bytes : Bytes) -> Json raise McapError {
+  if bytes.length() >= 8 && bytes[0:8].to_owned() == b"CJOB2\r\n\x00" {
+    return chunk_pipeline_progress(bytes)
+  }
   if bytes.length() >= 8 && bytes[0:8].to_owned() == b"CJOB1\r\n\x00" {
     return chunk_job_progress(bytes)
   }

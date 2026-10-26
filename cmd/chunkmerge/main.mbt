@@ -13,7 +13,7 @@ fn run(
 ) -> Unit raise @mcap.McapError {
   if values.is_empty() || values[0] == "--help" {
     println(
-      "chunkmerge INPUT... --job DIRECTORY --output NEW.mcap [--resume] [external merge budget options] [--max-parts N --record-limit N]",
+      "chunkmerge INPUT... --job DIRECTORY --output NEW.mcap [--resume --checkpoint-final] [external merge budget options] [--max-parts N --record-limit N]",
     )
     return
   }
@@ -28,10 +28,17 @@ fn run(
   }
   let options = []
   let mut maximum = 10000
+  let mut pipeline = false
   let mut records = 100000
   let seen : Map[String, Bool] = Map([])
   while i < values.length() {
-    if values[i] == "--max-parts" || values[i] == "--record-limit" {
+    if values[i] == "--checkpoint-final" {
+      if pipeline {
+        raise @mcap.io_error("duplicate checkpoint-final option")
+      }
+      pipeline = true
+      i += 1
+    } else if values[i] == "--max-parts" || values[i] == "--record-limit" {
       let key = values[i]
       if seen.contains(key) || i + 1 >= values.length() {
         raise @mcap.io_error("duplicate or incomplete chunk budget")
@@ -64,6 +71,11 @@ fn run(
   let job = @nodeio.open_merge_job(parsed.job_dir, resume=parsed.resume_job)
   try {
     let checkpoint = job.checkpoint()
+    if checkpoint is Some(bytes) &&
+      bytes.length() >= 8 &&
+      bytes[0:8].to_owned() == b"CJOB2\r\n\x00" {
+      pipeline = true
+    }
     let sources = paths.map(fn(path) { scope.open(path) })
     let transaction = job.output(parsed.output)
     try {
@@ -73,20 +85,36 @@ fn run(
         fn(id) { (owned.open)(maximum + id) },
         fn(id) { (owned.remove)(maximum + id) },
       )
-      let report = @mcap.resumable_chunk_merge(
-        sources,
-        owned,
-        final_sort,
-        transaction.sink(),
-        @nodeio.source_sha256,
-        fn(bytes) { job.save(bytes) },
-        checkpoint?,
-        max_parts=maximum,
-        options={
-          ..parsed.external,
-          limits: { ..parsed.external.limits, max_records: records, },
-        },
-      )
+      let report = if pipeline {
+        @mcap.resumable_chunk_pipeline(
+          sources,
+          owned,
+          transaction.sink(),
+          @nodeio.source_sha256,
+          fn(bytes) { job.save(bytes) },
+          checkpoint?,
+          max_parts=maximum,
+          options={
+            ..parsed.external,
+            limits: { ..parsed.external.limits, max_records: records, },
+          },
+        )
+      } else {
+        @mcap.resumable_chunk_merge(
+          sources,
+          owned,
+          final_sort,
+          transaction.sink(),
+          @nodeio.source_sha256,
+          fn(bytes) { job.save(bytes) },
+          checkpoint?,
+          max_parts=maximum,
+          options={
+            ..parsed.external,
+            limits: { ..parsed.external.limits, max_records: records, },
+          },
+        )
+      }
       transaction.publish()
       job.complete(report)
       println(report.stringify())

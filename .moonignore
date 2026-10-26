@@ -7,3 +7,5 @@ AGENTS.md
 *报名*
 *.log
 *.part
+__pycache__/
+*.pyc

@@ -205,6 +205,8 @@ pub fn replay(QuerySource, query? : Query, rate_numerator? : Int, rate_denominat
 
 pub fn resumable_chunk_merge(Array[ReadSource], SortStorage, SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, max_parts? : Int, cancelled? : () -> Bool) -> Json raise McapError
 
+pub fn resumable_chunk_pipeline(Array[ReadSource], SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, max_parts? : Int, cancelled? : () -> Bool) -> Json raise McapError
+
 pub fn resumable_merge(Array[ReadSource], SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, cancelled? : () -> Bool) -> ExternalReport raise McapError
 
 pub fn scan_file(Bytes, limits? : Limits) -> Array[Record] raise McapError
@@ -382,6 +384,8 @@ pub(all) struct ChunkIndex {
 type ChunkJobState
 
 type ChunkPart
+
+type ChunkSegment
 
 pub(all) struct CommandOptions {
   command : String
