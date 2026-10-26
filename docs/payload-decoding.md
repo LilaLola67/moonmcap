@@ -20,7 +20,17 @@ let dataset = @mcap.open_dataset([provider.filter_json(filter)])
 - 默认将 64 位整数写成精确十进制 JSON 数字，筛选和聚合使用原始数字表示，避免 Double 舍入。JS 消费者直接 JSON.parse 可能损失精度，可选 `int64_as_string: true` / CLI `--int64-strings`。字符串模式下这些字段不参与数值聚合。
 - 非有限浮点输出 `NaN`、`Infinity`、`-Infinity` 字符串；有限浮点遵循其 IEEE 精度。
 
-这是通用 wire 消息结构解码，不承诺完整 ProtoJSON：Timestamp、Duration、Any 等 well-known types 按普通消息字段展开，不做 RFC3339、Any 自动拆包等特殊映射；不解码扩展字段，不支持 Editions 和已声明的 GROUP 字段。描述符解析检查结构、重复定义和引用，但不是 protoc 的完整 schema 语义校验器。CDR、ROS1 等编码仍需要自行提供插件，默认解码器明确报不支持。
+默认仍为通用 wire 消息结构解码。可选 `protobuf_json_options()` / CLI `--protojson` 使用规范化映射：Timestamp、Duration、Any、FieldMask、Struct/Value/ListValue 及九种包装类型，见下节。尚不支持扩展字段、Editions 和已声明的 GROUP 字段。描述符解析检查结构、重复定义、字段编号、oneof/optional 关系和引用，但不是 protoc 的完整 schema 语义校验器。CDR、ROS1 等编码仍需要自行提供插件，默认解码器明确报不支持。
+
+## 可选 ProtoJSON 模式（0.15.19）
+
+`protobuf_decoder(descriptor, options=protobuf_json_options())` 和 `standard_payload_decoder(options=protobuf_json_options())` 均可启用；CLI 的 raw 与文件查询均支持 `--protojson`，附加 `--emit-defaults` 输出没有存在性语义的默认字段。原默认精确数字模式及 API 不变。规范模式的 64 位整数为字符串，不再作为 JSON 数值参与聚合。
+
+Timestamp 校验 0001–9999 年范围与纳秒，输出 UTC RFC3339；Duration 检查范围、符号，二者采用 0/3/6/9 位小数。Any 只使用已包含在 FileDescriptorSet 的目标类型，不访问 type URL；普通对象合并 `@type`，特殊类型放入 `value`。未知目标明确失败。FieldMask 检查可逆 snake_case 转换。Value 的未选择 kind、非有限 numberValue 明确失败。
+
+proto3 隐式标量默认值通常省略；显式 optional、oneof、消息字段保留出现性。proto2 optional 即使声明默认值，也不会因为缺失就被生成；`emit_defaults` 只输出不跟踪存在性的字段和空集合，遵循官方序列化语义。特殊类型保留旧模式时仍按普通结构展开。特殊映射校验描述符的必要字段类型，不仅检查消息名称。
+
+`python tools/protojson_workflows.py` 与 Google protobuf 6.33.0 核对 77 项规范输出，另覆盖非法时间/时长/Any/Value、无效字段编号、oneof 与 optional 关系。已有原始 wire 和数值精度对照同时保留。本模式提供序列化映射，不包含 ProtoJSON 文本到 Protobuf wire 的反向编码，也不宣称通过整个官方 conformance suite。
 
 ## 预算与缓存
 

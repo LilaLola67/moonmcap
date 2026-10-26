@@ -19,8 +19,20 @@ fn run(
   }
   let clean = []
   let mut strings = false
+  let mut canonical = false
+  let mut defaults = false
   for value in values {
-    if value == "--int64-strings" {
+    if value == "--protojson" {
+      if canonical {
+        raise @mcap.io_error("duplicate ProtoJSON option")
+      }
+      canonical = true
+    } else if value == "--emit-defaults" {
+      if defaults {
+        raise @mcap.io_error("duplicate default option")
+      }
+      defaults = true
+    } else if value == "--int64-strings" {
       if strings {
         raise @mcap.io_error("duplicate int64 mode")
       }
@@ -29,7 +41,15 @@ fn run(
       clean.push(value)
     }
   }
-  let options = { ..@mcap.protobuf_options(), int64_as_string: strings, }
+  if defaults && !canonical {
+    raise @mcap.io_error("emit-defaults requires ProtoJSON mode")
+  }
+  let options = {
+    ..@mcap.protobuf_options(),
+    int64_as_string: strings,
+    protojson: canonical,
+    emit_defaults: defaults,
+  }
   if clean[0] == "raw" {
     if clean.length() != 4 {
       raise @mcap.io_error(

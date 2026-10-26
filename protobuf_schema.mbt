@@ -7,12 +7,14 @@ struct ProtoField {
   label : Int
   type_name : String
   oneof : Int?
+  optional : Bool
 }
 
 ///|
 struct ProtoMessage {
   fields : Map[Int, ProtoField]
   map_entry : Bool
+  proto3 : Bool
 }
 
 ///|
@@ -36,6 +38,25 @@ fn proto_name(prefix : String, name : String) -> String {
   } else {
     prefix + "." + name
   }
+}
+
+///|
+fn proto_identifier(name : String) -> Bool {
+  if name == "" {
+    return false
+  }
+  let mut index = 0
+  for char in name {
+    let code = char.to_int()
+    if !(code == 95 ||
+      (code >= 65 && code <= 90) ||
+      (code >= 97 && code <= 122) ||
+      (index > 0 && code >= 48 && code <= 57)) {
+      return false
+    }
+    index += 1
+  }
+  true
 }
 
 ///|
@@ -74,6 +95,7 @@ fn ProtobufDecoder::field(
   let mut label = 1
   let mut type_name = ""
   let mut oneof : Int? = None
+  let mut optional = false
   while value.next() is Some(item) {
     match item.number {
       1 => name = item.text()
@@ -83,10 +105,11 @@ fn ProtobufDecoder::field(
       6 => type_name = item.text()
       9 => oneof = Some(item.number())
       10 => json_name = item.text()
+      17 => optional = item.number() != 0
       _ => value.skip(item, self.options.depth)
     }
   }
-  if name == "" ||
+  if !proto_identifier(name) ||
     number < 1 ||
     number > 536870911 ||
     kind < 1 ||
@@ -94,7 +117,7 @@ fn ProtobufDecoder::field(
     kind == 10 ||
     label < 1 ||
     label > 3 ||
-    (oneof is Some(id) && (id < 0 || label == 3)) {
+    (oneof is Some(id) && (id < 0 || label != 1)) {
     raise Invalid("invalid or unsupported protobuf field descriptor")
   }
   if type_name.has_prefix(".") {
@@ -116,6 +139,7 @@ fn ProtobufDecoder::field(
     label,
     type_name,
     oneof,
+    optional,
   }
 }
 
@@ -139,11 +163,14 @@ fn ProtobufDecoder::enum_type(
     }
   }
   let full = proto_name(prefix, name)
-  if name == "" || self.enums.contains(full) || self.messages.contains(full) {
+  if !proto_identifier(name) ||
+    self.enums.contains(full) ||
+    self.messages.contains(full) {
     raise Invalid("duplicate or empty protobuf enum")
   }
   let values : Map[Int, String] = Map([])
   let mut first : Int? = None
+  let labels : Map[String, Bool] = Map([])
   for bytes in entries {
     let entry = proto_wire(bytes, budget)
     let mut label = ""
@@ -157,9 +184,10 @@ fn ProtobufDecoder::enum_type(
         entry.skip(item, self.options.depth)
       }
     }
-    if label == "" {
+    if !proto_identifier(label) || labels.contains(label) {
       raise Invalid("empty protobuf enum label")
     }
+    labels[label] = true
     if first is None {
       first = Some(number)
     }
@@ -184,6 +212,7 @@ fn ProtobufDecoder::message_type(
   bytes : Bytes,
   budget : Array[Int],
   depth : Int,
+  proto3 : Bool,
 ) -> Unit raise McapError {
   if depth > self.options.depth {
     raise Invalid("protobuf descriptor depth exceeded")
@@ -194,12 +223,17 @@ fn ProtobufDecoder::message_type(
   let nested = []
   let enums = []
   let mut map_entry = false
+  let mut oneof_count = 0
   while value.next() is Some(item) {
     match item.number {
       1 => name = item.text()
       2 => fields.push(item.bytes())
       3 => nested.push(item.bytes())
       4 => enums.push(item.bytes())
+      8 => {
+        ignore(item.bytes())
+        oneof_count += 1
+      }
       7 => {
         let options = proto_wire(item.bytes(), budget)
         while options.next() is Some(option) {
@@ -214,25 +248,47 @@ fn ProtobufDecoder::message_type(
     }
   }
   let full = proto_name(prefix, name)
-  if name == "" || self.messages.contains(full) || self.enums.contains(full) {
+  if !proto_identifier(name) ||
+    self.messages.contains(full) ||
+    self.enums.contains(full) {
     raise Invalid("duplicate or empty protobuf message")
   }
   let by_number : Map[Int, ProtoField] = Map([])
   let names : Map[String, Bool] = Map([])
+  let source_names : Map[String, Bool] = Map([])
   for bytes in fields {
     let field = self.field(bytes, budget)
-    if by_number.contains(field.number) || names.contains(field.json_name) {
+    if (field.oneof is Some(id) && id >= oneof_count) ||
+      (field.optional && (!proto3 || field.oneof is None)) ||
+      (proto3 && field.label == 2) ||
+      (field.number >= 19000 && field.number <= 19999) {
+      raise Invalid("invalid protobuf presence, oneof or reserved field number")
+    }
+    if by_number.contains(field.number) ||
+      names.contains(field.json_name) ||
+      source_names.contains(field.name) {
       raise Invalid("duplicate protobuf field number or JSON name")
     }
     by_number[field.number] = field
     names[field.json_name] = true
+    source_names[field.name] = true
   }
-  self.messages[full] = { fields: by_number, map_entry, }
+  for field in by_number.values() {
+    if field.optional &&
+      by_number
+      .values()
+      .filter(fn(other) { other.oneof == field.oneof })
+      .count() !=
+      1 {
+      raise Invalid("proto3 optional requires its own synthetic oneof")
+    }
+  }
+  self.messages[full] = { fields: by_number, map_entry, proto3, }
   if self.messages.length() + self.enums.length() > self.options.fields {
     raise Invalid("protobuf type budget exceeded")
   }
   for child in nested {
-    self.message_type(full, child, budget, depth + 1)
+    self.message_type(full, child, budget, depth + 1, proto3)
   }
   for child in enums {
     self.enum_type(full, child, budget)
@@ -268,6 +324,7 @@ pub fn protobuf_decoder(
     }
     let file = proto_wire(item.bytes(), budget)
     let mut package = ""
+    let mut proto3 = false
     let messages = []
     let enums = []
     while file.next() is Some(field) {
@@ -277,6 +334,7 @@ pub fn protobuf_decoder(
         5 => enums.push(field.bytes())
         12 => {
           let syntax = field.text()
+          proto3 = syntax == "proto3"
           if syntax != "" && syntax != "proto2" && syntax != "proto3" {
             raise Invalid(
               "protobuf Editions require an explicit supported decoder",
@@ -291,7 +349,11 @@ pub fn protobuf_decoder(
       }
     }
     for message in messages {
-      decoder.message_type(package, message, budget, 1)
+      if package != "" &&
+        !package.split(".").all(fn(part) { proto_identifier(part.to_string()) }) {
+        raise Invalid("invalid protobuf package name")
+      }
+      decoder.message_type(package, message, budget, 1, proto3)
     }
     for enum_type in enums {
       decoder.enum_type(package, enum_type, budget)

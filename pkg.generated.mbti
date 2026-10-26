@@ -171,6 +171,8 @@ pub fn payload_decoder((Schema?, Channel, Bytes) -> Json raise McapError) -> Pay
 
 pub fn protobuf_decoder(Bytes, options? : ProtobufOptions) -> ProtobufDecoder raise McapError
 
+pub fn protobuf_json_options() -> ProtobufOptions
+
 pub fn protobuf_options() -> ProtobufOptions
 
 pub fn query_file(Bytes, Query, limits? : Limits) -> QueryResult raise McapError
@@ -789,6 +791,8 @@ pub(all) struct ProtobufOptions {
   items : Int
   fields : Int
   int64_as_string : Bool
+  protojson : Bool
+  emit_defaults : Bool
 }
 
 pub(all) struct Query {

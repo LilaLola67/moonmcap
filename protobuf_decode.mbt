@@ -15,7 +15,7 @@ fn ProtobufDecoder::integer64(
   text : String,
   number : Double,
 ) -> Json {
-  if self.options.int64_as_string {
+  if self.options.int64_as_string || self.options.protojson {
     Json::string(text)
   } else {
     Json::number(number, repr=text)
@@ -54,6 +54,8 @@ fn ProtobufDecoder::scalar(
       )
     (12, PBytes(bytes)) => Json::string(@base64.encode(bytes[:]))
     (13, PVarint(value)) => Json::number(value.to_uint().to_double())
+    (14, PVarint(_)) if self.options.protojson &&
+      field.type_name == "google.protobuf.NullValue" => Json::null()
     (14, PVarint(value)) =>
       match self.enums[field.type_name].values.get(value.to_uint().to_int()) {
         Some(name) => Json::string(name)
@@ -82,6 +84,8 @@ fn ProtobufDecoder::default_value(
     3 | 4 | 6 | 16 | 18 => self.integer64("0", 0)
     8 => Json::boolean(false)
     11 => Json::object(Map([]))
+    14 if self.options.protojson &&
+      field.type_name == "google.protobuf.NullValue" => Json::null()
     14 =>
       Json::string(
         self.enums[field.type_name].values[self.enums[field.type_name].first],
@@ -165,6 +169,26 @@ fn ProtobufDecoder::message(
       }
       if model.map_entry {
         result[field.json_name] = self.default_value(field)
+      } else if self.options.protojson &&
+        self.options.emit_defaults &&
+        (
+          field.label == 3 ||
+          (
+            model.proto3 &&
+            field.kind != 11 &&
+            field.oneof is None &&
+            !field.optional
+          )
+        ) {
+        result[field.json_name] = if field.label == 3 {
+          if field.kind == 11 && self.messages[field.type_name].map_entry {
+            Json::object(Map([]))
+          } else {
+            Json::array([])
+          }
+        } else {
+          self.default_value(field)
+        }
       }
       continue
     }
@@ -210,9 +234,29 @@ fn ProtobufDecoder::message(
     } else {
       self.scalar(field, items[items.length() - 1])
     }
-    result[field.json_name] = value
+    let empty_repeated = field.label == 3 &&
+      value is Array(items) &&
+      items.is_empty()
+    if self.options.protojson && !self.options.emit_defaults && empty_repeated {
+      continue
+    }
+    if !self.options.protojson ||
+      self.options.emit_defaults ||
+      !model.proto3 ||
+      model.map_entry ||
+      field.label == 3 ||
+      field.kind == 11 ||
+      field.oneof is Some(_) ||
+      field.optional ||
+      value != self.default_value(field) {
+      result[field.json_name] = value
+    }
   }
-  Json::object(result)
+  if self.options.protojson {
+    self.well_known(name, result, budget, depth)
+  } else {
+    Json::object(result)
+  }
 }
 
 ///|

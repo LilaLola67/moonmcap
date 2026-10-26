@@ -1,5 +1,7 @@
 # 接口与行为迁移
 
+0.15.19 增加 protobuf_json_options、ProtobufOptions.protojson/emit_defaults 与可选规范映射，默认数值模式保持不变；结构体建议用 protobuf_options() 更新字段。描述符更严格拒绝非法 oneof/optional、保留编号、重复字段名和包名，见 [消息解码](payload-decoding.md)。
+
 0.15.18 增加可选 Node.js CachedHttpSource/open_cached_http，所有原 HTTP API 不变；新缓存须独立目录并在使用后 close，见 [HTTP 缓存](http-cache.md)。
 
 0.15.17 增加 ProtobufDecoder、PayloadDecoder、同步/异步 decode_payload 和 cmd/decode；原容器 payload 保持原字节，显式适配后的声明为 JSON。默认 64 位整数输出精确 JSON 数字，可选字符串模式，见 [消息解码](payload-decoding.md)。

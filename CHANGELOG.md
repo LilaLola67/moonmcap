@@ -1,5 +1,9 @@
 # 更新记录
 
+## 0.15.19
+
+新增可选 ProtoJSON 规范映射，支持 Timestamp、Duration、Any、FieldMask、Struct/Value/ListValue 和包装类型；完善字段存在性、默认值及描述符检查，与官方运行库核对 77 项输出并保留原精确数值模式。
+
 ## 0.15.18
 
 新增 Node.js 持久 HTTP Range 页缓存、并发预取与请求去重；以强 ETag 和页摘要保护快照，限制磁盘及等待队列，提供取消、租约恢复、故障矩阵及 cached 示例命令。

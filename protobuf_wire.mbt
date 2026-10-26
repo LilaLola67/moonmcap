@@ -6,6 +6,8 @@ pub(all) struct ProtobufOptions {
   items : Int
   fields : Int
   int64_as_string : Bool
+  protojson : Bool
+  emit_defaults : Bool
 }
 
 ///|
@@ -17,6 +19,8 @@ pub fn protobuf_options() -> ProtobufOptions {
     items: 100000,
     fields: 10000,
     int64_as_string: false,
+    protojson: false,
+    emit_defaults: false,
   }
 }
 

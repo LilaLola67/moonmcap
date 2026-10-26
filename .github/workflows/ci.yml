@@ -120,6 +120,9 @@ jobs:
       - name: Verify descriptor payload decoding against official protobuf
         if: matrix.target == 'js'
         run: python tools/protobuf_workflows.py
+      - name: Verify canonical ProtoJSON and well known types
+        if: matrix.target == 'js'
+        run: python tools/protojson_workflows.py
       - name: Verify persistent HTTP pages concurrency faults and crash recovery
         if: matrix.target == 'js'
         run: python tools/cached_http_workflows.py
@@ -178,6 +181,7 @@ jobs:
             _interop/aggregate/report.json
             _interop/aggregate-external/report.json
             _interop/protobuf/report.json
+            _interop/protojson/report.json
             _interop/cached-http/report.json
             _interop/diff/report.json
             _interop/replay/report.json
