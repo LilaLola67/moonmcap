@@ -391,6 +391,7 @@ type ChunkPart
 
 pub(all) struct ChunkReadRequest {
   span : ReadSpan
+  chunk_bytes : Int
   expanded_bytes : Int
   compression : String
 }
@@ -578,10 +579,11 @@ pub struct DiskSidecarPollCursor {
 }
 pub fn DiskSidecarPollCursor::cancel(Self) -> Unit
 pub fn DiskSidecarPollCursor::feed_index(Self, Bytes) -> Unit raise McapError
-pub fn DiskSidecarPollCursor::feed_source(Self, Bytes) -> Unit raise McapError
+pub fn DiskSidecarPollCursor::feed_source(Self, Bytes, expanded? : Bytes) -> Unit raise McapError
 pub fn DiskSidecarPollCursor::pending_bytes(Self) -> Int
 pub fn DiskSidecarPollCursor::poll(Self) -> DiskSidecarPoll raise McapError
 pub fn DiskSidecarPollCursor::seek(Self, UInt64) -> Unit raise McapError
+pub fn DiskSidecarPollCursor::skip_source(Self) -> Unit raise McapError
 
 pub struct DiskSidecarReader {
   index : ReadSource
@@ -637,6 +639,7 @@ pub struct FieldIndex {
   zones : Map[UInt64, FieldZone]
 }
 pub fn FieldIndex::info(Self) -> Json
+pub fn FieldIndex::location_filter(Self, JsonFilter) -> ((UInt64, Int) -> Bool raise McapError) raise McapError
 pub fn FieldIndex::to_bytes(Self, max_bytes? : Int) -> Bytes raise McapError
 
 pub struct FieldQueryPlan {
@@ -674,6 +677,7 @@ pub struct FileCursor {
   mut peak_pending : Int
 }
 pub fn FileCursor::cancel(Self) -> Unit
+pub fn FileCursor::current_chunk_location(Self) -> MessageLocation raise McapError
 pub fn FileCursor::feed(Self, Bytes) -> Unit raise McapError
 pub fn FileCursor::feed_expanded(Self, Bytes, Bytes) -> Unit raise McapError
 pub fn FileCursor::next(Self) -> Message? raise McapError
@@ -681,6 +685,7 @@ pub fn FileCursor::next_page(Self, Int) -> Array[Message] raise McapError
 pub fn FileCursor::poll(Self) -> FilePoll raise McapError
 pub fn FileCursor::progress(Self) -> FileProgress
 pub fn FileCursor::seek(Self, UInt64) -> Unit raise McapError
+pub fn FileCursor::skip_chunk(Self) -> Unit raise McapError
 pub fn FileCursor::upcoming_reads(Self, Int) -> Array[ChunkReadRequest] raise McapError
 pub fn FileCursor::write_ndjson(Self, WriteSink) -> Int raise McapError
 

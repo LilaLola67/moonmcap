@@ -330,6 +330,7 @@ pub fn DiskSidecarPollCursor::feed_index(
 pub fn DiskSidecarPollCursor::feed_source(
   self : DiskSidecarPollCursor,
   bytes : Bytes,
+  expanded? : Bytes,
 ) -> Unit raise McapError {
   try {
     guard self.state == FileActive &&
@@ -355,7 +356,7 @@ pub fn DiskSidecarPollCursor::feed_source(
       bytes[start:start + length].to_owned()
     })
     let staged = { ..self.reader.base, source: mirror, }
-    self.ready = Some(staged.load(entry))
+    self.ready = Some(staged.load(entry, expanded?))
     self.reader.base.cached = staged.cached
     self.reader.base.cached_offset = staged.cached_offset
     self.reader.base.cached_span = staged.cached_span
@@ -368,6 +369,20 @@ pub fn DiskSidecarPollCursor::feed_source(
       raise error
     }
   }
+}
+
+///|
+pub fn DiskSidecarPollCursor::skip_source(
+  self : DiskSidecarPollCursor,
+) -> Unit raise McapError {
+  if self.state != FileActive ||
+    self.waiting_entry is None ||
+    self.waiting_page is Some(_) ||
+    self.ready is Some(_) {
+    raise Invalid("disk index cursor has no pending source read")
+  }
+  self.waiting_entry = None
+  self.position += if self.query.descending { -1 } else { 1 }
 }
 
 ///|

@@ -37,12 +37,18 @@ pub fn async_query_source(
 pub fn AsyncReader::query_source(
   self : AsyncReader,
   abort_source_on_cancel? : Bool = false,
+  select_region? : async (UInt64, Int) -> Bool = async fn(_, _) { true },
 ) -> AsyncQuerySource raise @mcap.McapError {
   let declarations = self.reader.query_source().declaration_log()
   async_query_source(
     declarations,
     fn(query, budget) {
-      let cursor = self.cursor(query, pending_bytes=budget, span_bytes=budget)
+      let cursor = self.cursor(
+        query,
+        pending_bytes=budget,
+        span_bytes=budget,
+        select_region~,
+      )
       async_message_stream(
         async fn() { cursor.next() },
         fn() {

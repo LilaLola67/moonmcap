@@ -80,6 +80,23 @@ pub struct FieldQueryPlan {
 }
 
 ///|
+/// Conservative physical-region predicate. Missing and differently sized regions
+/// remain candidates. Always apply the exact payload predicate after pruning.
+pub fn FieldIndex::location_filter(
+  self : FieldIndex,
+  filter : JsonFilter,
+) -> ((UInt64, Int) -> Bool raise McapError) raise McapError {
+  let pointers = self.paths.map(fn(path) { json_pointer(path) })
+  fn(offset, span) {
+    match self.zones.get(offset) {
+      None => true
+      Some(zone) =>
+        zone.span != span || filter.condition.may_match_zone(zone, pointers)
+    }
+  }
+}
+
+///|
 /// Caller must use the same decoder semantics identified when building the index.
 pub fn RangeReader::plan_field_query(
   self : RangeReader,

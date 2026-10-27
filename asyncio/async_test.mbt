@@ -1,4 +1,65 @@
 ///|
+async test "planned queries prune regions before exact filtering and pagination" {
+  let builder = @mcap.new_builder()
+  let channel = builder.register_channel("/n", "json")
+  for n = 0; n < 30; n = n + 1 {
+    builder.append(channel, n.to_uint64(), @utf8.encode("{\"n\":\{n}}"[:]))
+  }
+  let bytes = builder.finish(compression=@mcap.Zstd, messages_per_chunk=3)
+  fn memory(bytes : Bytes) -> @asyncio.AsyncSource {
+    @asyncio.new_source(bytes.length().to_uint64(), async fn(offset, length) {
+      @async.pause()
+      bytes[offset.to_int():offset.to_int() + length].to_owned()
+    })
+  }
+  let source = memory(bytes)
+  let digest = @asyncio.source_sha256(source)
+  let index = @mcap.build_field_index(
+    @mcap.memory_source(bytes),
+    ["/n"],
+    fn(_) { digest },
+    "moonmcap.std.json-protobuf-cdr.numeric.v1",
+  )
+  let filter = @mcap.json_filter("{\"path\":\"/n\",\"op\":\">=\",\"value\":24}")
+  let plan = @asyncio.plan_query(
+    source,
+    fields=memory(index.to_bytes()),
+    filter~,
+  )
+  let dataset = @asyncio.open_dataset([plan.query_source()])
+  let rows = dataset
+    .cursor({ ..@mcap.all_query(), offset: 1, limit: 2, })
+    .next_page(8)
+  assert_eq(rows.map(fn(r) { r.message.log_time }), [25UL, 26UL])
+  assert_true(
+    plan.info() is Object(fields) &&
+    fields["skipped_regions"] == Json::number(8),
+  )
+  let empty = @asyncio.plan_query(
+    memory(bytes),
+    fields=memory(index.to_bytes()),
+    filter=@mcap.json_filter("false"),
+  )
+  assert_eq(
+    @asyncio.open_dataset([empty.query_source()])
+    .cursor(@mcap.all_query())
+    .next(),
+    None,
+  )
+  assert_true(
+    empty.info() is Object(fields) &&
+    fields["query_source_bytes"] == Json::string("0"),
+  )
+  try
+    @asyncio.plan_query(memory(bytes), fields=memory(index.to_bytes()))
+  catch {
+    _ => ()
+  } noraise {
+    _ => fail("unsafe field pruning without exact filter")
+  }
+}
+
+///|
 async test "asynchronous MIDX2 reads pages and participates in decoded dataset paging" {
   let builder = @mcap.new_builder()
   let channel = builder.register_channel("/n", "json")

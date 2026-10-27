@@ -24,19 +24,21 @@ pub async fn open_cached_http(String, String, options? : HttpCacheOptions) -> Ca
 
 pub fn open_dataset(Array[AsyncQuerySource], limits? : @moonmcap.Limits, declaration_bytes? : Int, max_sources? : Int) -> AsyncDataset raise @moonmcap.McapError
 
-pub async fn open_disk_sidecar(AsyncSource, AsyncSource, AsyncIndexVerification, limits? : @moonmcap.Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64) -> AsyncDiskSidecarReader
+pub async fn open_disk_sidecar(AsyncSource, AsyncSource, AsyncIndexVerification, limits? : @moonmcap.Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64, pool? : WorkerPool, select_region? : async (UInt64, Int) -> Bool) -> AsyncDiskSidecarReader
 
 pub async fn open_file(String) -> AsyncSource
 
 pub async fn open_http(String, timeout_ms? : Int, retries? : Int, max_range_bytes? : Int) -> AsyncSource
 
-pub async fn open_parallel_reader(AsyncSource, WorkerPool, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int, limits? : @moonmcap.Limits) -> ParallelReader
+pub async fn open_parallel_reader(AsyncSource, WorkerPool, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int, limits? : @moonmcap.Limits, select_region? : async (UInt64, Int) -> Bool) -> ParallelReader
 
 pub async fn open_reader(AsyncSource, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int, limits? : @moonmcap.Limits) -> AsyncReader
 
 pub async fn open_sidecar(AsyncSource, Bytes, AsyncIndexVerification, limits? : @moonmcap.Limits, index_bytes? : Int, cache_bytes? : Int) -> AsyncSidecarReader
 
 pub async fn open_worker_pool(String, options? : WorkerOptions) -> WorkerPool
+
+pub async fn plan_query(AsyncSource, index? : AsyncSource, fields? : AsyncSource, pool? : WorkerPool, filter? : @moonmcap.JsonFilter, decode? : Bool, cache_bytes? : Int, fallback_bytes? : Int, max_decoded_bytes? : Int) -> AsyncQueryPlan
 
 pub async fn playback(@moonmcap.Replay, () -> UInt64, async (UInt64) -> Unit, async (@moonmcap.Message) -> Unit, cancelled? : () -> Bool) -> Unit
 
@@ -54,6 +56,7 @@ pub fn worker_options() -> WorkerOptions
 pub struct AsyncCursor {
   source : AsyncSource
   cursor : @moonmcap.FileCursor
+  select_region : async (UInt64, Int) -> Bool
   mut busy : Bool
 }
 pub fn AsyncCursor::cancel(Self) -> Unit
@@ -109,6 +112,9 @@ pub struct AsyncDiskSidecarReader {
   source : AsyncSource
   index : AsyncSource
   reader : @moonmcap.DiskSidecarReader
+  pool : WorkerPool?
+  limits : @moonmcap.Limits
+  select_region : async (UInt64, Int) -> Bool
 }
 pub fn AsyncDiskSidecarReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int) -> AsyncDiskSidecarCursor raise @moonmcap.McapError
 pub fn AsyncDiskSidecarReader::info(Self) -> Json
@@ -124,6 +130,20 @@ pub struct AsyncMessageStream {
   stop : () -> Unit
   pending : () -> Int
 }
+
+pub struct AsyncQueryPlan {
+  provider : AsyncQuerySource
+  source : AsyncSource
+  index : AsyncSource?
+  fields : AsyncSource?
+  backend : String
+  verified : Bool
+  opening_bytes : UInt64
+  decisions : Map[UInt64, Bool]
+  statistics : () -> Json
+}
+pub fn AsyncQueryPlan::info(Self) -> Json
+pub fn AsyncQueryPlan::query_source(Self) -> AsyncQuerySource
 
 pub struct AsyncQuerySource {
   declarations : @moonmcap.Log
@@ -145,8 +165,8 @@ pub struct AsyncReader {
   reader : @moonmcap.RangeReader
 }
 pub fn AsyncReader::channels(Self) -> Array[@moonmcap.Channel]
-pub fn AsyncReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int, span_bytes? : Int) -> AsyncCursor raise @moonmcap.McapError
-pub fn AsyncReader::query_source(Self, abort_source_on_cancel? : Bool) -> AsyncQuerySource raise @moonmcap.McapError
+pub fn AsyncReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int, span_bytes? : Int, select_region? : async (UInt64, Int) -> Bool) -> AsyncCursor raise @moonmcap.McapError
+pub fn AsyncReader::query_source(Self, abort_source_on_cancel? : Bool, select_region? : async (UInt64, Int) -> Bool) -> AsyncQuerySource raise @moonmcap.McapError
 
 pub struct AsyncSidecarCursor {
   source : AsyncSource
@@ -258,6 +278,7 @@ pub struct ParallelReader {
   base : AsyncReader
   pool : WorkerPool
   limits : @moonmcap.Limits
+  select_region : async (UInt64, Int) -> Bool
   mut batch_peak : Int
 }
 pub fn ParallelReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int, span_bytes? : Int) -> ParallelCursor raise @moonmcap.McapError

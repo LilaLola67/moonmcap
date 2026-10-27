@@ -185,6 +185,7 @@ pub async fn open_reader(
 pub struct AsyncCursor {
   source : AsyncSource
   cursor : @mcap.FileCursor
+  select_region : async (UInt64, Int) -> Bool
   mut busy : Bool
 }
 
@@ -194,10 +195,12 @@ pub fn AsyncReader::cursor(
   query : @mcap.Query,
   pending_bytes? : Int = 64 * 1024 * 1024,
   span_bytes? : Int = 32 * 1024 * 1024,
+  select_region? : async (UInt64, Int) -> Bool = async fn(_, _) { true },
 ) -> AsyncCursor raise @mcap.McapError {
   {
     source: self.source,
     cursor: self.reader.cursor(query, pending_bytes~, span_bytes~),
+    select_region,
     busy: false,
   }
 }
@@ -216,8 +219,14 @@ pub async fn AsyncCursor::next(self : AsyncCursor) -> @mcap.Message? {
       match self.cursor.poll() {
         @mcap.FileDone => return None
         @mcap.FileMessage(message) => return Some(message)
-        @mcap.FileRead(span) =>
-          self.cursor.feed(self.source.read_exact(span.offset, span.length))
+        @mcap.FileRead(span) => {
+          let location = self.cursor.current_chunk_location()
+          if (self.select_region)(location.offset, location.span) {
+            self.cursor.feed(self.source.read_exact(span.offset, span.length))
+          } else {
+            self.cursor.skip_chunk()
+          }
+        }
       }
     }
     None

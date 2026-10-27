@@ -303,6 +303,28 @@ fn FileCursor::fail(self : FileCursor) -> Unit {
 }
 
 ///|
+pub fn FileCursor::current_chunk_location(
+  self : FileCursor,
+) -> MessageLocation raise McapError {
+  if self.state != FileActive || !self.needed() || self.fallback is Some(_) {
+    raise Invalid("file cursor has no pending Chunk")
+  }
+  let index = self.candidates[self.loaded]
+  {
+    offset: index.chunk_start,
+    span: bounded_length(index.chunk_length, self.span_budget, "Chunk"),
+    inner: None,
+  }
+}
+
+///|
+/// Skip an externally rejected region without consuming result offset/limit.
+pub fn FileCursor::skip_chunk(self : FileCursor) -> Unit raise McapError {
+  ignore(self.current_chunk_location())
+  self.loaded += 1
+}
+
+///|
 /// Nonblocking protocol: perform FileRead externally, then feed exactly its bytes.
 pub fn FileCursor::poll(self : FileCursor) -> FilePoll raise McapError {
   if self.state == FileFailed {

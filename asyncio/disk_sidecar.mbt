@@ -3,6 +3,9 @@ pub struct AsyncDiskSidecarReader {
   source : AsyncSource
   index : AsyncSource
   reader : @mcap.DiskSidecarReader
+  pool : WorkerPool?
+  limits : @mcap.Limits
+  select_region : async (UInt64, Int) -> Bool
 }
 
 ///|
@@ -15,6 +18,8 @@ pub async fn open_disk_sidecar(
   cache_pages? : Int = 4,
   chunk_cache_bytes? : Int = 8 * 1024 * 1024,
   index_bytes? : UInt64 = 1099511627776UL,
+  pool? : WorkerPool,
+  select_region? : async (UInt64, Int) -> Bool = async fn(_, _) { true },
 ) -> AsyncDiskSidecarReader {
   if source.size() < 50UL ||
     index.size() < 16UL ||
@@ -79,7 +84,7 @@ pub async fn open_disk_sidecar(
   while audit.poll() is Some(span) {
     audit.feed(index.read_exact(span.offset, span.length))
   }
-  { source, index, reader: audit.finish(), }
+  { source, index, reader: audit.finish(), pool, limits, select_region, }
 }
 
 ///|
@@ -132,12 +137,37 @@ pub async fn AsyncDiskSidecarCursor::next(
           )
         }
         @mcap.DiskSourceRead(span) => {
+          if !(self.owner.select_region)(span.offset, span.length) {
+            self.cursor.skip_source()
+            continue
+          }
           if span.length > self.budget {
             raise @mcap.io_error("source record exceeds async span budget")
           }
-          self.cursor.feed_source(
-            self.owner.source.read_exact(span.offset, span.length),
-          )
+          let bytes = self.owner.source.read_exact(span.offset, span.length)
+          let expanded = match self.owner.pool {
+            None => None
+            Some(pool) => {
+              let records = @mcap.decode_records(
+                bytes,
+                limits=self.owner.limits,
+              )
+              if records.length() == 1 &&
+                records[0].opcode == 0x06 &&
+                bytes.length() >= pool.options.min_chunk_bytes {
+                Some(
+                  pool.expand_chunk(
+                    records[0].body,
+                    self.owner.limits.max_decompressed_bytes + 40,
+                    limits=self.owner.limits,
+                  ),
+                )
+              } else {
+                None
+              }
+            }
+          }
+          self.cursor.feed_source(bytes, expanded?)
         }
       }
     }

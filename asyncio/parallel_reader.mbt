@@ -1,5 +1,6 @@
 ///|
 struct PreparedChunk {
+  skipped : Bool
   original : Bytes
   expanded : Bytes?
   failure : String?
@@ -10,6 +11,7 @@ pub struct ParallelReader {
   base : AsyncReader
   pool : WorkerPool
   limits : @mcap.Limits
+  select_region : async (UInt64, Int) -> Bool
   mut batch_peak : Int
 }
 
@@ -21,6 +23,7 @@ pub async fn open_parallel_reader(
   summary_bytes? : Int = 8 * 1024 * 1024,
   fallback_bytes? : Int = 64 * 1024 * 1024,
   limits? : @mcap.Limits = @mcap.default_limits(),
+  select_region? : async (UInt64, Int) -> Bool = async fn(_, _) { true },
 ) -> ParallelReader {
   {
     base: open_reader(
@@ -32,6 +35,7 @@ pub async fn open_parallel_reader(
     ),
     pool,
     limits,
+    select_region,
     batch_peak: 0,
   }
 }
@@ -97,13 +101,32 @@ async fn ParallelCursor::fill(self : ParallelCursor) -> Unit {
     selected.map(fn(request) {
       async fn() {
         try {
+          // ChunkReadRequest includes following MessageIndexes; recover the
+          // Chunk's exact physical span from the source header before pruning.
+          // The indexed request exposes this without additional source IO.
+          if !(self.owner.select_region)(
+              request.span.offset,
+              request.chunk_bytes,
+            ) {
+            return PreparedChunk::{
+              skipped: true,
+              original: b"",
+              expanded: None,
+              failure: None,
+            }
+          }
           let original = self.owner.base.source.read_exact(
             request.span.offset,
             request.span.length,
           )
           if request.compression == "" ||
             request.expanded_bytes - 40 < config.min_chunk_bytes {
-            return PreparedChunk::{ original, expanded: None, failure: None, }
+            return PreparedChunk::{
+              skipped: false,
+              original,
+              expanded: None,
+              failure: None,
+            }
           }
           let records = @mcap.decode_records(original, limits=self.owner.limits)
           guard records.length() > 0 && records[0].opcode == 0x06 else {
@@ -122,10 +145,16 @@ async fn ParallelCursor::fill(self : ParallelCursor) -> Unit {
             },
           }
           let expanded = self.owner.pool.call(job, request.expanded_bytes)
-          PreparedChunk::{ original, expanded: Some(expanded), failure: None, }
+          PreparedChunk::{
+            skipped: false,
+            original,
+            expanded: Some(expanded),
+            failure: None,
+          }
         } catch {
           error =>
             PreparedChunk::{
+              skipped: false,
               original: b"",
               expanded: None,
               failure: Some(
@@ -173,6 +202,10 @@ pub async fn ParallelCursor::next(self : ParallelCursor) -> @mcap.Message? {
           if prepared.failure is Some(reason) {
             raise @mcap.io_error(reason)
           }
+          if prepared.skipped {
+            self.cursor.skip_chunk()
+            continue
+          }
           match prepared.expanded {
             None => self.cursor.feed(prepared.original)
             Some(expanded) =>
@@ -219,7 +252,7 @@ pub fn ParallelReader::query_source(
   self : ParallelReader,
 ) -> AsyncQuerySource raise @mcap.McapError {
   if !self.base.reader.diagnostics().indexed {
-    return self.base.query_source()
+    return self.base.query_source(select_region=self.select_region)
   }
   async_query_source(
     self.base.reader.declaration_log(),

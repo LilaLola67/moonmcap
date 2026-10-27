@@ -52,6 +52,7 @@ pub fn expand_worker_chunk(
 ///|
 pub(all) struct ChunkReadRequest {
   span : ReadSpan
+  chunk_bytes : Int
   expanded_bytes : Int
   compression : String
 }
@@ -89,6 +90,7 @@ pub fn FileCursor::upcoming_reads(
     requests.push({
       span: { offset: index.chunk_start, length, },
       expanded_bytes: expanded,
+      chunk_bytes: bounded_length(index.chunk_length, self.span_budget, "Chunk"),
       compression: index.compression,
     })
   }

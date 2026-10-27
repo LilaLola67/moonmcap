@@ -267,10 +267,14 @@ pub fn open_sidecar(
 fn SidecarReader::load(
   self : SidecarReader,
   entry : SidecarEntry,
+  expanded? : Bytes,
 ) -> Message raise McapError {
   let location = entry.location
   let message = match location.inner {
     None => {
+      if expanded is Some(_) {
+        raise Invalid("expanded direct Message is invalid")
+      }
       let record = self.source.record(
         location.offset,
         self.source.size,
@@ -294,7 +298,10 @@ fn SidecarReader::load(
         if record.opcode != 0x06 || record.body.length() + 9 != location.span {
           raise Invalid("sidecar chunk location mismatch")
         }
-        let chunk = decode_chunk(record.body, limits=self.limits)
+        let chunk = match expanded {
+          None => decode_chunk(record.body, limits=self.limits)
+          Some(bytes) => decode_prepared_chunk(record.body, bytes, self.limits)
+        }
         let size = chunk.records.fold(init=0, fn(sum, record) {
           sum + record.body.length() + 9
         })
