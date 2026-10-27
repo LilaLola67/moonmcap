@@ -28,5 +28,10 @@ test "Summary CRC catches corruption after DataEnd" {
   let changed = bytes[0:location].to_owned() +
     b"\xff" +
     bytes[location + 1:].to_owned()
-  assert_true((try? @moonmcap.read_log(changed)) is Err(_))
+  assert_true(
+    (Result::Ok(@moonmcap.read_log(changed)) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
+  )
 }

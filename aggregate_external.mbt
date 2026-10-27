@@ -144,7 +144,7 @@ fn aggregate_encode(key : String, state : AggregateState) -> Bytes {
     }
   }
   let bytes = out.to_bytes()
-  crc32(bytes).to_le_bytes() + bytes
+  crc32(bytes).mcap_le_bytes() + bytes
 }
 
 ///|

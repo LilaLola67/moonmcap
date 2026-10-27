@@ -1,6 +1,6 @@
 import {
-  "bikallem/compress/checksum",
-  "bikallem/blit",
+  "LilaLola67/moonmcap/internal/checksum",
+  "LilaLola67/moonmcap/internal/blit",
 }
 
 import {

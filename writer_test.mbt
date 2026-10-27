@@ -57,7 +57,10 @@ test "sequential writer round trips out of order nanosecond timestamps" {
 test "writer refuses inconsistent graph and duplicate identifiers" {
   let log = example_log()
   log.channels.push(log.channels[0])
-  assert_true((try? @moonmcap.write_log(log)) is Err(_))
+  assert_true(
+    (Result::Ok(@moonmcap.write_log(log)) catch { error => Result::Err(error) })
+    is Err(_),
+  )
   let dangling = @moonmcap.empty_log()
   dangling.messages.push({
     channel_id: 4,
@@ -66,7 +69,12 @@ test "writer refuses inconsistent graph and duplicate identifiers" {
     publish_time: 0UL,
     data: b"",
   })
-  assert_true((try? @moonmcap.write_log(dangling)) is Err(_))
+  assert_true(
+    (Result::Ok(@moonmcap.write_log(dangling)) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
+  )
 }
 
 ///|
@@ -81,5 +89,10 @@ test "data section corruption is detected" {
   let corrupted = bytes[0:offset].to_owned() +
     b"x" +
     bytes[offset + 1:].to_owned()
-  assert_true((try? @moonmcap.read_log(corrupted)) is Err(_))
+  assert_true(
+    (Result::Ok(@moonmcap.read_log(corrupted)) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
+  )
 }

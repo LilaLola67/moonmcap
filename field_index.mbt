@@ -253,9 +253,9 @@ pub fn FieldIndex::to_bytes(
   // Enforce the same structural/node budgets before publishing an index.
   ignore(parse_json_document(bytes, max_bytes, 32))
   b"MFLD1\r\n\x00" +
-  bytes.length().to_uint().to_le_bytes() +
+  bytes.length().to_uint().mcap_le_bytes() +
   bytes +
-  crc32(bytes).to_le_bytes()
+  crc32(bytes).mcap_le_bytes()
 }
 
 ///|

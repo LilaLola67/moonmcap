@@ -11,6 +11,48 @@ extern "js" fn cleanup(path : String) -> Unit =
   #| path => { const fs=process.getBuiltinModule('node:fs'); fs.unlinkSync(path); fs.rmdirSync(process.getBuiltinModule('node:path').dirname(path)); }
 
 ///|
+extern "js" fn is_windows() -> Bool =
+  #| ()=>process.platform==='win32'
+
+///|
+extern "js" fn remove_empty_parent(path : String) -> Unit =
+  #| path=>process.getBuiltinModule('node:fs').rmdirSync(process.getBuiltinModule('node:path').dirname(path))
+
+///|
+extern "js" fn rename_fault(path : String, count : Int) -> (Bool) -> Int =
+  #| (path,count)=>{const fs=process.getBuiltinModule('node:fs'),p=process.getBuiltinModule('node:path'),original=fs.renameSync;let attempts=0;fs.renameSync=function(from,to){if(p.resolve(from)===p.resolve(path,'checkpoint.tmp')){attempts++;if(attempts<=count){const error=new Error('injected temporary reader lock');error.code='EPERM';throw error;}}return original.apply(this,arguments);};return restore=>{if(restore)fs.renameSync=original;return attempts;};}
+
+///|
+test "checkpoint publication tolerates transient Windows locks and preserves durable bytes on permanent failure" {
+  let path = temp_path()
+  let job = @nodeio.open_merge_job(path)
+  defer {
+    job.clean() catch {
+      _ => ()
+    }
+    remove_empty_parent(path)
+  }
+  job.save(b"first")
+  if is_windows() {
+    let fault = rename_fault(path, 2)
+    defer ignore(fault(true))
+    job.save(b"second")
+    assert_eq(fault(false), 3)
+    assert_eq(@nodeio.read_file(path + "/checkpoint.bin"), b"second")
+  }
+  let prior = @nodeio.read_file(path + "/checkpoint.bin")
+  let fault = rename_fault(path, 100)
+  defer ignore(fault(true))
+  try job.save(b"uncommitted") catch {
+    _ => ()
+  } noraise {
+    _ => fail("persistent publication failure was swallowed")
+  }
+  assert_eq(fault(false), if is_windows() { 8 } else { 1 })
+  assert_eq(@nodeio.read_file(path + "/checkpoint.bin"), prior)
+}
+
+///|
 test "managed files bound read ahead preserve bytes and close scopes on errors" {
   let path = temp_path()
   let buffer = @buffer.Buffer::Buffer()

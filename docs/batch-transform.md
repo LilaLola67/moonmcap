@@ -29,4 +29,4 @@ python tools/batch_workflows.py
 
 时间对齐对所有选中消息的 log_time/publish_time 和附件的 log_time/create_time 施加同一平移。任何字段溢出/下溢则整个操作报错，不截断、不钳制。附件筛选发生在对齐之前。
 
-此版本使用内存 Log，CLI 受完整输入文件预算限制；尚未提供临时磁盘排序或有界内存的外部归并。写出使用现有索引写入器，重建声明引用、Statistics、索引及 CRC，并由官方读者检查。
+本页的 `transform_log` 与 `transform` 路径使用内存 Log，受完整输入文件预算限制。较大输入可使用已经提供的 [流式变换](stream-transform.md) 与 [磁盘外部归并](external-merge.md)，按相应接口的预算运行。写出重建声明引用、Statistics、索引及 CRC，并由官方读者检查。

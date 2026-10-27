@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "LilaLola67/moonmcap/internal/lz4"
+
+// Values
+pub fn compress(Bytes) -> Bytes
+
+// Errors
+pub(all) suberror Lz4Error {
+  InvalidHeader(String)
+  CorruptData(String)
+  ChecksumMismatch(expected~ : UInt, got~ : UInt)
+  ContentSizeMismatch
+  UnexpectedEOF
+} derive(Show)
+
+// Types and methods
+pub(all) enum Decode {
+  Await
+  Data(BytesView)
+  End
+  Error(Lz4Error)
+} derive(Show)
+
+pub(all) enum Encode {
+  Ok
+  Data(BytesView)
+  End
+  Error(Lz4Error)
+} derive(Show)
+
+// Type aliases
+
+// Traits

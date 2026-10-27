@@ -11,7 +11,7 @@
 
 name = "LilaLola67/moonmcap"
 
-version = "0.15.30"
+version = "0.15.31"
 
 readme = "README.md"
 
@@ -26,7 +26,5 @@ preferred_target = "wasm"
 description = "MoonBit-native MCAP message-log codec, indexed queries and file transformations"
 
 import {
-  "bikallem/compress@0.3.4",
-  "bikallem/blit@0.2.2",
   "moonbitlang/async@0.20.2",
 }

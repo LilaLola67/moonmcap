@@ -50,9 +50,17 @@ test "merge remaps colliding source identifiers without changing payload meaning
 test "clock shifting checks underflow and overflow transactionally" {
   let log = example_log()
   assert_eq(@moonmcap.shift_time(log, 10UL).messages[0].log_time, 40UL)
-  assert_true((try? @moonmcap.shift_time(log, 11UL, backwards=true)) is Err(_))
   assert_true(
-    (try? @moonmcap.shift_time(log, 18446744073709551615UL)) is Err(_),
+    (Result::Ok(@moonmcap.shift_time(log, 11UL, backwards=true)) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
+  )
+  assert_true(
+    (Result::Ok(@moonmcap.shift_time(log, 18446744073709551615UL)) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
   )
   assert_eq(log.messages[0].log_time, 30UL)
 }

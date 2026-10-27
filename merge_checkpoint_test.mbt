@@ -3,7 +3,9 @@ fn checkpoint_test_hash(
   source : @moonmcap.ReadSource,
 ) -> String raise @moonmcap.McapError {
   @moonmcap.encode_hex(
-    @moonmcap.crc32(source.read_exact(0UL, source.size().to_int())).to_le_bytes(),
+    @moonmcap.crc32(source.read_exact(0UL, source.size().to_int()))
+    .to_uint64()
+    .to_le_bytes()[0:4].to_owned(),
   )
 }
 

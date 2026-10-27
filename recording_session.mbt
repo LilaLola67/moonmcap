@@ -173,9 +173,9 @@ fn RecordingSession::save(
     raise Invalid("recording manifest byte budget exceeded")
   }
   let envelope = b"MRSC1\r\n\x00" +
-    bytes.length().to_uint().to_le_bytes() +
+    bytes.length().to_uint().mcap_le_bytes() +
     bytes +
-    crc32(bytes).to_le_bytes()
+    crc32(bytes).mcap_le_bytes()
   ignore(inspect_recording_manifest(envelope))
   (self.storage.save)(envelope)
 }

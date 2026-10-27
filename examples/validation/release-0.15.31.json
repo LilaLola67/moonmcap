@@ -1,0 +1,303 @@
+{
+  "version": "0.15.31",
+  "toolchains": {
+    "0.10.14+7d59c7ec9": {
+      "check_build": "passed",
+      "tests": {
+        "wasm": 173,
+        "js": 195
+      }
+    },
+    "0.10.17+d971670cd": {
+      "js_check_build": "passed",
+      "js_tests": 195,
+      "local_documentation": "passed"
+    }
+  },
+  "public_root_interface_changed": false,
+  "effective_handwritten_root_core_lines": 17830,
+  "counts_exclude": [
+    "tests",
+    "generated interfaces",
+    "internal adapted runtime components",
+    "subpackages and commands",
+    "Python tools"
+  ],
+  "runtime_components": {
+    "result": "passed",
+    "adapted_files": 10,
+    "package_manifests_audited": 31,
+    "legacy_compression_dependencies": false,
+    "license": "Apache-2.0",
+    "sources_manifest_sha256": "d0468d6167ba4e2d658593f9297c738ac23b3802d04a1a3a9cf0031fe9e8b73c",
+    "original_core_line_count_includes_internal_runtime": false
+  },
+  "regression_workflows": [
+    {
+      "script": "tools/interop.py",
+      "seconds": 5.073,
+      "passed": true
+    },
+    {
+      "script": "tools/conformance.py",
+      "seconds": 10.603,
+      "passed": true
+    },
+    {
+      "script": "examples/run.py",
+      "seconds": 1.798,
+      "passed": true
+    },
+    {
+      "script": "tools/range_benchmark.py",
+      "seconds": 1.202,
+      "passed": true
+    },
+    {
+      "script": "tools/stream_workflows.py",
+      "seconds": 1.702,
+      "passed": true
+    },
+    {
+      "script": "tools/cli_workflows.py",
+      "seconds": 3.431,
+      "passed": true
+    },
+    {
+      "script": "tools/batch_workflows.py",
+      "seconds": 1.566,
+      "passed": true
+    },
+    {
+      "script": "tools/repair_workflows.py",
+      "seconds": 4.21,
+      "passed": true
+    },
+    {
+      "script": "tools/async_workflows.py",
+      "seconds": 1.683,
+      "passed": true
+    },
+    {
+      "script": "tools/http_workflows.py",
+      "seconds": 3.146,
+      "passed": true
+    },
+    {
+      "script": "tools/external_workflows.py",
+      "seconds": 3.496,
+      "passed": true
+    },
+    {
+      "script": "tools/block_workflows.py",
+      "seconds": 1.776,
+      "passed": true
+    },
+    {
+      "script": "tools/transform_stream_workflows.py",
+      "seconds": 4.381,
+      "passed": true
+    },
+    {
+      "script": "tools/dataset_workflows.py",
+      "seconds": 2.42,
+      "passed": true
+    },
+    {
+      "script": "tools/sidecar_workflows.py",
+      "seconds": 10.955,
+      "passed": true
+    },
+    {
+      "script": "tools/json_workflows.py",
+      "seconds": 4.004,
+      "passed": true
+    },
+    {
+      "script": "tools/checkpoint_workflows.py",
+      "seconds": 24.609,
+      "passed": true
+    },
+    {
+      "script": "tools/input_checkpoint_workflows.py",
+      "seconds": 20.279,
+      "passed": true
+    },
+    {
+      "script": "tools/io_workflows.py",
+      "seconds": 3.282,
+      "passed": true
+    },
+    {
+      "script": "tools/aggregate_workflows.py",
+      "seconds": 1.649,
+      "passed": true
+    },
+    {
+      "script": "tools/diff_workflows.py",
+      "seconds": 1.649,
+      "passed": true
+    },
+    {
+      "script": "tools/replay_workflows.py",
+      "seconds": 1.58,
+      "passed": true
+    },
+    {
+      "script": "tools/async_dataset_workflows.py",
+      "seconds": 2.267,
+      "passed": true
+    },
+    {
+      "script": "tools/source_diagnostic_workflows.py",
+      "seconds": 5.923,
+      "passed": true
+    },
+    {
+      "script": "tools/large_source_workflows.py",
+      "seconds": 3.472,
+      "passed": true
+    },
+    {
+      "script": "tools/fuzz_workflows.py",
+      "seconds": 12.849,
+      "passed": true
+    },
+    {
+      "script": "tools/memory_benchmark.py",
+      "seconds": 23.365,
+      "passed": true
+    },
+    {
+      "script": "tools/corpus_workflows.py",
+      "seconds": 31.746,
+      "passed": true
+    },
+    {
+      "script": "tools/disk_index_workflows.py",
+      "seconds": 7.722,
+      "passed": true
+    },
+    {
+      "script": "tools/disk_index_scale.py",
+      "seconds": 2.218,
+      "passed": true
+    },
+    {
+      "script": "tools/aggregate_external_workflows.py",
+      "seconds": 14.76,
+      "passed": true
+    },
+    {
+      "script": "tools/chunk_checkpoint_workflows.py",
+      "seconds": 2.937,
+      "passed": true
+    },
+    {
+      "script": "tools/protobuf_workflows.py",
+      "seconds": 2.535,
+      "passed": true
+    },
+    {
+      "script": "tools/cached_http_workflows.py",
+      "seconds": 5.878,
+      "passed": true
+    },
+    {
+      "script": "tools/protojson_workflows.py",
+      "seconds": 10.828,
+      "passed": true
+    },
+    {
+      "script": "tools/cdr_workflows.py",
+      "seconds": 2.422,
+      "passed": true
+    },
+    {
+      "script": "tools/async_paged_workflows.py",
+      "seconds": 3.081,
+      "passed": true
+    },
+    {
+      "script": "tools/field_index_workflows.py",
+      "seconds": 7.111,
+      "passed": true
+    },
+    {
+      "script": "tools/chunk_pipeline_workflows.py",
+      "seconds": 7.159,
+      "passed": true
+    },
+    {
+      "script": "tools/worker_workflows.py",
+      "seconds": 18.915,
+      "passed": true
+    },
+    {
+      "script": "tools/worker_benchmark.py",
+      "seconds": 11.458,
+      "passed": true
+    },
+    {
+      "script": "tools/pipeline_workflows.py",
+      "seconds": 20.662,
+      "passed": true
+    },
+    {
+      "script": "tools/paged_field_workflows.py",
+      "seconds": 19.036,
+      "passed": true
+    },
+    {
+      "script": "tools/payload_view_workflows.py",
+      "seconds": 5.765,
+      "passed": true
+    },
+    {
+      "script": "tools/ros1_workflows.py",
+      "seconds": 2.972,
+      "passed": true
+    },
+    {
+      "script": "tools/temporal_join_workflows.py",
+      "seconds": 60.787,
+      "passed": true
+    },
+    {
+      "script": "tools/recording_session_workflows.py",
+      "seconds": 19.678,
+      "passed": true
+    },
+    {
+      "script": "tools/runtime_audit.py",
+      "seconds": 0.752,
+      "passed": true
+    }
+  ],
+  "public_payload_comparisons": {
+    "ROS2_native_messages": 4719,
+    "ROS1_converted_messages": 1606,
+    "raw_public_data_redistributed": false
+  },
+  "checkpoint_publication": {
+    "windows_transient_error_retry_max_attempts": 8,
+    "maximum_total_wait_ms": 140,
+    "permanent_failure_preserves_previous_checkpoint": true,
+    "fault_injection_test_passed": true
+  },
+  "installation_verification": {
+    "reproduction_command": "python tools/install_smoke.py --version 0.15.31",
+    "uses_fresh_consumer_and_published_package": true,
+    "own_compiled_worker": true,
+    "prepublication_script_control_version": "0.15.30",
+    "prepublication_script_control_result": "passed"
+  },
+  "scope_notes": [
+    "This file records local prepublication checks. Hosted CI, registry installation of 0.15.31 and hosted documentation are checked separately after publication.",
+    "LZ4 encoding, xxHash and portable byte buffers are adapted Apache-2.0 code, attributed per file and in third_party/runtime-sources.json; they are not counted as original MCAP core.",
+    "The byte encoding and floating reinterpretation replacements preserve the existing MCAP wire model. The removed try? spelling is replaced with explicit Result/catch semantics.",
+    "Windows retry only covers bounded transient sharing failures during atomic replacement, not power-loss durability or indefinite lock recovery.",
+    "Large-file workflow runs use the regular bounded-scale cases; previous actual million-message and over-2-GiB evidence remains historical.",
+    "The independent public ROS1 comparison checks scalars, inline arrays and large-array lengths; full binary export equivalence is covered by separate synthetic payload workflows."
+  ]
+}

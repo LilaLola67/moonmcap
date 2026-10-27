@@ -117,7 +117,7 @@ pub fn build_sidecar(
   if framed.length() > index_bytes - 4 {
     raise Invalid("sidecar encoded byte budget exceeded")
   }
-  framed + crc32(framed).to_le_bytes()
+  framed + crc32(framed).mcap_le_bytes()
 }
 
 ///|

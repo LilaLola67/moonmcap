@@ -12,7 +12,9 @@ test "IEEE CRC32 published check vector" {
 test "CRC omission is accepted but a corrupt payload is rejected" {
   @moonmcap.verify_crc(b"changed", 0U)
   assert_true(
-    (try? @moonmcap.verify_crc(b"changed", @moonmcap.crc32(b"original")))
+    (Result::Ok(@moonmcap.verify_crc(b"changed", @moonmcap.crc32(b"original"))) catch {
+      error => Result::Err(error)
+    })
     is Err(_),
   )
 }

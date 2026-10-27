@@ -142,7 +142,7 @@ pub fn write_chunked(
     out.write_bytes(frame(0x09, encode_attachment(attachment, checksums~))[:])
   }
   let checksum = if checksums { crc32(out.to_bytes()) } else { 0U }
-  out.write_bytes(frame(0x0f, checksum.to_le_bytes())[:])
+  out.write_bytes(frame(0x0f, checksum.mcap_le_bytes())[:])
   out.write_bytes(
     frame(
       0x02,

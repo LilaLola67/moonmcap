@@ -1,0 +1,49 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "LilaLola67/moonmcap/internal/checksum"
+
+// Values
+pub fn xxh32(BytesView, seed? : UInt) -> UInt
+
+pub fn xxh64(BytesView, seed? : UInt64) -> UInt64
+
+// Errors
+
+// Types and methods
+pub struct XXH32 {
+  seed : UInt
+  mut v1 : UInt
+  mut v2 : UInt
+  mut v3 : UInt
+  mut v4 : UInt
+  mut total_len : UInt
+  buf : FixedArray[Byte]
+  mut buf_used : Int
+}
+pub fn XXH32::new(seed? : UInt) -> Self
+pub impl Hasher for XXH32
+
+pub struct XXH64 {
+  seed : UInt64
+  mut v1 : UInt64
+  mut v2 : UInt64
+  mut v3 : UInt64
+  mut v4 : UInt64
+  mut total_len : UInt64
+  buf : FixedArray[Byte]
+  mut buf_used : Int
+}
+pub fn XXH64::checksum64(Self) -> UInt64
+pub fn XXH64::new(seed? : UInt64) -> Self
+pub fn XXH64::reset(Self) -> Unit
+pub fn XXH64::size(Self) -> Int
+pub fn XXH64::update(Self, BytesView) -> Unit
+
+// Type aliases
+
+// Traits
+pub(open) trait Hasher {
+  fn size(Self) -> Int
+  fn reset(Self) -> Unit
+  fn update(Self, BytesView) -> Unit
+  fn checksum(Self) -> UInt
+}

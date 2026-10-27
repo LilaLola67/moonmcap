@@ -143,7 +143,7 @@ fn SortSession::create(
 ///|
 fn write_sort_row(sink : WriteSink, row : SortRow) -> Unit raise McapError {
   let body = row.ordinal.to_le_bytes() + encode_message(row.message)
-  sink.write(frame(0x80, crc32(body).to_le_bytes() + body))
+  sink.write(frame(0x80, crc32(body).mcap_le_bytes() + body))
 }
 
 ///|

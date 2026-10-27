@@ -81,7 +81,7 @@ fn merge_checkpoint(
   if body.length() > 8 * 1024 * 1024 - 4 {
     raise Invalid("merge checkpoint exceeds 8 MiB")
   }
-  body + crc32(body).to_le_bytes()
+  body + crc32(body).mcap_le_bytes()
 }
 
 ///|

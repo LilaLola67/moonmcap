@@ -43,7 +43,7 @@ fn encode_chunk_job(state : ChunkJobState) -> Bytes raise McapError {
   if body.length() > 8 * 1024 * 1024 - 4 {
     raise Invalid("chunk checkpoint exceeds 8 MiB")
   }
-  body + crc32(body).to_le_bytes()
+  body + crc32(body).mcap_le_bytes()
 }
 
 ///|
@@ -190,7 +190,7 @@ fn resumable_chunk_merge_internal(
     }
     validate_log(empty_log(), limits=options.limits)
     let settings = checkpoint_settings(options) +
-      max_parts.to_uint().to_le_bytes()
+      max_parts.to_uint().mcap_le_bytes()
     let inputs = sources.map(fn(source) {
       if cancelled() {
         raise Invalid("chunk merge cancelled")

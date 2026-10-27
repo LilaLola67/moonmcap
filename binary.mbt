@@ -1,4 +1,15 @@
 ///|
+// Keep the wire primitive independent of removed standard-library methods.
+fn UInt::mcap_le_bytes(self : UInt) -> Bytes {
+  [
+    self.to_byte(),
+    (self >> 8).to_byte(),
+    (self >> 16).to_byte(),
+    (self >> 24).to_byte(),
+  ]
+}
+
+///|
 struct Cursor {
   data : Bytes
   mut pos : Int

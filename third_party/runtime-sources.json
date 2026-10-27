@@ -1,0 +1,82 @@
+[
+  {
+    "file": "internal/lz4/types.mbt",
+    "upstream": "bikallem/compress@0.3.4",
+    "upstream_file": "lz4/types.mbt",
+    "upstream_sha256": "3fefb32881da68be3165d3ad9dd8b5714bc5f8efd9e2f43b624c417e20d93018",
+    "license": "Apache-2.0",
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+  },
+  {
+    "file": "internal/lz4/compress.mbt",
+    "upstream": "bikallem/compress@0.3.4",
+    "upstream_file": "lz4/compress.mbt",
+    "upstream_sha256": "317687f62135937f37ef2409e0031bb13f4bf7c484f5063b61051a899f6c4eb2",
+    "license": "Apache-2.0",
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+  },
+  {
+    "file": "internal/lz4/block.mbt",
+    "upstream": "bikallem/compress@0.3.4",
+    "upstream_file": "lz4/block.mbt",
+    "upstream_sha256": "8643606ae6242b74ddf72528b28cc9859e57e3cd96d06d9508a2892a89266eca",
+    "license": "Apache-2.0",
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+  },
+  {
+    "file": "internal/lz4/frame.mbt",
+    "upstream": "bikallem/compress@0.3.4",
+    "upstream_file": "lz4/frame.mbt",
+    "upstream_sha256": "6593c5ea3bc8cb0d887a2c55c0ef14d954954e1243565af725c81695453fe529",
+    "license": "Apache-2.0",
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+  },
+  {
+    "file": "internal/checksum/hasher.mbt",
+    "upstream": "bikallem/compress@0.3.4",
+    "upstream_file": "checksum/hasher.mbt",
+    "upstream_sha256": "6b7089b85d7b2c657bac78be7e7f51d51422d602412679faac4768fcb17874e0",
+    "license": "Apache-2.0",
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+  },
+  {
+    "file": "internal/checksum/xxh32.mbt",
+    "upstream": "bikallem/compress@0.3.4",
+    "upstream_file": "checksum/xxh32.mbt",
+    "upstream_sha256": "01f8267c2ba87ff4d146cf1e910a66579100d8a4e9601bb5e33efaaeae27f774",
+    "license": "Apache-2.0",
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+  },
+  {
+    "file": "internal/checksum/xxh64.mbt",
+    "upstream": "bikallem/compress@0.3.4",
+    "upstream_file": "checksum/xxh64.mbt",
+    "upstream_sha256": "f0ccf7019ecab34966461439159494f06537eb653ba640dd4640cc93858d0a51",
+    "license": "Apache-2.0",
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+  },
+  {
+    "file": "internal/blit/blit.mbt",
+    "upstream": "bikallem/blit@0.2.2",
+    "upstream_file": "src/blit.mbt",
+    "upstream_sha256": "bbea978228e173fef1f4b261b1e4969638161f778122242684223046129f5072",
+    "license": "Apache-2.0",
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+  },
+  {
+    "file": "internal/blit/blit_non_native.mbt",
+    "upstream": "bikallem/blit@0.2.2",
+    "upstream_file": "src/blit_non_native.mbt",
+    "upstream_sha256": "d72010a0945fbdee0bc9a790be39f42d0f6047dc48a71c0b57020fdd3c485f48",
+    "license": "Apache-2.0",
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+  },
+  {
+    "file": "internal/blit/buffer.mbt",
+    "upstream": "bikallem/blit@0.2.2",
+    "upstream_file": "src/buffer.mbt",
+    "upstream_sha256": "2892ad04e4343c8130a90e5d69e3cb274e79d2052587d1aeecc7cbd0556eedbf",
+    "license": "Apache-2.0",
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+  }
+]

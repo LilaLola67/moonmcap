@@ -98,7 +98,8 @@ test "version one merge checkpoints remain resumable and upgrade to version two"
     _ => fail("expected stop")
   }
   let body = b"MJOB1\r\n\x00" + saved[0][8:saved[0].length() - 12].to_owned()
-  let legacy = body + @moonmcap.crc32(body).to_le_bytes()
+  let legacy = body +
+    @moonmcap.crc32(body).to_uint64().to_le_bytes()[0:4].to_owned()
   guard @moonmcap.checkpoint_progress(legacy) is Object(fields) else {
     fail("legacy progress")
   }

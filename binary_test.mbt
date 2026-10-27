@@ -12,11 +12,21 @@ test "framing preserves uint64 length and absolute offset" {
 ///|
 test "truncated headers and huge length fail before allocation" {
   let tiny = @moonmcap.frame(0x80, b"abc")
-  let result = try? @moonmcap.decode_records(tiny[0:8].to_owned())
+  let result = Result::Ok(@moonmcap.decode_records(tiny[0:8].to_owned())) catch {
+    error => Result::Err(error)
+  }
   assert_true(result is Err(_))
   let huge = b"\x80\xff\xff\xff\xff\xff\xff\xff\xff"
-  assert_true((try? @moonmcap.decode_records(huge)) is Err(_))
-  assert_true((try? @moonmcap.frame(0, b"")) is Err(_))
+  assert_true(
+    (Result::Ok(@moonmcap.decode_records(huge)) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
+  )
+  assert_true(
+    (Result::Ok(@moonmcap.frame(0, b"")) catch { error => Result::Err(error) })
+    is Err(_),
+  )
 }
 
 ///|
@@ -28,5 +38,10 @@ test "record budget is enforced" {
     max_decompressed_bytes: 64 * 1024 * 1024,
   }
   let bytes = @moonmcap.frame(0x80, b"a") + @moonmcap.frame(0x81, b"b")
-  assert_true((try? @moonmcap.decode_records(bytes, limits~)) is Err(_))
+  assert_true(
+    (Result::Ok(@moonmcap.decode_records(bytes, limits~)) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
+  )
 }

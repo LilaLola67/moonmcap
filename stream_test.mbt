@@ -26,18 +26,30 @@ test "one-byte streaming and poison behavior" {
   assert_eq(result.length(), 1)
   assert_eq(stream.buffered_bytes(), 0)
   stream.finish()
-  assert_true((try? stream.feed(b"")) is Err(_))
+  assert_true(
+    (Result::Ok(stream.feed(b"")) catch { error => Result::Err(error) })
+    is Err(_),
+  )
   let bad = @moonmcap.StreamDecoder::new()
   assert_true(
-    (try? bad.feed(b"\x80\xff\xff\xff\xff\xff\xff\xff\xff")) is Err(_),
+    (Result::Ok(bad.feed(b"\x80\xff\xff\xff\xff\xff\xff\xff\xff")) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
   )
   assert_eq(bad.buffered_bytes(), 0)
-  assert_true((try? bad.feed(bytes)) is Err(_))
+  assert_true(
+    (Result::Ok(bad.feed(bytes)) catch { error => Result::Err(error) })
+    is Err(_),
+  )
 }
 
 ///|
 test "stream finish rejects partial body" {
   let stream = @moonmcap.StreamDecoder::new()
   ignore(stream.feed(@moonmcap.frame(0x80, b"abc")[0:10].to_owned()))
-  assert_true((try? stream.finish()) is Err(_))
+  assert_true(
+    (Result::Ok(stream.finish()) catch { error => Result::Err(error) })
+    is Err(_),
+  )
 }

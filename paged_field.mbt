@@ -284,9 +284,9 @@ pub fn build_paged_field_index(
   }
   sink.write(
     b"MFLD2\r\n\x00" +
-    data.length().to_uint().to_le_bytes() +
+    data.length().to_uint().mcap_le_bytes() +
     data +
-    crc32(data).to_le_bytes(),
+    crc32(data).mcap_le_bytes(),
   )
   let page_index : FieldIndex = {
     size: source.size(),

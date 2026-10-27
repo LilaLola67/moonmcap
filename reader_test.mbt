@@ -27,7 +27,10 @@ test "minimal file is decoded without assuming messages" {
   assert_eq(@moonmcap.read_log(bytes).header.library, "independent")
   assert_eq(@moonmcap.scan_file(bytes).length(), 3)
   assert_true(
-    (try? @moonmcap.read_log(bytes[0:bytes.length() - 1].to_owned())) is Err(_),
+    (Result::Ok(@moonmcap.read_log(bytes[0:bytes.length() - 1].to_owned())) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
   )
 }
 
@@ -58,5 +61,10 @@ test "message cannot appear before declaration" {
       }),
     ),
   ])
-  assert_true((try? @moonmcap.read_log(bytes)) is Err(_))
+  assert_true(
+    (Result::Ok(@moonmcap.read_log(bytes)) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
+  )
 }

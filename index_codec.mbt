@@ -182,7 +182,9 @@ pub fn validate_message_index(
       if record.opcode != 0x05 {
         false
       } else {
-        let message = try? decode_message(record.body)
+        let message = Result::Ok(decode_message(record.body)) catch {
+          error => Result::Err(error)
+        }
         match message {
           Ok(value) => value.channel_id == index.channel_id
           Err(_) => false

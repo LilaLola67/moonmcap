@@ -31,7 +31,7 @@ fn ProtobufDecoder::scalar(
   match (field.kind, value) {
     (1, PFixed64(value)) => protobuf_float(value.reinterpret_as_double())
     (2, PFixed32(value)) => {
-      let number = value.reinterpret_as_float()
+      let number = Float::reinterpret_from_uint(value)
       let converted = number.to_double()
       if converted.is_inf() || converted.is_nan() {
         protobuf_float(converted)

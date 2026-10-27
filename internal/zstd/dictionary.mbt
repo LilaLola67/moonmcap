@@ -102,7 +102,9 @@ fn parse_dictionary_bytes(dict : Bytes) -> ZstdDictionary raise ZstdError {
 
 ///|
 fn parse_dictionary_for_encoder(dict : Bytes) -> ZstdDictionary {
-  let parsed = try? parse_dictionary_bytes(dict)
+  let parsed = Result::Ok(parse_dictionary_bytes(dict)) catch {
+    error => Result::Err(error)
+  }
   match parsed {
     Ok(parsed) => parsed
     Err(_) => {

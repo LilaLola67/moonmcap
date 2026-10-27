@@ -5,7 +5,8 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "moonbitlang/core/bigint",
-  "bikallem/compress/lz4",
-  "bikallem/compress/checksum",
+  "moonbitlang/core/float",
+  "LilaLola67/moonmcap/internal/lz4",
+  "LilaLola67/moonmcap/internal/checksum",
   "LilaLola67/moonmcap/internal/zstd",
 }

@@ -114,7 +114,7 @@ pub fn write_indexed(
       uncompressed_size,
     })
   }
-  out.write_bytes(frame(0x0f, crc32(out.to_bytes()).to_le_bytes())[:])
+  out.write_bytes(frame(0x0f, crc32(out.to_bytes()).mcap_le_bytes())[:])
   let summary_start = out.length()
   let groups = []
   let schema_bodies = []

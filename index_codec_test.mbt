@@ -10,7 +10,9 @@ test "MessageIndex retains unsigned 64 bit timestamps and offsets" {
   assert_eq(parsed.channel_id, value.channel_id)
   assert_eq(parsed.entries, value.entries)
   assert_true(
-    (try? @moonmcap.decode_message_index(b"\x01\x00\x01\x00\x00\x00x"))
+    (Result::Ok(@moonmcap.decode_message_index(b"\x01\x00\x01\x00\x00\x00x")) catch {
+      error => Result::Err(error)
+    })
     is Err(_),
   )
 }
@@ -26,17 +28,22 @@ test "MessageIndex entries are checked against chunk boundaries" {
     chunk,
   )
   assert_true(
-    (try? @moonmcap.validate_message_index(
-      { channel_id: 1, entries: [(30UL, 1UL)], },
-      chunk,
-    ))
+    (Result::Ok(
+      @moonmcap.validate_message_index(
+        { channel_id: 1, entries: [(30UL, 1UL)], },
+        chunk,
+      ),
+    ) catch {
+      error => Result::Err(error)
+    })
     is Err(_),
   )
   assert_true(
-    (try? @moonmcap.validate_message_index(
-      { channel_id: 1, entries: [], },
-      chunk,
-    ))
+    (Result::Ok(
+      @moonmcap.validate_message_index({ channel_id: 1, entries: [], }, chunk),
+    ) catch {
+      error => Result::Err(error)
+    })
     is Err(_),
   )
 }

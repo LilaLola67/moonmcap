@@ -55,7 +55,7 @@ moon run cmd/interop --target js -- examples/files/zstd-summary.mcap _interop/ex
 
 应得到 **5 条消息**，时间分别为 **21、23、25、27、29 秒**，并保留 **1 个附件、1 份元数据**。消息 payload 与输入对应消息完全相同。
 
-预期输出：[slice-lz4.mcap](expected/slice-lz4.mcap)。该命令是固定主题/时间参数的演示；通用参数化 CLI 是后续扩展。
+预期输出：[slice-lz4.mcap](expected/slice-lz4.mcap)。该命令是固定主题/时间参数的演示；通用参数化命令已提供，见 [CLI 使用说明](../docs/cli.md)。
 
 ## 样例二：合并不同布局和压缩的日志
 

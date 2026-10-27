@@ -15,11 +15,18 @@ test "chunked files preserve input order across chunk boundaries" {
 ///|
 test "chunk errors reject forbidden records and timestamps" {
   assert_true(
-    (try? @moonmcap.write_chunked(example_log(), messages_per_chunk=0))
+    (Result::Ok(@moonmcap.write_chunked(example_log(), messages_per_chunk=0)) catch {
+      error => Result::Err(error)
+    })
     is Err(_),
   )
   let forbidden : @moonmcap.Record = { opcode: 0x01, offset: 0, body: b"", }
-  assert_true((try? @moonmcap.encode_chunk([forbidden], 0UL, 0UL)) is Err(_))
+  assert_true(
+    (Result::Ok(@moonmcap.encode_chunk([forbidden], 0UL, 0UL)) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
+  )
   let message = example_log().messages[0]
   let record : @moonmcap.Record = {
     opcode: 0x05,
@@ -27,5 +34,10 @@ test "chunk errors reject forbidden records and timestamps" {
     body: @moonmcap.encode_message(message),
   }
   let bad = @moonmcap.encode_chunk([record], 0UL, 10UL)
-  assert_true((try? @moonmcap.decode_chunk(bad)) is Err(_))
+  assert_true(
+    (Result::Ok(@moonmcap.decode_chunk(bad)) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
+  )
 }

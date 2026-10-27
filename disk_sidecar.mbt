@@ -243,9 +243,9 @@ pub fn build_disk_sidecar(
     let metadata = header.to_bytes()
     output.write(
       b"MIDX2\r\n\x00" +
-      metadata.length().to_uint().to_le_bytes() +
+      metadata.length().to_uint().mcap_le_bytes() +
       metadata +
-      crc32(metadata).to_le_bytes(),
+      crc32(metadata).mcap_le_bytes(),
     )
     let page = @buffer.Buffer::Buffer()
     let mut rows = 0UL
@@ -255,7 +255,7 @@ pub fn build_disk_sidecar(
           page.write_byte(0x00)
         }
         let bytes = page.to_bytes()
-        output.write(bytes + crc32(bytes).to_le_bytes())
+        output.write(bytes + crc32(bytes).mcap_le_bytes())
         page.reset()
       }
     }

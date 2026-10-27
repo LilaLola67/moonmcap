@@ -420,7 +420,7 @@ pub fn StreamWriter::add_metadata(
 ///|
 fn StreamWriter::finish_output(self : StreamWriter) -> Unit raise McapError {
   self.flush()
-  self.emit(0x0f, self.crc.to_le_bytes(), false)
+  self.emit(0x0f, self.crc.mcap_le_bytes(), false)
   let start = self.sink.position
   let out = @buffer.Buffer::Buffer()
   let groups = []

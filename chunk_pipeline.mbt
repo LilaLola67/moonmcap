@@ -37,7 +37,7 @@ fn encode_chunk_pipeline(chunk : Bytes, merge : Bytes) -> Bytes raise McapError 
   if body.length() > 8 * 1024 * 1024 - 4 {
     raise Invalid("combined chunk pipeline checkpoint exceeds 8 MiB")
   }
-  body + crc32(body).to_le_bytes()
+  body + crc32(body).mcap_le_bytes()
 }
 
 ///|

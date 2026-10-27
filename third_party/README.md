@@ -18,12 +18,22 @@ implementation is maintained in the root package under MIT.
 Source: https://github.com/bikallem/compress
 Published module: https://mooncakes.io/docs/bikallem/compress
 
-- The module dependency supplies the LZ4 frame encoder and xxHash checksums.
+- `internal/lz4` contains the LZ4 frame encoder components and
+  `internal/checksum` contains XXH32/XXH64 and their trait definition, adapted
+  from the published 0.3.4 sources. They use modern local package manifests;
+  the old-format upstream module is no longer a runtime dependency.
+- The additional files, upstream paths and original SHA256 values are recorded
+  in [runtime-sources.json](runtime-sources.json). Each adapted file carries a
+  prominent source/license/change notice. Public MCAP interoperability tests
+  continue to check LZ4 and Zstd output against independent implementations.
 - `internal/zstd/*.mbt` is derived from the `zstd` package of the published
   version 0.3.4, not an original MCAP codec or a new compression algorithm.
 - Local changes add bounded block expansion and cumulative output checks,
   enlarge the adapter's permitted window to 64 MiB after preflight validation,
   and encode independent, explicitly offset 128 KiB blocks to keep noisy and large inputs within the format limits.
+- Dictionary parsing and block error capture use explicit Result/catch syntax
+  supported by both the declared baseline and current compiler; the removed
+  `try?` spelling is not required.
 - The size-format-3 Huffman literal header decoder uses the specified 18-bit
   regenerated-size field (not bits belonging to the compressed-size field).
   This correction was exercised by a publicly sourced driving recording and
@@ -40,8 +50,12 @@ Third-party sources are excluded from `tools/count_source.py`.
 ## bikallem/blit 0.2.2 — Apache-2.0
 
 Source: https://github.com/bikallem/blit
-Used as a module dependency for the vendored Zstd buffers. Its source is not
-copied into the root implementation or counted as original project code.
+`internal/blit` contains the upstream byte buffer and portable MoonBit copy/fill
+helpers. The portable implementation is used on supported backends; no native C
+stub is copied or required. Its upstream paths and SHA256 values are included in
+`runtime-sources.json`. The upstream module is no longer a runtime dependency.
+This adaptation and all other `internal/` runtime sources remain Apache-2.0,
+retain upstream attribution, and are excluded from original implementation counts.
 
 ## Official Python MCAP reference — MIT
 

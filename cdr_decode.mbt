@@ -94,7 +94,7 @@ fn CdrDecoder::value(
     }
     "float64" => protobuf_float(wire.unsigned(8).reinterpret_as_double())
     "float32" => {
-      let value = wire.unsigned(4).to_uint().reinterpret_as_float()
+      let value = Float::reinterpret_from_uint(wire.unsigned(4).to_uint())
       if value.to_double().is_nan() || value.to_double().is_inf() {
         protobuf_float(value.to_double())
       } else {

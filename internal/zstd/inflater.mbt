@@ -37,7 +37,9 @@ pub fn Inflater::new(
   dict? : Bytes = Bytes::default(),
   output_limit? : Int = 64 * 1024 * 1024,
 ) -> Inflater {
-  let parsed = try? parse_dictionary_bytes(dict)
+  let parsed = Result::Ok(parse_dictionary_bytes(dict)) catch {
+    error => Result::Err(error)
+  }
   match parsed {
     Ok(dict) =>
       Inflater({
@@ -312,17 +314,21 @@ fn decode_compressed_block(
         ZstdError::CorruptData("compressed block without frame header"),
       )
   }
-  let result = try? decompress_block(
-    input[:],
-    s.input_pos,
-    block_size,
-    header.window_size,
-    s.history,
-    s.dict.content[:],
-    s.rep,
-    s.prev_lit_table,
-    s.prev_seq_tables,
-  )
+  let result = Result::Ok(
+    decompress_block(
+      input[:],
+      s.input_pos,
+      block_size,
+      header.window_size,
+      s.history,
+      s.dict.content[:],
+      s.rep,
+      s.prev_lit_table,
+      s.prev_seq_tables,
+    ),
+  ) catch {
+    error => Result::Err(error)
+  }
   match result {
     Err(e) => Err(e)
     Ok((block, next_lit, next_seq)) => {

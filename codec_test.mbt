@@ -50,19 +50,31 @@ test "schemas and channels retain identifiers and payloads" {
 
 ///|
 test "malformed UTF8 duplicate keys and footer extension are rejected" {
-  assert_true((try? @moonmcap.decode_header(b"\x01\x00\x00\x00\xff")) is Err(_))
+  assert_true(
+    (Result::Ok(@moonmcap.decode_header(b"\x01\x00\x00\x00\xff")) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
+  )
   let bad : @moonmcap.Metadata = {
     name: "x",
     entries: [("a", "1"), ("a", "2")],
   }
-  assert_true((try? @moonmcap.encode_metadata(bad)) is Err(_))
+  assert_true(
+    (Result::Ok(@moonmcap.encode_metadata(bad)) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
+  )
   let footer : @moonmcap.Footer = {
     summary_start: 0UL,
     summary_offset_start: 0UL,
     summary_crc: 0U,
   }
   assert_true(
-    (try? @moonmcap.decode_footer(@moonmcap.encode_footer(footer) + b"x"))
+    (Result::Ok(@moonmcap.decode_footer(@moonmcap.encode_footer(footer) + b"x")) catch {
+      error => Result::Err(error)
+    })
     is Err(_),
   )
 }

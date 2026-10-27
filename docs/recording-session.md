@@ -29,4 +29,6 @@ node _build/js/debug/build/cmd/session/session.js resume my-session recording.mc
 
 本地适配同步文件与清单，在支持的平台同步目录；Windows 的目录 fsync 受平台限制。验证范围是进程中断与提交窗口，**未做断电/存储设备故障保证**。核心 storage 的持久化责任由适配器承担。库调用者异常退出须关闭目录以释放句柄，未完成尾段仍保留以供下次检查。
 
+Windows 的清单替换采用与合并保存点相同的有限共享占用重试，持续错误仍会失败；清单成功提交后才推进持久计数。
+
 复现 `python tools/recording_session_workflows.py`：独立 writer 生成来源；三种压缩各实际终止一个录制进程，验证已提交前缀逐字节保留、720 条消息不重复恢复、各 Channel 的连续序号、部分尾段原样隔离、完整孤立段接管、两个硬链接提交窗口的幂等恢复、损坏已提交段拒绝及并发锁。全部测试产物留在忽略目录。

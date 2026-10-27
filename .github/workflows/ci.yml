@@ -34,6 +34,7 @@ jobs:
       - run: moon version --all
       - run: moon update
       - run: python tools/count_source.py
+      - run: python tools/runtime_audit.py
       - run: moon check --target ${{ matrix.target }}
       - run: moon build --target ${{ matrix.target }}
       - run: moon test --target ${{ matrix.target }}
@@ -233,6 +234,31 @@ jobs:
             _interop/large-source/report.json
             _interop/memory/report.json
             _interop/package/report.json
+            _interop/runtime/report.json
+            _interop/pipeline/report.json
+            _interop/paged-fields/report.json
+            _interop/payload-views/report.json
+            _interop/ros1/report.json
+            _interop/temporal-join/report.json
+            _interop/recording-sessions/report.json
+  current-toolchain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install current official toolchain
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - run: moon version --all
+      - run: moon update
+      - run: python tools/runtime_audit.py
+      - run: moon check --target js
+      - run: moon build --target js
+      - run: moon test --target js
+      - run: moon doc
   large-source:
     if: github.event_name == 'workflow_dispatch' && inputs.large_source
     runs-on: ubuntu-latest

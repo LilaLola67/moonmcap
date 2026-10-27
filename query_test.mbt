@@ -21,5 +21,10 @@ test "index owns snapshot and does not duplicate repeated topic filters" {
     index.query({ ..query, topics: ["/temperature", "/temperature"], }).length(),
     2,
   )
-  assert_true((try? index.query({ ..query, offset: -1, })) is Err(_))
+  assert_true(
+    (Result::Ok(index.query({ ..query, offset: -1, })) catch {
+      error => Result::Err(error)
+    })
+    is Err(_),
+  )
 }
