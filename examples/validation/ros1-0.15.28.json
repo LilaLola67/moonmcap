@@ -1,0 +1,18 @@
+{
+  "result": "passed",
+  "synthetic_messages": 36,
+  "codecs": 3,
+  "aliases": "byte=int8,char=uint8",
+  "public_messages": 1606,
+  "public_topics": [
+    "/diagnostics",
+    "/image_color/compressed",
+    "/radar/points",
+    "/radar/range",
+    "/radar/tracks",
+    "/tf",
+    "/velodyne_points"
+  ],
+  "public_source_sha256": "cc941e50af6a0411071abcebafca764e4002898801a01b5c85ea04d4fef161cd",
+  "public_origin": "Foxglove demo.bag, explicitly converted preserving topic/time/payload; not redistributed"
+}

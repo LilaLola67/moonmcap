@@ -48,6 +48,23 @@ fn run(
     raise @mcap.io_error("decode requires an input")
   }
   let cdr = { ..@mcap.cdr_options(), int64_as_string: strings, }
+  if clean[0] == "raw-ros1" {
+    if clean.length() != 4 {
+      raise @mcap.io_error(
+        "raw-ros1 requires ros1msg definition, payload and type",
+      )
+    }
+    println(
+      @mcap.ros1_decoder(
+        clean[3],
+        @nodeio.read_file(clean[1], maximum=cdr.schema_bytes),
+        options=cdr,
+      )
+      .decode(@nodeio.read_file(clean[2], maximum=cdr.message_bytes))
+      .stringify(),
+    )
+    return
+  }
   if clean[0] == "raw-cdr" {
     if clean.length() != 4 {
       raise @mcap.io_error(

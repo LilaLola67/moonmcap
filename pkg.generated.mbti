@@ -219,6 +219,8 @@ pub fn resumable_chunk_pipeline(Array[ReadSource], SortStorage, WriteSink, (Read
 
 pub fn resumable_merge(Array[ReadSource], SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, cancelled? : () -> Bool) -> ExternalReport raise McapError
 
+pub fn ros1_decoder(String, Bytes, options? : CdrOptions) -> Ros1Decoder raise McapError
+
 pub fn scan_file(Bytes, limits? : Limits) -> Array[Record] raise McapError
 
 pub fn scan_source(ReadSource, SourceVisitor, limits? : Limits, declaration_bytes? : Int, cancelled? : () -> Bool, trace? : (SourceScanEvent) -> Unit) -> UInt64 raise McapError
@@ -326,6 +328,7 @@ pub(all) struct BinaryField {
   element_type : String
   stride : Int
   little_endian : Bool
+  aligned : Bool
 } derive(Eq, @debug.Debug)
 
 pub(all) struct BlockRecoveryEvidence {
@@ -355,6 +358,7 @@ pub struct CdrDecoder {
   definitions : Map[String, Array[CdrField]]
   options : CdrOptions
   field_count : Int
+  ros1 : Bool
 }
 pub fn CdrDecoder::decode(Self, Bytes) -> Json raise McapError
 pub fn CdrDecoder::view(Self, Bytes, selection? : DecodeSelection) -> PayloadView raise McapError
@@ -1176,6 +1180,12 @@ pub(all) enum ReplayState {
   ReplayCancelled
   ReplayFailed
 } derive(Eq, @debug.Debug)
+
+pub struct Ros1Decoder {
+  layout : CdrDecoder
+}
+pub fn Ros1Decoder::decode(Self, Bytes) -> Json raise McapError
+pub fn Ros1Decoder::view(Self, Bytes, selection? : DecodeSelection) -> PayloadView raise McapError
 
 type RunHead
 

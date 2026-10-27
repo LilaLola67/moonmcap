@@ -37,6 +37,7 @@ pub struct CdrDecoder {
   definitions : Map[String, Array[CdrField]]
   options : CdrOptions
   field_count : Int
+  ros1 : Bool
 }
 
 ///|
@@ -80,6 +81,7 @@ fn cdr_field(
   name : String,
   package : String,
   options : CdrOptions,
+  ros1 : Bool,
 ) -> CdrField raise McapError {
   if !proto_identifier(name) {
     raise Invalid("invalid CDR field name")
@@ -102,7 +104,7 @@ fn cdr_field(
     } else {
       array = Some(cdr_bound(count, options.items))
     }
-    if array == Some(0) || bound == Some(0) {
+    if !ros1 && (array == Some(0) || bound == Some(0)) {
       raise Invalid("CDR array bound must be positive")
     }
   }
@@ -172,9 +174,10 @@ fn cdr_check_graph(
 }
 
 ///|
-pub fn cdr_decoder(
+fn cdr_decoder_internal(
   name : String,
   definition : Bytes,
+  ros1 : Bool,
   options? : CdrOptions = cdr_options(),
 ) -> CdrDecoder raise McapError {
   if options.schema_bytes < 1 ||
@@ -243,6 +246,7 @@ pub fn cdr_decoder(
       pieces[1].to_string(),
       package,
       options,
+      ros1,
     )
     if definitions[current].any(fn(existing) { existing.name == field.name }) {
       raise Invalid("duplicate CDR field")
@@ -263,5 +267,14 @@ pub fn cdr_decoder(
   for key in definitions.keys() {
     ignore(cdr_check_graph(key, definitions, Map([]), done, 1, options.depth))
   }
-  { name, definitions, options, field_count: count, }
+  { name, definitions, options, field_count: count, ros1, }
+}
+
+///|
+pub fn cdr_decoder(
+  name : String,
+  definition : Bytes,
+  options? : CdrOptions = cdr_options(),
+) -> CdrDecoder raise McapError {
+  cdr_decoder_internal(name, definition, false, options~)
 }

@@ -7,7 +7,7 @@ moon build --target js
 node _build/js/debug/build/cmd/query/query.js recording.mcap --index recording.midx2 --field-index recording.mfld --workers 2 --where '{"path":"/speed","op":">","value":10}' --select /speed --offset 5 --limit 20
 ```
 
-`--index` 与 `--field-index` 可省略；提供时每个输入各对应一个。`--workers 0` 为默认值，正数启用工作线程，库用户需自行编译 worker 入口并传入路径，见 [工作线程](workers.md)。`--http-cache EXISTING_PARENT` 为三个来源各分配独立缓存。存在内容条件时自动解码，`--decode` 可在无条件时主动解码。未选择字段时输出沿用 Dataset NDJSON 的 `data_hex`，可用 `--where true` 请求 decoded 输出。
+`--index` 与 `--field-index` 可省略；提供时每个输入各对应一个。`--workers 0` 为默认值，正数启用工作线程，库用户需自行编译 worker 入口并传入路径，见 [工作线程](parallel-codecs.md)。`--http-cache EXISTING_PARENT` 为三个来源各分配独立缓存。存在内容条件时自动解码，`--decode` 可在无条件时主动解码。未选择字段时输出沿用 Dataset NDJSON 的 `data_hex`，可用 `--where true` 请求 decoded 输出。
 
 字段索引要求 SHA256 与解码器身份一致。无法判定的区域保留，剪枝后仍逐消息执行精确过滤，再执行 offset/limit。没有内部索引时使用已有的有界完整载入回退，字段索引不会把无索引输入伪装成选择性读取。
 

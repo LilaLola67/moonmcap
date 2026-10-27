@@ -14,6 +14,7 @@ pub fn payload_decoder(
 enum SchemaDecoder {
   Proto(ProtobufDecoder)
   Cdr(CdrDecoder)
+  Ros1(Ros1Decoder)
 }
 
 ///|
@@ -30,6 +31,11 @@ fn SchemaDecoder::decode(
         Some(s) => decoder.decode_selected(name, bytes, s)
       }
     Cdr(decoder) =>
+      match selection {
+        None => decoder.decode(bytes)
+        Some(s) => decoder.view(bytes, selection=s).json()
+      }
+    Ros1(decoder) =>
       match selection {
         None => decoder.decode(bytes)
         Some(s) => decoder.view(bytes, selection=s).json()
@@ -76,7 +82,8 @@ pub fn standard_payload_decoder(
       }
     }
     if channel.message_encoding != "protobuf" &&
-      channel.message_encoding != "cdr" {
+      channel.message_encoding != "cdr" &&
+      channel.message_encoding != "ros1" {
       raise Invalid(
         "no decoder for message encoding: \{channel.message_encoding}",
       )
@@ -87,7 +94,8 @@ pub fn standard_payload_decoder(
           schema.encoding == "protobuf" &&
           channel.message_encoding == "protobuf"
         ) ||
-        (schema.encoding == "ros2msg" && channel.message_encoding == "cdr")
+        (schema.encoding == "ros2msg" && channel.message_encoding == "cdr") ||
+        (schema.encoding == "ros1msg" && channel.message_encoding == "ros1")
       ) else {
       raise Invalid(
         "payload channel requires a matching protobuf or ros2msg schema",
@@ -105,6 +113,9 @@ pub fn standard_payload_decoder(
     let (decoder, fields) = if schema.encoding == "protobuf" {
       let decoder = protobuf_decoder(schema.data, options~)
       (SchemaDecoder::Proto(decoder), decoder.field_count[0])
+    } else if schema.encoding == "ros1msg" {
+      let decoder = ros1_decoder(schema.name, schema.data, options=cdr)
+      (SchemaDecoder::Ros1(decoder), decoder.layout.field_count)
     } else {
       let decoder = cdr_decoder(schema.name, schema.data, options=cdr)
       (SchemaDecoder::Cdr(decoder), decoder.field_count)

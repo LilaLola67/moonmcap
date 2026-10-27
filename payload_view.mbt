@@ -19,6 +19,7 @@ pub(all) struct BinaryField {
   element_type : String
   stride : Int
   little_endian : Bool
+  aligned : Bool
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -125,6 +126,7 @@ pub fn PayloadView::read_elements(
     little: field.little_endian,
     position: field.offset + start * field.stride,
     budget: [count],
+    aligned: field.aligned,
   }
   let model : CdrField = {
     name: "value",
@@ -192,7 +194,7 @@ pub fn PayloadDecoder::require_filter_fields(
   let paths = filter.required_paths().map(fn(p) { json_pointer(p) })
   payload_decoder(fn(schema, channel, bytes) {
     let value = (self.decode_payload)(schema, channel, bytes)
-    if channel.message_encoding != "cdr" {
+    if channel.message_encoding != "cdr" && channel.message_encoding != "ros1" {
       return value
     }
     for path in paths {
@@ -334,7 +336,7 @@ fn CdrProjection::message(
   }
   let result : Map[String, Json] = Map([])
   let fields = self.decoder.definitions[name]
-  if fields.is_empty() {
+  if fields.is_empty() && !self.decoder.ros1 {
     wire.item()
     if wire.unsigned(1) != 0UL {
       raise Invalid("invalid empty ROS2 message")
@@ -350,6 +352,7 @@ fn CdrProjection::message(
       if cdr_primitive(field.base) {
         self.decoder.value(wire, field, depth)
       } else {
+        wire.item()
         self.message(wire, field.base, item_path, depth + 1, emit)
       }
     }
@@ -378,7 +381,7 @@ fn CdrProjection::message(
           )
         }
         if width > 0 && (!wanted || count > self.selection.inline_array_items) {
-          if count > 0 {
+          if count > 0 && wire.aligned {
             wire.skip((width - (wire.position - 4) % width) % width)
           }
           let start = wire.position
@@ -403,6 +406,7 @@ fn CdrProjection::message(
               element_type: field.base,
               stride: width,
               little_endian: wire.little,
+              aligned: wire.aligned,
             }
             self.binary[binary.path] = binary
             binary.json()
@@ -430,6 +434,7 @@ fn CdrProjection::message(
               element_type: field.base,
               stride: 0,
               little_endian: wire.little,
+              aligned: wire.aligned,
             }
             self.binary[binary.path] = binary
             binary.json()
@@ -438,6 +443,11 @@ fn CdrProjection::message(
           }
         }
       }
+    }
+    if self.decoder.ros1 &&
+      (name == "moonmcap_ros1/Time" || name == "moonmcap_ros1/Duration") &&
+      field.name == "nanosec" {
+      validate_ros1_time(name, Map::from_array([("nanosec", value)]))
     }
     if wanted {
       result[field.name] = value
@@ -453,19 +463,33 @@ pub fn CdrDecoder::view(
   selection? : DecodeSelection = decode_selection(),
 ) -> PayloadView raise McapError {
   let paths = selection_paths(selection)
-  if bytes.length() < 4 ||
-    bytes.length() > self.options.message_bytes ||
-    bytes[0] != 0x00 ||
-    (bytes[1] != 0x00 && bytes[1] != 0x01) ||
-    bytes[2] != 0x00 ||
-    bytes[3] != 0x00 {
+  if bytes.length() > self.options.message_bytes {
+    raise Invalid("projected payload exceeds byte budget")
+  }
+  if !self.ros1 &&
+    (
+      bytes.length() < 4 ||
+      bytes[0] != 0x00 ||
+      (bytes[1] != 0x00 && bytes[1] != 0x01) ||
+      bytes[2] != 0x00 ||
+      bytes[3] != 0x00
+    ) {
     raise Invalid("invalid projected XCDR1 encapsulation or size")
   }
   let wire : CdrWire = {
     bytes,
-    little: bytes[1] == 0x01,
-    position: 4,
+    little: if self.ros1 {
+      true
+    } else {
+      bytes[1] == 0x01
+    },
+    position: if self.ros1 {
+      0
+    } else {
+      4
+    },
     budget: [selection.scan_items],
+    aligned: !self.ros1,
   }
   let projection : CdrProjection = {
     decoder: self,
@@ -474,7 +498,8 @@ pub fn CdrDecoder::view(
     binary: Map([]),
   }
   let value = projection.message(wire, self.name, [], 1, true)
-  if bytes.length() - wire.position > 3 ||
+  if (self.ros1 && bytes.length() != wire.position) ||
+    bytes.length() - wire.position > 3 ||
     bytes[wire.position:].iter().any(fn(b) { b != 0x00 }) {
     raise Invalid("trailing projected CDR bytes")
   }

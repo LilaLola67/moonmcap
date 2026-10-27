@@ -4,6 +4,7 @@ struct CdrWire {
   little : Bool
   mut position : Int
   budget : Array[Int]
+  aligned : Bool
 }
 
 ///|
@@ -18,7 +19,11 @@ fn CdrWire::take(self : CdrWire, count : Int) -> Bytes raise McapError {
 
 ///|
 fn CdrWire::unsigned(self : CdrWire, width : Int) -> UInt64 raise McapError {
-  let padding = (width - (self.position - 4) % width) % width
+  let padding = if self.aligned {
+    (width - (self.position - 4) % width) % width
+  } else {
+    0
+  }
   ignore(self.take(padding))
   let data = self.take(width)
   let mut result = 0UL
@@ -98,6 +103,16 @@ fn CdrDecoder::value(
     }
     "string" => {
       let length = wire.unsigned(4)
+      if self.ros1 {
+        if length > self.options.string_bytes.to_uint64() {
+          raise Invalid("ROS1 string exceeds byte budget")
+        }
+        return Json::string(
+          @utf8.decode(wire.take(length.to_int())[:]) catch {
+            _ => raise Invalid("invalid ROS1 string UTF-8")
+          },
+        )
+      }
       if length == 0UL || length - 1UL > self.options.string_bytes.to_uint64() {
         raise Invalid("CDR string length exceeds budget or lacks NUL")
       }
@@ -131,7 +146,7 @@ fn CdrDecoder::message(
   }
   let fields = self.definitions[name]
   let result : Map[String, Json] = Map([])
-  if fields.is_empty() {
+  if fields.is_empty() && !self.ros1 {
     wire.item()
     if wire.unsigned(1) != 0UL {
       raise Invalid("invalid ROS 2 empty message sentinel")
@@ -164,6 +179,9 @@ fn CdrDecoder::message(
     }
     result[field.name] = value
   }
+  if self.ros1 {
+    validate_ros1_time(name, result)
+  }
   Json::object(result)
 }
 
@@ -188,6 +206,7 @@ pub fn CdrDecoder::decode(
     little: bytes[1] == 0x01,
     position: 4,
     budget: [self.options.items],
+    aligned: true,
   }
   let result = self.message(wire, self.name, 1)
   let remaining = bytes.length() - wire.position

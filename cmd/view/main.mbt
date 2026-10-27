@@ -22,10 +22,17 @@ fn run(values : Array[String]) -> Unit raise @mcap.McapError {
   let exports = []
   let windows = []
   let mut protobuf = false
+  let mut ros1 = false
   let mut i = 3
   while i < values.length() {
     let flag = values[i]
-    if flag == "--protobuf" {
+    if flag == "--ros1" {
+      if ros1 {
+        raise @mcap.io_error("duplicate ros1 flag")
+      }
+      ros1 = true
+      i += 1
+    } else if flag == "--protobuf" {
       if protobuf {
         raise @mcap.io_error("duplicate protobuf flag")
       }
@@ -63,6 +70,9 @@ fn run(values : Array[String]) -> Unit raise @mcap.McapError {
     paths: fields,
     inline_array_items: inline,
   }
+  if ros1 && protobuf {
+    raise @mcap.io_error("choose exactly one payload encoding")
+  }
   if protobuf {
     if !exports.is_empty() || !windows.is_empty() {
       raise @mcap.io_error(
@@ -76,7 +86,11 @@ fn run(values : Array[String]) -> Unit raise @mcap.McapError {
     println(value.stringify())
     return
   }
-  let view = @mcap.cdr_decoder(values[2], schema).view(bytes, selection~)
+  let view = if ros1 {
+    @mcap.ros1_decoder(values[2], schema).view(bytes, selection~)
+  } else {
+    @mcap.cdr_decoder(values[2], schema).view(bytes, selection~)
+  }
   let output = []
   // Validate every export/window before producing any destination.
   let window_values = windows.map(fn(w) { view.read_elements(w.0, w.1, w.2) })
