@@ -21,10 +21,19 @@ fn SchemaDecoder::decode(
   self : SchemaDecoder,
   name : String,
   bytes : Bytes,
+  selection? : DecodeSelection,
 ) -> Json raise McapError {
   match self {
-    Proto(decoder) => decoder.decode(name, bytes)
-    Cdr(decoder) => decoder.decode(bytes)
+    Proto(decoder) =>
+      match selection {
+        None => decoder.decode(name, bytes)
+        Some(s) => decoder.decode_selected(name, bytes, s)
+      }
+    Cdr(decoder) =>
+      match selection {
+        None => decoder.decode(bytes)
+        Some(s) => decoder.view(bytes, selection=s).json()
+      }
   }
 }
 
@@ -44,15 +53,27 @@ pub fn standard_payload_decoder(
   cdr? : CdrOptions = cdr_options(),
   cache_bytes? : Int = 8 * 1024 * 1024,
   max_schemas? : Int = 64,
+  selection? : DecodeSelection,
 ) -> PayloadDecoder raise McapError {
   if cache_bytes < 1 || max_schemas < 1 {
     raise Invalid("invalid payload decoder cache budget")
   }
   let entries : Array[ProtoCache] = []
+  if selection is Some(s) {
+    ignore(selection_paths(s))
+  }
   let retained = [0]
   payload_decoder(fn(schema, channel, bytes) {
     if channel.message_encoding == "json" {
-      return parse_json_document(bytes, options.message_bytes, options.depth)
+      let value = parse_json_document(
+        bytes,
+        options.message_bytes,
+        options.depth,
+      )
+      return match selection {
+        None => value
+        Some(s) => selected_json(value, selection_paths(s), [])
+      }
     }
     if channel.message_encoding != "protobuf" &&
       channel.message_encoding != "cdr" {
@@ -78,7 +99,7 @@ pub fn standard_payload_decoder(
         entries[i].encoding == schema.encoding {
         let entry = entries.remove(i)
         entries.push(entry)
-        return entry.decoder.decode(schema.name, bytes)
+        return entry.decoder.decode(schema.name, bytes, selection?)
       }
     }
     let (decoder, fields) = if schema.encoding == "protobuf" {
@@ -104,7 +125,7 @@ pub fn standard_payload_decoder(
       charge,
     })
     retained[0] += charge
-    decoder.decode(schema.name, bytes)
+    decoder.decode(schema.name, bytes, selection?)
   })
 }
 

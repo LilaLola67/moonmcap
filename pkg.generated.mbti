@@ -79,6 +79,8 @@ pub fn decode_records(Bytes, limits? : Limits, base? : Int) -> Array[Record] rai
 
 pub fn decode_schema(Bytes, limits? : Limits) -> Schema raise McapError
 
+pub fn decode_selection() -> DecodeSelection
+
 pub fn decode_summary_offset(Bytes) -> SummaryOffset raise McapError
 
 pub fn decompress_payload(Bytes, String, UInt64, limits? : Limits) -> Bytes raise McapError
@@ -229,7 +231,7 @@ pub fn sort_storage((Int) -> WriteSink raise McapError, (Int) -> ReadSource rais
 
 pub fn source_visitor(schema? : (Schema) -> Unit raise McapError, channel? : (Channel) -> Unit raise McapError, message? : (Message, MessageLocation) -> Unit raise McapError, attachment? : (Attachment) -> Unit raise McapError, metadata? : (Metadata) -> Unit raise McapError) -> SourceVisitor
 
-pub fn standard_payload_decoder(options? : ProtobufOptions, cdr? : CdrOptions, cache_bytes? : Int, max_schemas? : Int) -> PayloadDecoder raise McapError
+pub fn standard_payload_decoder(options? : ProtobufOptions, cdr? : CdrOptions, cache_bytes? : Int, max_schemas? : Int, selection? : DecodeSelection) -> PayloadDecoder raise McapError
 
 pub fn start_disk_sidecar_audit(ReadSource, ReadSource, IndexVerification, limits? : Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64) -> DiskSidecarAudit raise McapError
 
@@ -316,6 +318,16 @@ pub(all) struct AttachmentIndex {
   media_type : String
 }
 
+pub(all) struct BinaryField {
+  path : String
+  offset : Int
+  byte_length : Int
+  elements : Int
+  element_type : String
+  stride : Int
+  little_endian : Bool
+} derive(Eq, @debug.Debug)
+
 pub(all) struct BlockRecoveryEvidence {
   start : UInt64
   end : UInt64
@@ -345,6 +357,7 @@ pub struct CdrDecoder {
   field_count : Int
 }
 pub fn CdrDecoder::decode(Self, Bytes) -> Json raise McapError
+pub fn CdrDecoder::view(Self, Bytes, selection? : DecodeSelection) -> PayloadView raise McapError
 
 type CdrField
 
@@ -357,6 +370,8 @@ pub(all) struct CdrOptions {
   depth : Int
   int64_as_string : Bool
 }
+
+type CdrProjection
 
 type CdrWire
 
@@ -492,6 +507,12 @@ pub(all) struct DatasetProgress {
   skipped_messages : Int
   pending_bytes : Int
   peak_pending_bytes : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) struct DecodeSelection {
+  paths : Array[String]
+  inline_array_items : Int
+  scan_items : Int
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Diagnostic {
@@ -802,6 +823,8 @@ pub struct JsonFilter {
 }
 pub fn JsonFilter::matches(Self, Bytes) -> Bool raise McapError
 pub fn JsonFilter::project(Self, Bytes) -> Json raise McapError
+pub fn JsonFilter::required_paths(Self) -> Array[String]
+pub fn JsonFilter::selected_paths(Self) -> Array[String]
 
 pub(all) enum JsonInvalidPolicy {
   JsonError
@@ -910,6 +933,20 @@ pub struct PayloadDecoder {
   decode_payload : (Schema?, Channel, Bytes) -> Json raise McapError
 }
 pub fn PayloadDecoder::decode_message(Self, Message, Log, max_bytes? : Int) -> Message raise McapError
+pub fn PayloadDecoder::require_filter_fields(Self, JsonFilter) -> Self raise McapError
+
+pub struct PayloadView {
+  source : Bytes
+  value : Json
+  binary : Map[String, BinaryField]
+  visited : Int
+}
+pub fn PayloadView::binary_fields(Self) -> Array[BinaryField]
+pub fn PayloadView::info(Self) -> Json
+pub fn PayloadView::json(Self) -> Json
+pub fn PayloadView::read_binary(Self, String, Int, Int, max_bytes? : Int) -> Bytes raise McapError
+pub fn PayloadView::read_elements(Self, String, Int, Int, max_elements? : Int) -> Json raise McapError
+pub fn PayloadView::write_binary(Self, String, WriteSink, block_bytes? : Int, cancelled? : () -> Bool) -> UInt64 raise McapError
 
 type ProtoCache
 
@@ -932,6 +969,7 @@ pub struct ProtobufDecoder {
   field_count : Array[Int]
 }
 pub fn ProtobufDecoder::decode(Self, String, Bytes) -> Json raise McapError
+pub fn ProtobufDecoder::decode_selected(Self, String, Bytes, DecodeSelection) -> Json raise McapError
 
 pub(all) struct ProtobufOptions {
   descriptor_bytes : Int

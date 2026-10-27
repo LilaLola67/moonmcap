@@ -40,7 +40,7 @@ pub async fn open_sidecar(AsyncSource, Bytes, AsyncIndexVerification, limits? : 
 
 pub async fn open_worker_pool(String, options? : WorkerOptions) -> WorkerPool
 
-pub async fn plan_query(AsyncSource, index? : AsyncSource, fields? : AsyncSource, pool? : WorkerPool, filter? : @moonmcap.JsonFilter, decode? : Bool, cache_bytes? : Int, fallback_bytes? : Int, max_decoded_bytes? : Int) -> AsyncQueryPlan
+pub async fn plan_query(AsyncSource, index? : AsyncSource, fields? : AsyncSource, pool? : WorkerPool, filter? : @moonmcap.JsonFilter, decode? : Bool, cache_bytes? : Int, fallback_bytes? : Int, max_decoded_bytes? : Int, selection? : @moonmcap.DecodeSelection) -> AsyncQueryPlan
 
 pub async fn playback(@moonmcap.Replay, () -> UInt64, async (UInt64) -> Unit, async (@moonmcap.Message) -> Unit, cancelled? : () -> Bool) -> Unit
 
@@ -156,6 +156,8 @@ pub struct AsyncQueryPlan {
   decisions : Map[UInt64, Bool]
   statistics : () -> Json
   paged_fields : Array[AsyncPagedFields]
+  projected_decode : Bool
+  payload_workers : Bool
 }
 pub fn AsyncQueryPlan::info(Self) -> Json
 pub fn AsyncQueryPlan::query_source(Self) -> AsyncQuerySource

@@ -10,6 +10,8 @@ pub struct AsyncQueryPlan {
   decisions : Map[UInt64, Bool]
   statistics : () -> Json
   paged_fields : Array[AsyncPagedFields]
+  projected_decode : Bool
+  payload_workers : Bool
 }
 
 ///|
@@ -25,6 +27,7 @@ pub async fn plan_query(
   cache_bytes? : Int = 8 * 1024 * 1024,
   fallback_bytes? : Int = 64 * 1024 * 1024,
   max_decoded_bytes? : Int = 1024 * 1024,
+  selection? : @mcap.DecodeSelection,
 ) -> AsyncQueryPlan {
   if fields is Some(_) && filter is None {
     raise @mcap.io_error("field pruning requires an exact filter")
@@ -118,14 +121,39 @@ pub async fn plan_query(
         }
       }
   }
-  let provider = if decode || filter is Some(_) {
-    match pool {
-      None =>
-        provider.decode_payload(
-          @mcap.standard_payload_decoder(),
-          max_bytes=max_decoded_bytes,
-        )
-      Some(pool) => provider.decode_parallel(pool, max_bytes=max_decoded_bytes)
+  let selection = selection.map(fn(s) {
+    if s.paths.is_empty() {
+      s
+    } else {
+      let paths = s.paths.copy()
+      if filter is Some(f) {
+        for p in f.required_paths() {
+          if !paths.contains(p) {
+            paths.push(p)
+          }
+        }
+      }
+      { ..s, paths, }
+    }
+  })
+  let provider = if decode || filter is Some(_) || selection is Some(_) {
+    if selection is Some(s) {
+      let decoder = @mcap.standard_payload_decoder(selection=s)
+      let decoder = match filter {
+        None => decoder
+        Some(f) => decoder.require_filter_fields(f)
+      }
+      provider.decode_payload(decoder, max_bytes=max_decoded_bytes)
+    } else {
+      match pool {
+        None =>
+          provider.decode_payload(
+            @mcap.standard_payload_decoder(),
+            max_bytes=max_decoded_bytes,
+          )
+        Some(pool) =>
+          provider.decode_parallel(pool, max_bytes=max_decoded_bytes)
+      }
     }
   } else {
     provider
@@ -145,6 +173,8 @@ pub async fn plan_query(
     decisions,
     statistics,
     paged_fields,
+    projected_decode: selection is Some(_),
+    payload_workers: pool is Some(_) && selection is None,
   }
 }
 
@@ -157,6 +187,8 @@ pub fn AsyncQueryPlan::query_source(self : AsyncQueryPlan) -> AsyncQuerySource {
 pub fn AsyncQueryPlan::info(self : AsyncQueryPlan) -> Json {
   {
     "backend": self.backend,
+    "projected_decode": self.projected_decode,
+    "payload_workers": self.payload_workers,
     "content_verified": self.verified,
     "opening_source_bytes": self.opening_bytes.to_string(),
     "query_source_bytes": (self.source.metrics().bytes_read - self.opening_bytes).to_string(),

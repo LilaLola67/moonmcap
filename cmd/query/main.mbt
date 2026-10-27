@@ -35,13 +35,22 @@ async fn main {
     let clean = []
     let mut cache_dir = ""
     let mut decode = false
+    let mut projected = false
     let fields = []
     let mut workers = 0
     let mut entry = worker_path()
     let seen : Map[String, Bool] = Map([])
     let mut i = 0
     while i < values.length() {
-      if ["--field-index", "--workers", "--worker-entry"].contains(values[i]) {
+      if values[i] == "--project-decode" {
+        if projected {
+          raise @mcap.io_error("duplicate projection flag")
+        }
+        projected = true
+        i += 1
+      } else if ["--field-index", "--workers", "--worker-entry"].contains(
+          values[i],
+        ) {
         let flag = values[i]
         if i + 1 >= values.length() ||
           (flag != "--field-index" && seen.contains(flag)) {
@@ -78,6 +87,14 @@ async fn main {
       }
     }
     let parsed = @mcap.parse_command(["dataset-query"] + clean)
+    let selection = if projected {
+      Some({
+        ..@mcap.decode_selection(),
+        paths: parsed.content.map(fn(f) { f.selected_paths() }).unwrap_or([]),
+      })
+    } else {
+      None
+    }
     if parsed.full ||
       parsed.fast_index ||
       (
@@ -134,6 +151,7 @@ async fn main {
         pool?,
         filter?=parsed.content,
         decode~,
+        selection?,
         cache_bytes=parsed.cache_bytes,
         fallback_bytes=parsed.max_file_bytes,
       )

@@ -125,6 +125,7 @@ fn ProtobufDecoder::message(
   bytes : Bytes,
   budget : Array[Int],
   depth : Int,
+  keep_fields? : Array[String],
 ) -> Json raise McapError {
   if depth > self.options.depth {
     raise Invalid("protobuf message depth budget exceeded")
@@ -136,16 +137,22 @@ fn ProtobufDecoder::message(
   let wire = proto_wire(bytes, budget)
   let values : Map[Int, Array[ProtoValue]] = Map([])
   let oneofs : Map[Int, Int] = Map([])
+  let present : Map[Int, Bool] = Map([])
   while wire.next() is Some(item) {
     guard model.fields.get(item.number) is Some(field) else {
       wire.skip(item, self.options.depth - depth)
       continue
     }
+    present[field.number] = true
     if field.oneof is Some(id) {
       if oneofs.get(id) is Some(old) && old != field.number {
         values.remove(old)
       }
       oneofs[id] = field.number
+    }
+    if keep_fields is Some(names) && !names.contains(field.json_name) {
+      wire.skip(item, self.options.depth - depth)
+      continue
     }
     if field.label == 3 &&
       ![9, 11, 12].contains(field.kind) &&
@@ -163,6 +170,12 @@ fn ProtobufDecoder::message(
   }
   let result : Map[String, Json] = Map([])
   for field in model.fields.values() {
+    if keep_fields is Some(names) && !names.contains(field.json_name) {
+      if field.label == 2 && !present.contains(field.number) {
+        raise Invalid("required protobuf field missing: \{field.name}")
+      }
+      continue
+    }
     guard values.get(field.number) is Some(items) else {
       if field.label == 2 {
         raise Invalid("required protobuf field missing: \{field.name}")
@@ -274,4 +287,36 @@ pub fn ProtobufDecoder::decode(
   }
   let name = if name.has_prefix(".") { name[1:].to_string() } else { name }
   self.message(name, payload, [self.options.items], 1)
+}
+
+///|
+/// Skips materializing unrequested top-level fields. Selected nested messages
+/// retain normal merge/map/oneof semantics before the final nested projection.
+pub fn ProtobufDecoder::decode_selected(
+  self : ProtobufDecoder,
+  name : String,
+  payload : Bytes,
+  selection : DecodeSelection,
+) -> Json raise McapError {
+  let paths = selection_paths(selection)
+  if payload.length() > self.options.message_bytes {
+    raise Invalid("protobuf message byte budget exceeded")
+  }
+  if self.options.protojson ||
+    paths.is_empty() ||
+    paths.any(fn(p) { p.is_empty() }) {
+    return selected_json(self.decode(name, payload), paths, [])
+  }
+  let names = []
+  for p in paths {
+    if !names.contains(p[0]) {
+      names.push(p[0])
+    }
+  }
+  let name = if name.has_prefix(".") { name[1:].to_string() } else { name }
+  selected_json(
+    self.message(name, payload, [selection.scan_items], 1, keep_fields=names),
+    paths,
+    [],
+  )
 }
