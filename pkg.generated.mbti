@@ -21,6 +21,8 @@ pub fn build_disk_sidecar(ReadSource, SortStorage, WriteSink, (ReadSource) -> St
 
 pub fn build_field_index(ReadSource, Array[String], (ReadSource) -> String raise McapError, String, decoder? : PayloadDecoder, limits? : Limits, max_zones? : Int, state_bytes? : Int, cancelled? : () -> Bool) -> FieldIndex raise McapError
 
+pub fn build_paged_field_index(ReadSource, WriteSink, Array[String], (ReadSource) -> String raise McapError, String, page_bytes? : Int, page_zones? : Int, bloom? : Bool, limits? : Limits, cancelled? : () -> Bool) -> Json raise McapError
+
 pub fn build_query_index(Log) -> QueryIndex raise McapError
 
 pub fn build_sidecar(ReadSource, (ReadSource) -> String raise McapError, identity? : String, limits? : Limits, index_bytes? : Int, declaration_bytes? : Int, cancelled? : () -> Bool) -> Bytes raise McapError
@@ -170,6 +172,8 @@ pub fn open_dataset(Array[QuerySource], limits? : Limits, declaration_bytes? : I
 pub fn open_disk_sidecar(ReadSource, ReadSource, IndexVerification, limits? : Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64) -> DiskSidecarReader raise McapError
 
 pub fn open_field_index(ReadSource, Bytes, (ReadSource) -> String raise McapError, String, max_bytes? : Int, max_zones? : Int) -> FieldIndex raise McapError
+
+pub fn open_paged_field_header(UInt64, UInt64, Bytes, String, String) -> PagedFieldHeader raise McapError
 
 pub fn open_reader(ReadSource, limits? : Limits, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int) -> RangeReader raise McapError
 
@@ -642,6 +646,22 @@ pub fn FieldIndex::info(Self) -> Json
 pub fn FieldIndex::location_filter(Self, JsonFilter) -> ((UInt64, Int) -> Bool raise McapError) raise McapError
 pub fn FieldIndex::to_bytes(Self, max_bytes? : Int) -> Bytes raise McapError
 
+pub struct FieldPage {
+  index : FieldIndex
+  blooms : Map[UInt64, Array[Bytes]]
+  first : UInt64
+  end : UInt64
+}
+pub fn FieldPage::end_offset(Self) -> UInt64
+pub fn FieldPage::first_offset(Self) -> UInt64
+pub fn FieldPage::may_match(Self, UInt64, Int, JsonFilter) -> Bool raise McapError
+
+pub(all) struct FieldPageLayout {
+  header_bytes : Int
+  page_bytes : Int
+  pages : Int
+} derive(Eq, @debug.Debug)
+
 pub struct FieldQueryPlan {
   reader : RangeReader
   filter : JsonFilter
@@ -878,6 +898,13 @@ pub(all) struct MetadataIndex {
   length : UInt64
   name : String
 }
+
+pub struct PagedFieldHeader {
+  template : FieldIndex
+  layout : FieldPageLayout
+}
+pub fn PagedFieldHeader::decode_page(Self, Bytes) -> FieldPage raise McapError
+pub fn PagedFieldHeader::layout(Self) -> FieldPageLayout
 
 pub struct PayloadDecoder {
   decode_payload : (Schema?, Channel, Bytes) -> Json raise McapError

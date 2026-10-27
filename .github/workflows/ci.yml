@@ -132,6 +132,12 @@ jobs:
       - name: Verify conservative field zone pruning and exact predicates
         if: matrix.target == 'js'
         run: python tools/field_index_workflows.py
+      - name: Verify unified async query combinations and remote caches
+        if: matrix.target == 'js'
+        run: python tools/pipeline_workflows.py
+      - name: Verify page bounded field indexes and large region counts
+        if: matrix.target == 'js'
+        run: python tools/paged_field_workflows.py
       - name: Verify real codec workers order cancellation budgets and faults
         if: matrix.target == 'js'
         run: python tools/worker_workflows.py

@@ -14,3 +14,18 @@ node _build/js/debug/build/cmd/query/query.js recording.mcap --index recording.m
 stderr 的 `plans` 区分 `opening_source_bytes` 和 `query_source_bytes`。打开时可能扫描完整源文件计算 SHA256，并审计完整 MIDX2；冷缓存不能宣称只传输命中区域。`tracked_regions/skipped_regions` 是最多 10000 个不同物理区域的观测值，超过时截断统计，查询本身继续正确执行；Chunk 的缓存命中也可能省略该观测。工作线程内存与队列限制见独立文档，工作线程并非所有负载都更快。
 
 复现：`python tools/pipeline_workflows.py` 使用官方 Python MCAP writer 生成 768 条合成消息，对照独立排序/过滤结果执行 10 组查询，检查三种压缩、两个索引后端、两种工作线程设置、升降序全局分页、三个远程缓存的热启动及损坏字段索引的原子失败。
+
+## MFLD2 分页字段索引
+
+```powershell
+node _build/js/debug/build/cmd/field/field.js build-paged recording.mcap recording.mfld2 --field /speed --field /label --page-bytes 65536 --page-zones 32
+node _build/js/debug/build/cmd/query/query.js recording.mcap --field-index recording.mfld2 --where '{"path":"/speed","op":">","value":10}' --select /speed
+```
+
+统一入口自动识别 MFLD1/MFLD2。MFLD2 包含绑定源 SHA256/解码器身份的有界头，以及固定长度、CRC 保护、物理顺序排列的页。构建时逐区域汇总，只保留当前区域和一页；超出页预算时明确失败，可降低 `--page-zones` 或增大 `--page-bytes`，不会偷偷扩大内存。输出通过临时文件校验完成后发布。
+
+`asyncio.open_paged_fields` 打开时完整审计页 CRC、区域边界和顺序，保留至多指定页数（默认 4，允许 0..64）；查询二分查找页，页缓存采用 LRU。打开审计读取全索引，不是零扫描启动。字段页还须受调用者 HTTP 缓存预算约束。该格式使用定长页换取直接定位，稀疏页有空间开销。
+
+每个字符串字段可选 256 位、4 哈希 Bloom（`--no-bloom` 关闭）。只用于字符串相等及保守 AND/OR 推断，否定等无法安全判断的条件保留；未知解码区域、缺失摘要、不同跨度也保留。精确过滤始终执行。CRC 和 SHA256 防误用与意外损坏，摘要并非不可信第三方提供的证明。
+
+复现 `python tools/paged_field_workflows.py`：独立 writer 构建 12032 区域的合成大索引，超过旧格式默认一万区域限制；验证三个压缩后端、六组分页查询、最多四页缓存，以及损坏页原子失败。Bloom 的区间内缺失值与已存在值另有单元测试。

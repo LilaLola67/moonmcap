@@ -30,6 +30,8 @@ pub async fn open_file(String) -> AsyncSource
 
 pub async fn open_http(String, timeout_ms? : Int, retries? : Int, max_range_bytes? : Int) -> AsyncSource
 
+pub async fn open_paged_fields(AsyncSource, UInt64, String, String, cache_pages? : Int) -> AsyncPagedFields
+
 pub async fn open_parallel_reader(AsyncSource, WorkerPool, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int, limits? : @moonmcap.Limits, select_region? : async (UInt64, Int) -> Bool) -> ParallelReader
 
 pub async fn open_reader(AsyncSource, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int, limits? : @moonmcap.Limits) -> AsyncReader
@@ -131,6 +133,18 @@ pub struct AsyncMessageStream {
   pending : () -> Int
 }
 
+pub struct AsyncPagedFields {
+  index : AsyncSource
+  header : @moonmcap.PagedFieldHeader
+  pages : Array[(Int, @moonmcap.FieldPage)]
+  cache_limit : Int
+  mut reads : Int
+  mut hits : Int
+  mut peak_pages : Int
+}
+pub fn AsyncPagedFields::info(Self) -> Json
+pub async fn AsyncPagedFields::may_match(Self, UInt64, Int, @moonmcap.JsonFilter) -> Bool
+
 pub struct AsyncQueryPlan {
   provider : AsyncQuerySource
   source : AsyncSource
@@ -141,6 +155,7 @@ pub struct AsyncQueryPlan {
   opening_bytes : UInt64
   decisions : Map[UInt64, Bool]
   statistics : () -> Json
+  paged_fields : Array[AsyncPagedFields]
 }
 pub fn AsyncQueryPlan::info(Self) -> Json
 pub fn AsyncQueryPlan::query_source(Self) -> AsyncQuerySource
