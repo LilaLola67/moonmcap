@@ -50,6 +50,8 @@ pub fn run_codec_worker() -> Unit raise @moonmcap.McapError
 
 pub async fn source_sha256(AsyncSource) -> String
 
+pub fn temporal_join(AsyncMessageStream, AsyncMessageStream, options? : @moonmcap.JoinOptions) -> AsyncTemporalJoin raise @moonmcap.McapError
+
 pub fn worker_options() -> WorkerOptions
 
 // Errors
@@ -225,6 +227,17 @@ pub fn AsyncSource::cancel(Self) -> Unit
 pub fn AsyncSource::metrics(Self) -> AsyncReadMetrics
 pub async fn AsyncSource::read_exact(Self, UInt64, Int) -> Bytes
 pub fn AsyncSource::size(Self) -> UInt64
+
+pub struct AsyncTemporalJoin {
+  cursor : @moonmcap.TemporalJoinCursor
+  left : AsyncMessageStream
+  right : AsyncMessageStream
+  mut closed : Bool
+  mut busy : Bool
+}
+pub fn AsyncTemporalJoin::cancel(Self) -> Unit
+pub fn AsyncTemporalJoin::info(Self) -> Json
+pub async fn AsyncTemporalJoin::next(Self) -> @moonmcap.TemporalMatch?
 
 pub(all) struct AsyncWriteProgress {
   state : AsyncWriterState

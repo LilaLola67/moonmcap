@@ -144,6 +144,9 @@ jobs:
       - name: Verify ROS1 nested payloads and query adapters
         if: matrix.target == 'js'
         run: python tools/ros1_workflows.py
+      - name: Verify bounded temporal joins against brute force matching
+        if: matrix.target == 'js'
+        run: python tools/temporal_join_workflows.py
       - name: Verify real codec workers order cancellation budgets and faults
         if: matrix.target == 'js'
         run: python tools/worker_workflows.py

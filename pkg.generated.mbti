@@ -145,6 +145,8 @@ pub fn inspect_json(Log) -> Json raise McapError
 
 pub fn io_error(String) -> McapError
 
+pub fn join_options() -> JoinOptions
+
 pub fn json_filter(String, select? : Array[String], invalid? : JsonInvalidPolicy, max_bytes? : Int, max_depth? : Int) -> JsonFilter raise McapError
 
 pub fn json_query_record(DatasetMessage, Array[Channel], JsonFilter) -> Json raise McapError
@@ -244,6 +246,10 @@ pub fn stream_options() -> StreamOptions
 pub fn stream_transform(ReadSource, SortStorage, WriteSink, TransformOptions, external? : ExternalOptions, content? : JsonFilter, cancelled? : () -> Bool) -> TransformReport raise McapError
 
 pub fn summarize(Log) -> LogStats raise McapError
+
+pub fn temporal_join(MessageStream, MessageStream, options? : JoinOptions) -> TemporalJoinStream raise McapError
+
+pub fn temporal_join_cursor(options? : JoinOptions) -> TemporalJoinCursor raise McapError
 
 pub fn transform_log(Log, TransformOptions) -> Log raise McapError
 
@@ -814,6 +820,26 @@ pub(all) enum IndexVerification {
   TrustIdentity(String)
 }
 
+pub(all) enum JoinMode {
+  JoinAsOf
+  JoinNearest
+} derive(Eq, @debug.Debug)
+
+pub(all) struct JoinOptions {
+  mode : JoinMode
+  tolerance : UInt64
+  missing : MissingMatch
+  buffer_bytes : Int
+  buffer_messages : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) enum JoinPoll {
+  JoinReadLeft
+  JoinReadRight
+  JoinRow(TemporalMatch)
+  JoinDone
+}
+
 type JsonCondition
 
 type JsonDocumentParser
@@ -925,6 +951,11 @@ pub(all) struct MetadataIndex {
   length : UInt64
   name : String
 }
+
+pub(all) enum MissingMatch {
+  JoinKeep
+  JoinDrop
+} derive(Eq, @debug.Debug)
 
 pub struct PagedFieldHeader {
   template : FieldIndex
@@ -1349,6 +1380,46 @@ pub(all) struct SummaryOffset {
   start : UInt64
   length : UInt64
 }
+
+pub struct TemporalJoinCursor {
+  options : JoinOptions
+  mut left : Message?
+  mut before : Message?
+  mut after : Message?
+  mut left_done : Bool
+  mut right_done : Bool
+  mut waiting : Int
+  mut last_left : UInt64?
+  mut last_right : UInt64?
+  mut state : FileCursorState
+  mut left_read : UInt64
+  mut right_read : UInt64
+  mut matched : UInt64
+  mut unmatched : UInt64
+  mut peak_bytes : Int
+}
+pub fn TemporalJoinCursor::cancel(Self) -> Unit
+pub fn TemporalJoinCursor::feed_left(Self, Message?) -> Unit raise McapError
+pub fn TemporalJoinCursor::feed_right(Self, Message?) -> Unit raise McapError
+pub fn TemporalJoinCursor::info(Self) -> Json
+pub fn TemporalJoinCursor::poll(Self) -> JoinPoll raise McapError
+
+pub struct TemporalJoinStream {
+  cursor : TemporalJoinCursor
+  left : MessageStream
+  right : MessageStream
+  mut closed : Bool
+}
+pub fn TemporalJoinStream::cancel(Self) -> Unit
+pub fn TemporalJoinStream::info(Self) -> Json
+pub fn TemporalJoinStream::next(Self) -> TemporalMatch? raise McapError
+
+pub(all) struct TemporalMatch {
+  left : Message
+  right : Message?
+  distance : UInt64?
+  right_is_earlier : Bool
+} derive(Eq, @debug.Debug)
 
 type TemporaryWorkspace
 

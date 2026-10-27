@@ -1,4 +1,43 @@
 ///|
+async test "async temporal join cancellation closes both input streams" {
+  let stopped = [0]
+  let started = [false]
+  let left = @asyncio.async_message_stream(
+    async fn() {
+      started[0] = true
+      @async.sleep(1000)
+      Some(@mcap.Message::{
+        channel_id: 1,
+        sequence: 0U,
+        log_time: 1UL,
+        publish_time: 1UL,
+        data: b"x",
+      })
+    },
+    fn() { stopped[0] += 1 },
+  )
+  let right = @asyncio.async_message_stream(async fn() { None }, fn() {
+    stopped[0] += 1
+  })
+  let join = @asyncio.temporal_join(left, right)
+  @async.with_task_group(async fn(group) {
+    let task = group.spawn(async fn() { join.next() }, allow_failure=true)
+    while !started[0] {
+      @async.pause()
+    }
+    try join.next() catch {
+      _ => ()
+    } noraise {
+      _ => fail("concurrent join accepted")
+    }
+    task.cancel()
+    ignore(task.wait() catch { _ => None })
+  })
+  assert_eq(stopped[0], 2)
+  assert_eq(join.next(), None)
+}
+
+///|
 async test "planned queries prune regions before exact filtering and pagination" {
   let builder = @mcap.new_builder()
   let channel = builder.register_channel("/n", "json")
