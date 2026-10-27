@@ -1,0 +1,431 @@
+{
+  "version": "0.15.30",
+  "implemented_versions": [
+    "0.15.25",
+    "0.15.26",
+    "0.15.27",
+    "0.15.28",
+    "0.15.29",
+    "0.15.30"
+  ],
+  "environment": {
+    "platform": "Windows",
+    "node": "24.15.0",
+    "moonc": "0.10.14+7d59c7ec9"
+  },
+  "tests": {
+    "wasm": 171,
+    "js": 192,
+    "failed": 0
+  },
+  "effective_handwritten_root_core_lines": 17820,
+  "count_excludes": [
+    "tests",
+    "generated interfaces",
+    "vendored codecs",
+    "subpackages and commands",
+    "Python tools"
+  ],
+  "regression_workflows": [
+    {
+      "script": "tools/interop.py",
+      "seconds": 10.976,
+      "passed": true
+    },
+    {
+      "script": "tools/conformance.py",
+      "seconds": 11.133,
+      "passed": true
+    },
+    {
+      "script": "examples/run.py",
+      "seconds": 1.429,
+      "passed": true
+    },
+    {
+      "script": "tools/range_benchmark.py",
+      "seconds": 0.615,
+      "passed": true
+    },
+    {
+      "script": "tools/stream_workflows.py",
+      "seconds": 1.511,
+      "passed": true
+    },
+    {
+      "script": "tools/cli_workflows.py",
+      "seconds": 3.779,
+      "passed": true
+    },
+    {
+      "script": "tools/batch_workflows.py",
+      "seconds": 1.375,
+      "passed": true
+    },
+    {
+      "script": "tools/repair_workflows.py",
+      "seconds": 4.515,
+      "passed": true
+    },
+    {
+      "script": "tools/async_workflows.py",
+      "seconds": 1.584,
+      "passed": true
+    },
+    {
+      "script": "tools/http_workflows.py",
+      "seconds": 3.164,
+      "passed": true
+    },
+    {
+      "script": "tools/external_workflows.py",
+      "seconds": 3.543,
+      "passed": true
+    },
+    {
+      "script": "tools/block_workflows.py",
+      "seconds": 1.591,
+      "passed": true
+    },
+    {
+      "script": "tools/transform_stream_workflows.py",
+      "seconds": 4.647,
+      "passed": true
+    },
+    {
+      "script": "tools/dataset_workflows.py",
+      "seconds": 2.534,
+      "passed": true
+    },
+    {
+      "script": "tools/sidecar_workflows.py",
+      "seconds": 13.85,
+      "passed": true
+    },
+    {
+      "script": "tools/json_workflows.py",
+      "seconds": 9.448,
+      "passed": true
+    },
+    {
+      "script": "tools/checkpoint_workflows.py",
+      "seconds": 27.12,
+      "passed": true
+    },
+    {
+      "script": "tools/input_checkpoint_workflows.py",
+      "seconds": 25.664,
+      "passed": true
+    },
+    {
+      "script": "tools/io_workflows.py",
+      "seconds": 4.144,
+      "passed": true
+    },
+    {
+      "script": "tools/aggregate_workflows.py",
+      "seconds": 1.612,
+      "passed": true
+    },
+    {
+      "script": "tools/diff_workflows.py",
+      "seconds": 2.026,
+      "passed": true
+    },
+    {
+      "script": "tools/replay_workflows.py",
+      "seconds": 1.944,
+      "passed": true
+    },
+    {
+      "script": "tools/async_dataset_workflows.py",
+      "seconds": 2.266,
+      "passed": true
+    },
+    {
+      "script": "tools/source_diagnostic_workflows.py",
+      "seconds": 5.9,
+      "passed": true
+    },
+    {
+      "script": "tools/large_source_workflows.py",
+      "seconds": 3.213,
+      "passed": true
+    },
+    {
+      "script": "tools/fuzz_workflows.py",
+      "seconds": 13.064,
+      "passed": true
+    },
+    {
+      "script": "tools/memory_benchmark.py",
+      "seconds": 22.827,
+      "passed": true
+    },
+    {
+      "script": "tools/corpus_workflows.py",
+      "seconds": 35.261,
+      "passed": true
+    },
+    {
+      "script": "tools/disk_index_workflows.py",
+      "seconds": 7.414,
+      "passed": true
+    },
+    {
+      "script": "tools/disk_index_scale.py",
+      "seconds": 2.021,
+      "passed": true
+    },
+    {
+      "script": "tools/aggregate_external_workflows.py",
+      "seconds": 12.99,
+      "passed": true
+    },
+    {
+      "script": "tools/chunk_checkpoint_workflows.py",
+      "seconds": 2.691,
+      "passed": true
+    },
+    {
+      "script": "tools/protobuf_workflows.py",
+      "seconds": 2.169,
+      "passed": true
+    },
+    {
+      "script": "tools/cached_http_workflows.py",
+      "seconds": 5.667,
+      "passed": true
+    },
+    {
+      "script": "tools/protojson_workflows.py",
+      "seconds": 9.734,
+      "passed": true
+    },
+    {
+      "script": "tools/cdr_workflows.py",
+      "seconds": 2.142,
+      "passed": true
+    },
+    {
+      "script": "tools/async_paged_workflows.py",
+      "seconds": 2.714,
+      "passed": true
+    },
+    {
+      "script": "tools/field_index_workflows.py",
+      "seconds": 6.845,
+      "passed": true
+    },
+    {
+      "script": "tools/chunk_pipeline_workflows.py",
+      "seconds": 7.702,
+      "passed": true
+    },
+    {
+      "script": "tools/worker_workflows.py",
+      "seconds": 17.962,
+      "passed": true
+    },
+    {
+      "script": "tools/worker_benchmark.py",
+      "seconds": 10.82,
+      "passed": true
+    },
+    {
+      "script": "tools/pipeline_workflows.py",
+      "seconds": 19.253,
+      "passed": true
+    },
+    {
+      "script": "tools/paged_field_workflows.py",
+      "seconds": 11.157,
+      "passed": true
+    },
+    {
+      "script": "tools/payload_view_workflows.py",
+      "seconds": 3.892,
+      "passed": true
+    },
+    {
+      "script": "tools/ros1_workflows.py",
+      "seconds": 2.293,
+      "passed": true
+    },
+    {
+      "script": "tools/temporal_join_workflows.py",
+      "seconds": 60.262,
+      "passed": true
+    },
+    {
+      "script": "tools/recording_session_workflows.py",
+      "seconds": 16.609,
+      "passed": true
+    }
+  ],
+  "unified_pipeline": {
+    "result": "passed",
+    "queries": 11,
+    "independent_messages": 776,
+    "codecs": 3,
+    "backends": [
+      "native",
+      "MIDX2"
+    ],
+    "workers": [
+      0,
+      2
+    ],
+    "remote_warm_cache": true,
+    "high_ratio_MIDX2_worker_expansion": true,
+    "corrupt_field_atomic_failure": true,
+    "data_origin": "synthetic independent official Python MCAP writer"
+  },
+  "paged_fields": {
+    "result": "passed",
+    "cases": [
+      {
+        "codec": "NONE",
+        "zones": 12032,
+        "pages": 1504,
+        "bytes": 12321005,
+        "peak_cached_pages": 4
+      },
+      {
+        "codec": "LZ4",
+        "zones": 256,
+        "pages": 32,
+        "bytes": 262379,
+        "peak_cached_pages": 4
+      },
+      {
+        "codec": "ZSTD",
+        "zones": 256,
+        "pages": 32,
+        "bytes": 262379,
+        "peak_cached_pages": 4
+      }
+    ],
+    "queries": 6,
+    "large_index_exceeds_MFLD1_default_zone_budget": true,
+    "source_data": "synthetic official MCAP writer",
+    "corrupt_pages_atomic_failure": 3,
+    "cache_pages_limit": 4
+  },
+  "payload_views": {
+    "result": "passed",
+    "cdr_endians": 2,
+    "binary_bytes": 1048576,
+    "points": 32768,
+    "codecs": 3,
+    "protobuf_skipped_bytes": 524288,
+    "protobuf_skipped_repeated": 200000,
+    "binary_export_sha256": "fbbab289f7f94b25736c58be46a994c441fd02552cc6022352e3d86d2fab7c83",
+    "data_origin": "synthetic independent rosbags and protobuf serializers"
+  },
+  "ros1_synthetic": {
+    "result": "passed",
+    "synthetic_messages": 36,
+    "codecs": 3,
+    "aliases": "byte=int8,char=uint8",
+    "public_messages": 0,
+    "public_topics": [],
+    "public_source_sha256": null,
+    "public_origin": "Foxglove demo.bag, explicitly converted preserving topic/time/payload; not redistributed"
+  },
+  "ros1_public": {
+    "result": "passed",
+    "synthetic_messages": 36,
+    "codecs": 3,
+    "aliases": "byte=int8,char=uint8",
+    "public_messages": 1606,
+    "public_topics": [
+      "/diagnostics",
+      "/image_color/compressed",
+      "/radar/points",
+      "/radar/range",
+      "/radar/tracks",
+      "/tf",
+      "/velodyne_points"
+    ],
+    "public_source_sha256": "cc941e50af6a0411071abcebafca764e4002898801a01b5c85ea04d4fef161cd",
+    "public_origin": "Foxglove demo.bag, explicitly converted preserving topic/time/payload; not redistributed"
+  },
+  "ros2_public": {
+    "independently_compared_messages": 4719,
+    "native_recording": true,
+    "source_sha256": "e11ebd97b793b101b91237dcb4ceac32540aa2adb515df97650ad22116f6ac84",
+    "data_redistributed": false
+  },
+  "temporal_join": {
+    "result": "passed",
+    "queries": 12,
+    "codecs": 3,
+    "source_files_per_query": 2,
+    "physical_order": "intentionally unordered and overlapping timestamps",
+    "oracle": "brute force nearest/asof, stable (time, source, physical order) ties",
+    "output_pagination": "after join and missing policy",
+    "bounded_failure_atomic": 3,
+    "data_origin": "synthetic independent Python MCAP writer"
+  },
+  "recording_sessions": {
+    "result": "passed",
+    "cases": [
+      {
+        "compression": "none",
+        "committed_before_kill": 34,
+        "tail_bytes_preserved": 103,
+        "messages_after_resume": 720,
+        "segments": 43,
+        "incomplete_tail_quarantined": true,
+        "sealed_orphan_adopted": true,
+        "idempotent_resume": true,
+        "live_lock_rejected": true
+      },
+      {
+        "compression": "lz4",
+        "committed_before_kill": 34,
+        "tail_bytes_preserved": 103,
+        "messages_after_resume": 720,
+        "segments": 43,
+        "incomplete_tail_quarantined": true,
+        "sealed_orphan_adopted": true,
+        "idempotent_resume": true,
+        "live_lock_rejected": true
+      },
+      {
+        "compression": "zstd",
+        "committed_before_kill": 34,
+        "tail_bytes_preserved": 103,
+        "messages_after_resume": 720,
+        "segments": 43,
+        "incomplete_tail_quarantined": true,
+        "sealed_orphan_adopted": true,
+        "idempotent_resume": true,
+        "live_lock_rejected": true
+      }
+    ],
+    "actual_process_kills": 3,
+    "quarantine_commit_window_recovered": 3,
+    "sealed_commit_window_recovered": 3,
+    "corrupt_committed_segments_rejected": 3,
+    "data_origin": "synthetic independent official MCAP writer",
+    "durability_scope": "process interruption; not a power-loss test"
+  },
+  "documentation_generation": {
+    "command": "moon doc",
+    "exit_code": 0
+  },
+  "scope_notes": [
+    "Full matrix includes regular bounded scale cases; the previous actual million-message and over-2-GiB runs remain historical evidence, not rerun claims.",
+    "MFLD2 open audits all field pages and verifies the source hash. Bounded page retention does not imply zero-scan cold start. Summaries require a trusted producer.",
+    "CDR/ROS1 views avoid JSON expansion but still read/decompress enclosing Chunks. Variable arrays require a wire scan. Exact conditions over opaque binary fields fail explicitly.",
+    "Protobuf selection skips unrequested top-level materialization; selected nested messages and canonical ProtoJSON retain the documented complete-decoding paths. JSON is parsed before projection.",
+    "Projected payload decoding runs on the main thread while worker Chunk expansion remains available. MIDX2 worker reservations use the actual Chunk response bound.",
+    "Temporal joins require ascending input, use stable first duplicate/right earlier equidistance ties, bound their own retained payloads, and stop without draining unused right tails.",
+    "Recording recovery verifies all committed files, quarantines incomplete reserved tails, adopts validated complete orphans, and creates only new segment numbers. Tests cover process termination and publication windows, not power-loss durability.",
+    "Core live recording requires resending uncommitted tail messages. The CLI binds a fixed source SHA256 and replays its physical committed prefix to avoid duplicates.",
+    "Public ROS1 array comparisons verify scalar/inline data and large-array element/byte counts; binary export content equivalence is separately tested on independent synthetic payloads.",
+    "Public raw recordings retain their source terms and are not redistributed. No independent-install or hosted-CI outcome is asserted by this prepublication evidence file."
+  ]
+}

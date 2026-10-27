@@ -143,6 +143,8 @@ pub fn frame(Byte, Bytes) -> Bytes raise McapError
 
 pub fn inspect_json(Log) -> Json raise McapError
 
+pub fn inspect_recording_manifest(Bytes) -> Json raise McapError
+
 pub fn io_error(String) -> McapError
 
 pub fn join_options() -> JoinOptions
@@ -181,6 +183,8 @@ pub fn open_paged_field_header(UInt64, UInt64, Bytes, String, String) -> PagedFi
 
 pub fn open_reader(ReadSource, limits? : Limits, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int) -> RangeReader raise McapError
 
+pub fn open_recording_session(Log, RecordingStorage, manifest? : Bytes, options? : RecordingOptions) -> RecordingSession raise McapError
+
 pub fn open_sidecar(ReadSource, Bytes, IndexVerification, limits? : Limits, index_bytes? : Int, cache_bytes? : Int) -> SidecarReader raise McapError
 
 pub fn parse_command(Array[String]) -> CommandOptions raise McapError
@@ -204,6 +208,10 @@ pub fn read_diagnostics_json(ReadDiagnostics) -> Json
 pub fn read_log(Bytes, limits? : Limits) -> Log raise McapError
 
 pub fn rebuild_indexes(Bytes, compression? : Compression, messages_per_chunk? : Int, limits? : Limits) -> IndexRepair raise McapError
+
+pub fn recording_options() -> RecordingOptions
+
+pub fn recording_storage((Int) -> WriteSink raise McapError, (Int) -> ReadSource raise McapError, (Int) -> Bool raise McapError, (Int) -> Unit raise McapError, (Bytes) -> Unit raise McapError, (Int) -> Unit raise McapError, () -> Array[Int] raise McapError, (ReadSource) -> String raise McapError) -> RecordingStorage
 
 pub fn recover_blocks(ReadSource, WriteSink, limits? : Limits, options? : StreamOptions, summary_bytes? : Int, on_block? : (BlockRecoveryEvidence) -> Unit raise McapError) -> BlockRecoveryReport raise McapError
 
@@ -272,6 +280,8 @@ pub fn validate_metadata_indexes(Bytes, limits? : Limits) -> Int raise McapError
 pub fn validate_summary(Bytes, limits? : Limits) -> Int raise McapError
 
 pub fn verify_crc(Bytes, UInt, label? : String) -> Unit raise McapError
+
+pub fn worker_chunk_properties(Bytes, limits? : Limits) -> (Int, String) raise McapError
 
 pub fn write_chunked(Log, messages_per_chunk? : Int, checksums? : Bool, compression? : Compression, limits? : Limits) -> Bytes raise McapError
 
@@ -1148,6 +1158,51 @@ pub fn Record::equal(Self, Self) -> Bool
 pub fn Record::not_equal(Self, Self) -> Bool
 pub fn Record::to_repr(Self) -> @debug.Repr
 
+pub(all) struct RecordingOptions {
+  stream : StreamOptions
+  segment_messages : Int
+  segment_bytes_target : UInt64
+  segment_span : UInt64
+  segment_limit : Int
+  sequences : SequencePolicy
+  source_identity : String
+} derive(Eq, @debug.Debug)
+
+pub struct RecordingSession {
+  template : Log
+  config : Json
+  options : RecordingOptions
+  storage : RecordingStorage
+  completed : Array[Json]
+  mut next_ordinal : Int
+  mut active : Int?
+  mut writer : StreamWriter?
+  mut next_sequence : Map[Int, UInt64]
+  mut committed_next : Map[Int, UInt64]
+  mut total : UInt64
+  mut start_time : UInt64
+  mut end_time : UInt64
+  mut state : WriterState
+  mut adopted : Int
+  mut quarantined : Int
+}
+pub fn RecordingSession::append(Self, Message) -> Unit raise McapError
+pub fn RecordingSession::cancel(Self) -> Unit
+pub fn RecordingSession::committed_messages(Self) -> UInt64
+pub fn RecordingSession::finish(Self) -> Json raise McapError
+pub fn RecordingSession::info(Self) -> Json
+
+pub struct RecordingStorage {
+  create : (Int) -> WriteSink raise McapError
+  open : (Int) -> ReadSource raise McapError
+  exists : (Int) -> Bool raise McapError
+  seal : (Int) -> Unit raise McapError
+  save : (Bytes) -> Unit raise McapError
+  quarantine : (Int) -> Unit raise McapError
+  list : () -> Array[Int] raise McapError
+  fingerprint : (ReadSource) -> String raise McapError
+}
+
 pub(all) struct RecoveredBlock {
   start : UInt64
   end : UInt64
@@ -1233,6 +1288,11 @@ pub fn Schema::not_equal(Self, Self) -> Bool
 pub fn Schema::to_repr(Self) -> @debug.Repr
 
 type SchemaDecoder
+
+pub(all) enum SequencePolicy {
+  PreserveSequence
+  ContinueSequence
+} derive(Eq, @debug.Debug)
 
 pub struct SidecarCursor {
   reader : SidecarReader

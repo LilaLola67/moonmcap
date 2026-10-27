@@ -7,6 +7,33 @@ pub fn decode_chunk(
 }
 
 ///|
+/// Validated response bound from the original Chunk envelope, before expansion.
+pub fn worker_chunk_properties(
+  body : Bytes,
+  limits? : Limits = default_limits(),
+) -> (Int, String) raise McapError {
+  if body.length() > limits.max_record_bytes ||
+    limits.max_decompressed_bytes > 2147483607 {
+    raise Invalid("worker Chunk envelope exceeds budget")
+  }
+  let input = cursor(body, limits)
+  let start = input.u64()
+  let end = input.u64()
+  let size = bounded_length(
+    input.u64(),
+    limits.max_decompressed_bytes,
+    "worker expanded Chunk",
+  )
+  ignore(input.u32())
+  let compression = input.text()
+  let encoded = input.u64()
+  if start > end || encoded != (body.length() - input.pos).to_uint64() {
+    raise Invalid("invalid worker Chunk envelope")
+  }
+  (size + 40, compression)
+}
+
+///|
 /// Pure MoonBit work unit: bounded decompression and CRC, preserving raw records.
 pub fn expand_worker_chunk(
   body : Bytes,

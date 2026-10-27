@@ -190,7 +190,12 @@ async fn main {
           _ => ()
         }
       }
-      error_exit("\{error}")
+      error_exit(
+        match error {
+          @mcap.Invalid(reason) => reason
+          _ => "\{error}"
+        },
+      )
     }
   }
   for pool in pools {

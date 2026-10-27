@@ -1,4 +1,13 @@
 ///|
+pub fn open_recording_directory(
+  _path : String,
+  resume? : Bool = false,
+) -> RecordingDirectory raise @mcap.McapError {
+  ignore(resume)
+  raise @mcap.io_error("recording directory requires JS")
+}
+
+///|
 pub fn open_managed_file(
   _path : String,
   read_ahead_bytes? : Int = 65536,

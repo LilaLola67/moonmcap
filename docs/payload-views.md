@@ -16,7 +16,7 @@ node _build/js/debug/build/cmd/query/query.js recording.mcap --project-decode --
 
 `--project-decode` 将输出选择与过滤依赖合并，先解码所需字段再精确过滤、分页。只要条件涉及尚未展开的大数组就明确失败，不能用描述符替代原数组计算 contains/比较；可以提高内联限制，或通过视图窗口处理。选择超出内联上限数组的单个元素也明确失败，改用 `read_elements`。默认不启用，确保既有 JSON 输出兼容。
 
-`ProtobufDecoder.decode_selected(name, payload, selection)` 可跳过未请求的顶层字段，避免大 bytes 的 base64 展开和 packed repeated 的逐项构造；选中的嵌套消息沿用完整合并/map/oneof 语义再投影。必填字段缺失仍失败；未选字段执行 wire 级跳过，不承诺完整值语义验证。ProtoJSON 模式为保留 WKT 语义，使用完整解码后投影。Protobuf 的长度字段仍复制有界原始跨度，此接口并非零复制；二进制窗口当前针对 CDR。`cmd/view ... --protobuf --field /stamp` 可复现 Protobuf 投影。
+`ProtobufDecoder.decode_selected(name, payload, selection)` 可跳过未请求的顶层字段，避免大 bytes 的 base64 展开和 packed repeated 的逐项构造；选中的嵌套消息沿用完整合并/map/oneof 语义再投影。必填字段缺失仍失败；未选字段执行 wire 级跳过，不承诺完整值语义验证。ProtoJSON 模式为保留 WKT 语义，使用完整解码后投影。Protobuf 的长度字段仍复制有界原始跨度，此接口并非零复制；二进制窗口支持 CDR 和 ROS1。`cmd/view ... --protobuf --field /stamp` 可复现 Protobuf 投影。
 
 JSON 输入完整解析后投影。按需载荷解码当前在主线程执行；工作线程仍可并行解压 Chunk，explain 中 `projected_decode/payload_workers` 区分两者。查询仍需读取包含载荷的 Chunk，减少的是载荷展开成本，不能宣称按字段读取压缩文件。
 

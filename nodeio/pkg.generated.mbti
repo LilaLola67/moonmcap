@@ -18,6 +18,8 @@ pub fn open_managed_file(String, read_ahead_bytes? : Int) -> ManagedFile raise @
 
 pub fn open_merge_job(String, resume? : Bool) -> MergeJob raise @moonmcap.McapError
 
+pub fn open_recording_directory(String, resume? : Bool) -> RecordingDirectory raise @moonmcap.McapError
+
 pub fn output_transaction(String) -> OutputTransaction raise @moonmcap.McapError
 
 pub fn read_file(String, maximum? : Int) -> Bytes raise @moonmcap.McapError
@@ -83,6 +85,15 @@ pub struct OutputTransaction {
 pub fn OutputTransaction::abort(Self) -> Unit raise @moonmcap.McapError
 pub fn OutputTransaction::publish(Self) -> Unit raise @moonmcap.McapError
 pub fn OutputTransaction::sink(Self) -> @moonmcap.WriteSink
+
+pub struct RecordingDirectory {
+  operate : (String, Int, Bytes) -> String
+  mut closed : Bool
+}
+pub fn RecordingDirectory::close(Self) -> Unit raise @moonmcap.McapError
+pub fn RecordingDirectory::inspect(Self) -> Json raise @moonmcap.McapError
+pub fn RecordingDirectory::manifest(Self) -> Bytes? raise @moonmcap.McapError
+pub fn RecordingDirectory::storage(Self) -> @moonmcap.RecordingStorage
 
 // Type aliases
 

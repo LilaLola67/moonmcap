@@ -10,6 +10,7 @@ options(
     "merge_job.mbt": [ "js" ],
     "managed.mbt": [ "js" ],
     "fingerprint.mbt": [ "js" ],
+    "recording_js.mbt": [ "js" ],
     "files_test.mbt": [ "js" ],
     "unsupported.mbt": [ "not", "js" ],
   },

@@ -10,7 +10,7 @@ extern "js" fn fail_exit(text : String) -> Unit =
 fn run(values : Array[String]) -> Unit raise @mcap.McapError {
   if values.is_empty() || values == ["--help"] {
     println(
-      "view ROS2MSG PAYLOAD TYPE [--field /path... --inline N --export /binary NEW_FILE --window /binary START COUNT]",
+      "view SCHEMA PAYLOAD TYPE [--ros1|--protobuf --field /path... --inline N --export /binary NEW_FILE --window /binary START COUNT]",
     )
     return
   }

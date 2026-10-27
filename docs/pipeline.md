@@ -13,7 +13,7 @@ node _build/js/debug/build/cmd/query/query.js recording.mcap --index recording.m
 
 stderr 的 `plans` 区分 `opening_source_bytes` 和 `query_source_bytes`。打开时可能扫描完整源文件计算 SHA256，并审计完整 MIDX2；冷缓存不能宣称只传输命中区域。`tracked_regions/skipped_regions` 是最多 10000 个不同物理区域的观测值，超过时截断统计，查询本身继续正确执行；Chunk 的缓存命中也可能省略该观测。工作线程内存与队列限制见独立文档，工作线程并非所有负载都更快。
 
-复现：`python tools/pipeline_workflows.py` 使用官方 Python MCAP writer 生成 768 条合成消息，对照独立排序/过滤结果执行 10 组查询，检查三种压缩、两个索引后端、两种工作线程设置、升降序全局分页、三个远程缓存的热启动及损坏字段索引的原子失败。
+复现：`python tools/pipeline_workflows.py` 使用官方 Python MCAP writer 生成 776 条合成消息，对照独立排序/过滤结果执行 11 组查询，检查三种压缩、两个索引后端、两种工作线程设置、升降序全局分页、三个远程缓存的热启动及损坏字段索引的原子失败。额外高压缩比夹具确认小压缩跨度也可触发实际 worker 解压，任务按该 Chunk 的真实声明展开大小预留缓冲。
 
 ## MFLD2 分页字段索引
 

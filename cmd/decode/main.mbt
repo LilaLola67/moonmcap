@@ -13,7 +13,7 @@ fn run(
 ) -> Unit raise @mcap.McapError {
   if values.is_empty() || values == ["--help"] {
     println(
-      "decode INPUT... [--where JSON --select /field --offset N --limit N --index SIDECAR --output NEW.ndjson --int64-strings --protojson --emit-defaults] | raw DESCRIPTOR PAYLOAD TYPE | raw-cdr ROS2MSG PAYLOAD TYPE",
+      "decode INPUT... [--where JSON --select /field --offset N --limit N --index SIDECAR --output NEW.ndjson --int64-strings --protojson --emit-defaults] | raw DESCRIPTOR PAYLOAD TYPE | raw-cdr ROS2MSG PAYLOAD TYPE | raw-ros1 ROS1MSG PAYLOAD TYPE",
     )
     return
   }

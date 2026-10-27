@@ -152,16 +152,23 @@ pub async fn AsyncDiskSidecarCursor::next(
                 bytes,
                 limits=self.owner.limits,
               )
-              if records.length() == 1 &&
-                records[0].opcode == 0x06 &&
-                bytes.length() >= pool.options.min_chunk_bytes {
-                Some(
-                  pool.expand_chunk(
-                    records[0].body,
-                    self.owner.limits.max_decompressed_bytes + 40,
-                    limits=self.owner.limits,
-                  ),
+              if records.length() == 1 && records[0].opcode == 0x06 {
+                let (expanded_bytes, compression) = @mcap.worker_chunk_properties(
+                  records[0].body,
+                  limits=self.owner.limits,
                 )
+                if compression == "" ||
+                  expanded_bytes - 40 < pool.options.min_chunk_bytes {
+                  None
+                } else {
+                  Some(
+                    pool.expand_chunk(
+                      records[0].body,
+                      expanded_bytes,
+                      limits=self.owner.limits,
+                    ),
+                  )
+                }
               } else {
                 None
               }

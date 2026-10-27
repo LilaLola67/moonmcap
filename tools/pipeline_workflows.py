@@ -32,6 +32,15 @@ def main():
                 assert [(int(r['log_time']),r['source_index'],r['sequence']) for r in rows]==wanted,(rows,wanted)
                 stats=json.loads(result.stderr);assert all(p['content_verified'] and p['skipped_regions']>40 for p in stats['plans']),stats
                 cases+=1
+    # A tiny compressed span can expand past the worker threshold. Its job
+    # reservation must use its actual declared size, not the global 64 MiB cap.
+    data=io.BytesIO();writer=Writer(data,compression=CompressionType.ZSTD,chunk_size=1024*1024,enable_data_crcs=True);writer.start();cid=writer.register_channel('/large','json',0)
+    for n in range(8):writer.add_message(cid,n,json.dumps({'n':n,'blob':'x'*30000}).encode(),n,n)
+    writer.finish();large=work/'large.mcap';large.write_bytes(data.getvalue());large_index=work/'large.midx2';large_fields=work/'large.mfld'
+    result=run('paged','build',large,large_index,temporary,'--page-entries',2);assert result.returncode==0,result.stderr
+    result=run('field','build',large,large_fields,'--field','/n');assert result.returncode==0,result.stderr
+    result=run('query',large,'--index',large_index,'--field-index',large_fields,'--workers',2,'--where','true','--select','/n');assert result.returncode==0,result.stderr
+    assert [json.loads(line)['sequence'] for line in result.stdout.splitlines()]==list(range(8));assert json.loads(result.stderr)['pools'][0]['completed']>=9
     payloads={'/source':paths[2].read_bytes(),'/index':indexes[2].read_bytes(),'/fields':fields[2].read_bytes()};counts=defaultdict(int)
     class Handler(BaseHTTPRequestHandler):
         protocol_version='HTTP/1.1'
@@ -58,8 +67,8 @@ def main():
             cases+=1
         bad=bytearray(fields[0].read_bytes());bad[-1]^=1;corrupt=work/'bad.mfld';corrupt.write_bytes(bad);output=work/'failed.ndjson'
         result=run('query',paths[0],'--field-index',corrupt,'--where','true','--output',output);assert result.returncode==2 and not output.exists()
-        report={'result':'passed','queries':cases,'independent_messages':768,'codecs':3,'backends':['native','MIDX2'],'workers':[0,2],'remote_warm_cache':True,'corrupt_field_atomic_failure':True,'data_origin':'synthetic independent official Python MCAP writer'}
-        (ROOT/'_interop/pipeline/report.json').write_text(json.dumps(report,indent=2)+'\n');print('Unified pipeline passed: 10 queries, global pagination, 3 codecs, worker combinations and warm HTTP source/index/field caches')
+        report={'result':'passed','queries':cases+1,'independent_messages':776,'codecs':3,'backends':['native','MIDX2'],'workers':[0,2],'remote_warm_cache':True,'high_ratio_MIDX2_worker_expansion':True,'corrupt_field_atomic_failure':True,'data_origin':'synthetic independent official Python MCAP writer'}
+        (ROOT/'_interop/pipeline/report.json').write_text(json.dumps(report,indent=2)+'\n');print('Unified pipeline passed: 11 queries, high-ratio MIDX2 worker expansion, global pagination, 3 codecs and warm HTTP caches')
     finally:server.shutdown();server.server_close();thread.join(timeout=2)
 
 
