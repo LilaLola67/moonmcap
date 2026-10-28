@@ -44,6 +44,33 @@ pub fn QuerySource::declaration_log(self : QuerySource) -> Log {
 }
 
 ///|
+/// Open a source-local message stream without Dataset ID remapping. The caller
+/// must cancel on early termination. Source ordering and limits follow Query.
+pub fn QuerySource::stream(
+  self : QuerySource,
+  query? : Query = all_query(),
+  pending_bytes? : Int = 64 * 1024 * 1024,
+) -> MessageStream raise McapError {
+  if query.start_time > query.end_time ||
+    query.offset < 0 ||
+    query.limit < 0 ||
+    pending_bytes < 1 {
+    raise Invalid("invalid source stream query or budget")
+  }
+  (self.open)(query, pending_bytes)
+}
+
+///|
+pub fn MessageStream::next(self : MessageStream) -> Message? raise McapError {
+  (self.next_message)()
+}
+
+///|
+pub fn MessageStream::cancel(self : MessageStream) -> Unit {
+  (self.stop)()
+}
+
+///|
 pub fn RangeReader::query_source(
   self : RangeReader,
 ) -> QuerySource raise McapError {

@@ -48,6 +48,7 @@ async fn smoke() -> Unit {
   let directory=@nodeio.open_recording_directory("recording-smoke",resume=true)
   let resumed=@mcap.open_recording_session(template,directory.storage(),manifest?=directory.manifest(),options~)
   assert_eq(resumed.committed_messages(),5UL);ignore(resumed.finish());directory.close()
+  // INCIDENT_SMOKE
   println("INSTALLED_SMOKE_PASSED: unified worker query, paged fields, binary views, ROS1, temporal join, durable recording")
 }
 
@@ -72,6 +73,23 @@ WORKER_PACKAGE = r"""import {"LilaLola67/moonmcap" @mcap,"LilaLola67/moonmcap/as
 pkgtype(kind:"executable")
 """
 
+INCIDENT = r"""let incident_source = @mcap.build_query_index(builder.snapshot()).query_source()
+  let quality = @mcap.check_quality(incident_source, [{..@mcap.quality_rule("/n"),max_gap:Some(1UL)}],0UL,31UL)
+  assert_true(quality is Object(q) && q["status"] == Json::string("passed"))
+  let events = @mcap.detect_events(incident_source,{..@mcap.event_rule("/n","{\"path\":\"/n\",\"op\":\">=\",\"value\":16}"),max_gap:1UL,duration:2UL})
+  assert_eq(events.length(),1);assert_eq(events[0].start,16UL);assert_eq(events[0].confirmed,18UL)
+  let clip = @mcap.extract_context_clip(incident_source,16UL,20UL)
+  assert_eq(clip.log.messages.length(),5)
+  let emitted=[0]
+  let retained=[0]
+  let capture=@mcap.trigger_recorder(template,fn(log,_){retained[0]=log.messages.length();emitted[0]+=1},options={..@mcap.trigger_options(),pre:2UL,post:2UL})
+  for message in builder.snapshot().messages {capture.feed(message);if message.log_time==16UL{capture.trigger("installed")}}
+  capture.finish();assert_eq(emitted[0],1);assert_true(retained[0]>0)
+  let mapping=@mcap.clock_map([{source:0UL,target:100UL},{source:31UL,target:162UL}])
+  let calibrated=incident_source.calibrate_time(mapping).stream(query={..@mcap.all_query(),start_time:132UL,end_time:140UL,offset:1,limit:1})
+  assert_true(calibrated.next() is Some(m) && m.log_time==134UL);calibrated.cancel()
+"""
+
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
@@ -79,9 +97,11 @@ def main():
     args=parser.parse_args()
     version=args.version or re.search(r'^version = "([^"]+)"',(ROOT/'moon.mod').read_text(encoding='utf-8'),re.M)[1]
     assert re.fullmatch(r'\d+\.\d+\.\d+',version),'expected a published numeric patch version'
+    incidents=tuple(map(int,version.split('.'))) >= (0,15,32)
+    source=SOURCE.replace('// INCIDENT_SMOKE',INCIDENT if incidents else '')
     work=ROOT/'_interop/installed'/uuid.uuid4().hex;worker=work/'cmd/worker';worker.mkdir(parents=True)
     (work/'moon.mod').write_text(f'name = "local/installed-smoke"\nversion = "0.0.1"\nimport {{ "LilaLola67/moonmcap@{version}", "moonbitlang/async@0.20.2", }}\n',encoding='utf-8')
-    for path,text in [(work/'main.mbt',SOURCE),(work/'moon.pkg',PACKAGE),(worker/'main.mbt',WORKER),(worker/'moon.pkg',WORKER_PACKAGE)]:path.write_text(text,encoding='utf-8')
+    for path,text in [(work/'main.mbt',source),(work/'moon.pkg',PACKAGE),(worker/'main.mbt',WORKER),(worker/'moon.pkg',WORKER_PACKAGE)]:path.write_text(text,encoding='utf-8')
     moon=os.environ.get('MOON','moon')
     identity=subprocess.run([moon,'version','--all'],cwd=work,capture_output=True,text=True,encoding='utf-8',errors='replace',check=True)
     compiler=re.search(r'moonc v([^\s]+)',identity.stdout)
@@ -92,9 +112,10 @@ def main():
         if result.returncode:raise RuntimeError(f'installed consumer {name} failed; inspect {work/name}.log: '+(result.stdout+result.stderr)[-2500:])
         if name=='run':assert 'INSTALLED_SMOKE_PASSED' in result.stdout,'missing explicit consumer success marker'
     report={'result':'passed','version':version,'module':'LilaLola67/moonmcap','moonc':compiler[1],'fresh_consumer':True,'source_path_override':False,'own_compiled_worker_entry':True,'features':['unified worker query','paged fields','binary views','ROS1','temporal join','durable recording']}
+    if incidents:report['features']+=['quality rules','event detection','context clips','trigger recording','clock maps']
     (work/'report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     (ROOT/'_interop/installed/report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
-    print(f'Installed {version} consumer passed: six public API workflows and consumer-owned worker')
+    print(f"Installed {version} consumer passed: {len(report['features'])} public API workflows and consumer-owned worker")
 
 
 if __name__=='__main__':main()

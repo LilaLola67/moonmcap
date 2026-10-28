@@ -1,0 +1,4 @@
+{
+  "rule": {"topic": "/imu", "enter": true, "max_gap": "5000000000", "pre": "1000000000", "post": "5000000000"},
+  "buffer_bytes": 1048576, "buffer_messages": 1000
+}

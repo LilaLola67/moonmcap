@@ -1,0 +1,5 @@
+{
+  "start": "20000000000",
+  "end": "30000000000",
+  "rules": [{"topic": "/imu", "minimum_messages": 1, "max_gap": "5000000000"}]
+}

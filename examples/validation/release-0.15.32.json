@@ -1,0 +1,259 @@
+{
+  "version": "0.15.32",
+  "date": "2026-10-29",
+  "tests": {
+    "wasm": 185,
+    "js": 207
+  },
+  "workflow_count": 49,
+  "workflows": [
+    "tools/interop.py",
+    "tools/conformance.py",
+    "examples/run.py",
+    "tools/range_benchmark.py",
+    "tools/stream_workflows.py",
+    "tools/cli_workflows.py",
+    "tools/batch_workflows.py",
+    "tools/repair_workflows.py",
+    "tools/async_workflows.py",
+    "tools/http_workflows.py",
+    "tools/external_workflows.py",
+    "tools/block_workflows.py",
+    "tools/transform_stream_workflows.py",
+    "tools/dataset_workflows.py",
+    "tools/sidecar_workflows.py",
+    "tools/json_workflows.py",
+    "tools/checkpoint_workflows.py",
+    "tools/input_checkpoint_workflows.py",
+    "tools/io_workflows.py",
+    "tools/aggregate_workflows.py",
+    "tools/diff_workflows.py",
+    "tools/replay_workflows.py",
+    "tools/async_dataset_workflows.py",
+    "tools/source_diagnostic_workflows.py",
+    "tools/large_source_workflows.py",
+    "tools/fuzz_workflows.py",
+    "tools/memory_benchmark.py",
+    "tools/corpus_workflows.py",
+    "tools/disk_index_workflows.py",
+    "tools/disk_index_scale.py",
+    "tools/aggregate_external_workflows.py",
+    "tools/chunk_checkpoint_workflows.py",
+    "tools/protobuf_workflows.py",
+    "tools/cached_http_workflows.py",
+    "tools/protojson_workflows.py",
+    "tools/cdr_workflows.py",
+    "tools/async_paged_workflows.py",
+    "tools/field_index_workflows.py",
+    "tools/chunk_pipeline_workflows.py",
+    "tools/worker_workflows.py",
+    "tools/worker_benchmark.py",
+    "tools/pipeline_workflows.py",
+    "tools/paged_field_workflows.py",
+    "tools/payload_view_workflows.py",
+    "tools/ros1_workflows.py",
+    "tools/temporal_join_workflows.py",
+    "tools/recording_session_workflows.py",
+    "tools/runtime_audit.py",
+    "tools/incident_workflows.py"
+  ],
+  "current_toolchain": {
+    "moonc": "0.10.17+d971670cd",
+    "steps": [
+      {
+        "step": "check",
+        "passed": true
+      },
+      {
+        "step": "build",
+        "passed": true
+      },
+      {
+        "step": "test",
+        "passed": true
+      },
+      {
+        "step": "doc",
+        "passed": true
+      }
+    ]
+  },
+  "incident_workflows": {
+    "result": "passed",
+    "commands": 36,
+    "codecs": [
+      {
+        "compression": "NONE",
+        "quality": "rules, boundary silence, warning, match availability",
+        "events": [
+          {
+            "start": "40",
+            "confirmed": "50",
+            "end": "80",
+            "closed": true
+          },
+          {
+            "start": "100",
+            "confirmed": "110",
+            "end": "140",
+            "closed": true
+          }
+        ],
+        "context": "raw payload and missing policy",
+        "capture": "incremental replay, two bounded windows",
+        "clock": "independent integer piecewise oracle",
+        "atomic_failures": "existing output, missing context, clip budget, clock domain"
+      },
+      {
+        "compression": "LZ4",
+        "quality": "rules, boundary silence, warning, match availability",
+        "events": [
+          {
+            "start": "40",
+            "confirmed": "50",
+            "end": "80",
+            "closed": true
+          },
+          {
+            "start": "100",
+            "confirmed": "110",
+            "end": "140",
+            "closed": true
+          }
+        ],
+        "context": "raw payload and missing policy",
+        "capture": "incremental replay, two bounded windows",
+        "clock": "independent integer piecewise oracle",
+        "atomic_failures": "existing output, missing context, clip budget, clock domain"
+      },
+      {
+        "compression": "ZSTD",
+        "quality": "rules, boundary silence, warning, match availability",
+        "events": [
+          {
+            "start": "40",
+            "confirmed": "50",
+            "end": "80",
+            "closed": true
+          },
+          {
+            "start": "100",
+            "confirmed": "110",
+            "end": "140",
+            "closed": true
+          }
+        ],
+        "context": "raw payload and missing policy",
+        "capture": "incremental replay, two bounded windows",
+        "clock": "independent integer piecewise oracle",
+        "atomic_failures": "existing output, missing context, clip budget, clock domain"
+      }
+    ],
+    "data_origin": "synthetic independent Python MCAP writer; not real clock-calibration evidence",
+    "public": null
+  },
+  "effective_root_core_lines": 18952,
+  "count_exclusions": [
+    "comments",
+    "blank lines",
+    "tests",
+    "generated interfaces",
+    "adapted third-party internals",
+    "CLI and host subpackages",
+    "Python development tools"
+  ],
+  "existing_public_function_signatures_preserved": true,
+  "scope": "Prepublication local evidence. Registry installation, hosted docs and exact GitHub CI are checked separately after publishing.",
+  "limitations": [
+    "No live ROS network adapter",
+    "Trigger buffer is volatile; per-file output publication is atomic, multi-file batches are not",
+    "Clock accuracy not validated against real multi-device synchronization; anchors are explicit",
+    "Context depth is per-topic message retention, not TF state merging"
+  ],
+  "public_incident_workflows": {
+    "result": "passed",
+    "commands": 39,
+    "codecs": [
+      {
+        "compression": "NONE",
+        "quality": "rules, boundary silence, warning, match availability",
+        "events": [
+          {
+            "start": "40",
+            "confirmed": "50",
+            "end": "80",
+            "closed": true
+          },
+          {
+            "start": "100",
+            "confirmed": "110",
+            "end": "140",
+            "closed": true
+          }
+        ],
+        "context": "raw payload and missing policy",
+        "capture": "incremental replay, two bounded windows",
+        "clock": "independent integer piecewise oracle",
+        "atomic_failures": "existing output, missing context, clip budget, clock domain"
+      },
+      {
+        "compression": "LZ4",
+        "quality": "rules, boundary silence, warning, match availability",
+        "events": [
+          {
+            "start": "40",
+            "confirmed": "50",
+            "end": "80",
+            "closed": true
+          },
+          {
+            "start": "100",
+            "confirmed": "110",
+            "end": "140",
+            "closed": true
+          }
+        ],
+        "context": "raw payload and missing policy",
+        "capture": "incremental replay, two bounded windows",
+        "clock": "independent integer piecewise oracle",
+        "atomic_failures": "existing output, missing context, clip budget, clock domain"
+      },
+      {
+        "compression": "ZSTD",
+        "quality": "rules, boundary silence, warning, match availability",
+        "events": [
+          {
+            "start": "40",
+            "confirmed": "50",
+            "end": "80",
+            "closed": true
+          },
+          {
+            "start": "100",
+            "confirmed": "110",
+            "end": "140",
+            "closed": true
+          }
+        ],
+        "context": "raw payload and missing policy",
+        "capture": "incremental replay, two bounded windows",
+        "clock": "independent integer piecewise oracle",
+        "atomic_failures": "existing output, missing context, clip budget, clock domain"
+      }
+    ],
+    "data_origin": "synthetic independent Python MCAP writer; not real clock-calibration evidence",
+    "public": {
+      "source": "https://foxglove.dev/blog/record-and-replay-with-a-ros-2-powered-so-101",
+      "sha256": "e11ebd97b793b101b91237dcb4ceac32540aa2adb515df97650ad22116f6ac84",
+      "kind": "physical-robot-recording",
+      "total_messages": 4719,
+      "decoded_quality_messages": 1171,
+      "checks": [
+        "real ROS2 field existence and count",
+        "decoded event boundaries",
+        "raw context clip payloads"
+      ],
+      "clock_accuracy_evidence": false
+    }
+  }
+}

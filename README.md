@@ -1,8 +1,12 @@
 # MoonMCAP
 
+新增[数据质量与故障复现工作流](docs/incident-workflows.md)：可配置质量规则、持续事件定位、带上下文的片段导出、有界触发录制，以及显式锚点时钟校正。附[可直接运行的配置](examples/incidents/README.md)，文件互操作通过独立 Python MCAP reader/writer 验证；时钟校正不声称真实设备精度。
+
+0.15.32 的 [验证记录](examples/validation/release-0.15.32.json)：49 个工作流、Wasm 185 项 / JS 207 项测试通过，0.10.14 与 0.10.17 双工具链验证通过。
+
 统一组合查询入口与复现说明见 [异步查询管线](docs/pipeline.md)。
 
-0.15.31 的 [验证记录](examples/validation/release-0.15.31.json)：48 个工作流、Wasm 173 项 / JS 195 项测试通过；0.10.14 与 0.10.17 已验证，本地当前工具链文档生成通过。
+0.15.31 的 [历史验证记录](examples/validation/release-0.15.31.json)：48 个工作流、Wasm 173 项 / JS 195 项测试通过；0.10.14 与 0.10.17 已验证，本地当前工具链文档生成通过。
 
 新增能力：MFLD2 分页字段索引、[按需解码与大数组](docs/payload-views.md)、[ROS 1 载荷](docs/ros1.md)、[跨话题时间关联](docs/temporal-join.md)、[持久录制会话](docs/recording-session.md)。
 
@@ -22,7 +26,7 @@ HTTP 远程日志支持有界持久页缓存、并发预取、ETag 快照校验�
 
 [0.15.24 本地验证报告](examples/validation/release-0.15.24.json)记录 41 组回归、11 个语料案例、4719 条公开 CDR 消息的独立解码对照，以及 200 条消息的并行/串行对照，区分真实录制、转换数据与合成样例。
 
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.15.31**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
+MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.15.32**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
 
 ## 安装与运行
 
@@ -69,10 +73,10 @@ JS 目标：`moon test --target js`、`moon run cmd/main --target js`。内存�
 安装 Mooncakes 发行版本：
 
 ```sh
-moon add LilaLola67/moonmcap@0.15.31
+moon add LilaLola67/moonmcap@0.15.32
 ```
 
-已发布版本的独立安装验证：`python tools/install_smoke.py --version 0.15.31`。脚本在全新使用者目录中安装发行包，编译使用者自己的 worker 入口，运行查询、分页字段索引、二进制视图、ROS1、时间关联和录制恢复样例；产物保存在 `_interop/installed/`。
+已发布版本的独立安装验证：`python tools/install_smoke.py --version 0.15.32`。脚本在全新使用者目录中安装发行包，编译使用者自己的 worker 入口，运行查询、分页字段索引、二进制视图、ROS1、时间关联、录制恢复，以及质量、事件、上下文、触发录制和时钟映射共 11 类公开接口样例；产物保存在 `_interop/installed/`。
 
 也可从 GitHub 克隆复现全部样例；[发布包校验](docs/distribution.md) 可生成经过文件清单检查的模块归档。LZ4/Zstd、xxHash 与字节缓冲使用发行包内的独立内部组件，保留上游 Apache-2.0 许可证及来源，详见 [第三方说明](third_party/README.md)；异步包使用固定版本的 `moonbitlang/async 0.20.2`。运行时不需要 Python，也不调用外部压缩进程。
 
@@ -160,7 +164,7 @@ python tools/conformance.py
 python tools/count_source.py
 ```
 
-- MoonBit 单元/回归测试：Wasm 173 项、JS 195 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
+- MoonBit 单元/回归测试：Wasm 185 项、JS 207 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
 - 真实文件验证：30 项；包含 `3 输入压缩 × 2 摘要布局 × 3 输出压缩 = 18` 组双向读写检查，以及顺序文件、无消息索引、无摘要偏移、混合压缩和查询/合并/恢复工作流。
 - 真实文件验证还覆盖按需读取、三种流式输出、8 项 CLI、4 项批量变换、8 项诊断修复，以及 5 项异步录制、15 项 HTTP 故障、5 项磁盘排序、9 项独立块恢复、108 项固定种子差分检查和 4 组进程 RSS 测量。执行命令见下方，结果位于 `_interop/` 各子目录的 `report.json`。GitHub Actions 完整执行并上传报告。
 - 新增 45 项大文件诊断与恢复故障用例，百万条消息与实际超过 2 GiB 文件的本地验证见 [规模报告](docs/performance.md)。常规 CI 使用缩小规模，完整规模测试可手动启用。

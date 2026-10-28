@@ -27,19 +27,29 @@ pub fn build_query_index(Log) -> QueryIndex raise McapError
 
 pub fn build_sidecar(ReadSource, (ReadSource) -> String raise McapError, identity? : String, limits? : Limits, index_bytes? : Int, declaration_bytes? : Int, cancelled? : () -> Bool) -> Bytes raise McapError
 
+pub fn calibrate_log(Log, ClockMap, same_publish_clock? : Bool) -> Log raise McapError
+
 pub fn cdr_decoder(String, Bytes, options? : CdrOptions) -> CdrDecoder raise McapError
 
 pub fn cdr_options() -> CdrOptions
 
+pub fn check_match_quality(MessageStream, MessageStream, UInt64, Int) -> Json raise McapError
+
+pub fn check_quality(QuerySource, Array[QualityRule], UInt64, UInt64, detail_limit? : Int, pending_bytes? : Int, cancelled? : () -> Bool) -> Json raise McapError
+
 pub fn checkpoint_progress(Bytes) -> Json raise McapError
 
 pub fn checkpoint_run_ids(Bytes) -> Array[Int] raise McapError
+
+pub fn clock_map(Array[ClockAnchor], extrapolate? : Bool) -> ClockMap raise McapError
 
 pub fn codec_worker_handler(input_bytes? : Int, output_bytes? : Int, context_bytes? : Int) -> ((String) -> String) raise McapError
 
 pub fn compress_payload(Bytes, Compression) -> Bytes
 
 pub fn compute_file_statistics(Log, UInt) -> FileStatistics
+
+pub fn context_rule(String) -> ContextRule
 
 pub fn copy_log(Log) -> Log
 
@@ -87,6 +97,8 @@ pub fn decompress_payload(Bytes, String, UInt64, limits? : Limits) -> Bytes rais
 
 pub fn default_limits() -> Limits
 
+pub fn detect_events(QuerySource, EventRule, start? : UInt64, end? : UInt64, event_limit? : Int, pending_bytes? : Int, cancelled? : () -> Bool) -> Array[EventSpan] raise McapError
+
 pub fn diagnose_file(Bytes, limits? : Limits) -> FileDiagnosis
 
 pub fn diagnose_source(ReadSource, limits? : Limits, summary_bytes? : Int, read_bytes? : Int, cancelled? : () -> Bool) -> Json raise McapError
@@ -129,6 +141,14 @@ pub fn encode_schema(Schema) -> Bytes raise McapError
 
 pub fn encode_summary_offset(SummaryOffset) -> Bytes
 
+pub fn event_detector(EventRule) -> EventDetector raise McapError
+
+pub fn event_rule(String, String) -> EventRule
+
+pub fn event_span_json(EventSpan) -> Json
+
+pub fn event_windows(Array[EventSpan], UInt64, UInt64, merge_gap? : UInt64) -> Array[EventWindow] raise McapError
+
 pub fn expand_worker_chunk(Bytes, limits? : Limits) -> Bytes raise McapError
 
 pub fn external_merge(Array[ReadSource], SortStorage, WriteSink, options? : ExternalOptions, cancelled? : () -> Bool, preserve_ids? : Bool) -> ExternalReport raise McapError
@@ -136,6 +156,8 @@ pub fn external_merge(Array[ReadSource], SortStorage, WriteSink, options? : Exte
 pub fn external_options() -> ExternalOptions
 
 pub fn external_report_json(ExternalReport) -> Json
+
+pub fn extract_context_clip(QuerySource, UInt64, UInt64, topics? : Array[String], context? : Array[ContextRule], message_limit? : Int, byte_limit? : Int, pending_bytes? : Int, cancelled? : () -> Bool) -> ContextClip raise McapError
 
 pub fn find_attachments(Log, name? : String, media_type? : String) -> Array[Attachment]
 
@@ -198,6 +220,8 @@ pub fn protobuf_decoder(Bytes, options? : ProtobufOptions) -> ProtobufDecoder ra
 pub fn protobuf_json_options() -> ProtobufOptions
 
 pub fn protobuf_options() -> ProtobufOptions
+
+pub fn quality_rule(String) -> QualityRule
 
 pub fn query_file(Bytes, Query, limits? : Limits) -> QueryResult raise McapError
 
@@ -264,6 +288,10 @@ pub fn transform_log(Log, TransformOptions) -> Log raise McapError
 pub fn transform_options() -> TransformOptions
 
 pub fn transform_report_json(TransformReport) -> Json
+
+pub fn trigger_options() -> TriggerOptions
+
+pub fn trigger_recorder(Log, (Log, Json) -> Unit raise McapError, options? : TriggerOptions) -> TriggerRecorder raise McapError
 
 pub fn validate_attachment_indexes(Bytes, limits? : Limits) -> Int raise McapError
 
@@ -437,6 +465,19 @@ pub(all) struct ChunkReadRequest {
 
 type ChunkSegment
 
+pub(all) struct ClockAnchor {
+  source : UInt64
+  target : UInt64
+}
+
+pub struct ClockMap {
+  anchors : Array[ClockAnchor]
+  extrapolate : Bool
+}
+pub fn ClockMap::json(Self) -> Json
+pub fn ClockMap::map(Self, UInt64) -> UInt64 raise McapError
+pub fn ClockMap::residuals(Self, Array[ClockAnchor]) -> Json raise McapError
+
 pub(all) struct CommandOptions {
   command : String
   inputs : Array[String]
@@ -470,6 +511,18 @@ pub fn Compression::equal(Self, Self) -> Bool
 pub fn Compression::name(Self) -> String
 pub fn Compression::not_equal(Self, Self) -> Bool
 pub fn Compression::to_repr(Self) -> @debug.Repr
+
+pub(all) struct ContextClip {
+  log : Log
+  report : Json
+}
+
+pub(all) struct ContextRule {
+  topic : String
+  depth : Int
+  max_age : UInt64
+  required : Bool
+}
 
 type Cursor
 
@@ -649,6 +702,48 @@ pub fn DiskSidecarReader::info(Self) -> Json
 pub fn DiskSidecarReader::poll_cursor(Self, Query) -> DiskSidecarPollCursor raise McapError
 pub fn DiskSidecarReader::query_source(Self) -> QuerySource raise McapError
 pub fn DiskSidecarReader::validate_entries(Self) -> Unit raise McapError
+
+pub struct EventDetector {
+  rule : EventRule
+  enter : JsonFilter
+  leave : JsonFilter?
+  mut previous : UInt64?
+  mut candidate : UInt64?
+  mut confirmed : UInt64?
+  mut ended : UInt64?
+  mut finished : Bool
+}
+pub fn EventDetector::feed(Self, Message) -> Array[EventSignal] raise McapError
+pub fn EventDetector::finish(Self) -> EventSpan?
+
+pub(all) struct EventRule {
+  topic : String
+  enter : String
+  leave : String?
+  duration : UInt64
+  max_gap : UInt64
+  cooldown : UInt64
+  pre : UInt64
+  post : UInt64
+}
+
+pub(all) enum EventSignal {
+  EventStarted(UInt64, UInt64)
+  EventClosed(EventSpan)
+}
+
+pub(all) struct EventSpan {
+  start : UInt64
+  confirmed : UInt64
+  end : UInt64
+  closed : Bool
+} derive(Eq, @debug.Debug)
+
+pub(all) struct EventWindow {
+  start : UInt64
+  end : UInt64
+  events : Array[EventSpan]
+}
 
 type ExactDecimal
 
@@ -947,6 +1042,8 @@ pub struct MessageStream {
   stop : () -> Unit
   pending : () -> Int
 }
+pub fn MessageStream::cancel(Self) -> Unit
+pub fn MessageStream::next(Self) -> Message? raise McapError
 
 pub(all) struct Metadata {
   name : String
@@ -1027,6 +1124,17 @@ pub(all) struct ProtobufOptions {
   emit_defaults : Bool
 }
 
+pub(all) struct QualityRule {
+  topic : String
+  minimum_messages : Int
+  max_gap : UInt64?
+  check_sequence : Bool
+  condition : String?
+  warning : Bool
+}
+
+type QualityState
+
 pub(all) struct Query {
   topics : Array[String]
   start_time : UInt64
@@ -1093,9 +1201,11 @@ pub struct QuerySource {
   open : (Query, Int) -> MessageStream raise McapError
   materialized : Bool
 }
+pub fn QuerySource::calibrate_time(Self, ClockMap, same_publish_clock? : Bool) -> Self raise McapError
 pub fn QuerySource::declaration_log(Self) -> Log
 pub fn QuerySource::decode_payload(Self, PayloadDecoder, max_bytes? : Int) -> Self raise McapError
 pub fn QuerySource::filter_json(Self, JsonFilter) -> Self raise McapError
+pub fn QuerySource::stream(Self, query? : Query, pending_bytes? : Int) -> MessageStream raise McapError
 
 pub struct RangeReader {
   source : ReadSource
@@ -1520,6 +1630,43 @@ pub(all) struct TransformReport {
   output_bytes : UInt64
   peak_temporary_bytes : UInt64
 }
+
+pub(all) struct TriggerOptions {
+  pre : UInt64
+  post : UInt64
+  buffer_bytes : Int
+  buffer_messages : Int
+  clip_bytes : Int
+  clip_messages : Int
+  event_limit : Int
+}
+
+pub struct TriggerRecorder {
+  template : Log
+  options : TriggerOptions
+  emit : (Log, Json) -> Unit raise McapError
+  mut ring : Array[Message?]
+  mut head : Int
+  mut buffered_bytes : Int
+  mut first : UInt64?
+  mut last : UInt64?
+  mut capacity_evicted_through : UInt64?
+  mut evicted : UInt64
+  mut active : Array[Message]?
+  mut active_bytes : Int
+  mut start : UInt64
+  mut deadline : UInt64
+  mut pre_complete : Bool
+  labels : Array[String]
+  mut completed : Int
+  mut state : WriterState
+  mut delivering : Bool
+}
+pub fn TriggerRecorder::cancel(Self) -> Unit
+pub fn TriggerRecorder::feed(Self, Message) -> Unit raise McapError
+pub fn TriggerRecorder::finish(Self) -> Unit raise McapError
+pub fn TriggerRecorder::progress(Self) -> Json
+pub fn TriggerRecorder::trigger(Self, String) -> Unit raise McapError
 
 pub(all) struct WriteProgress {
   state : WriterState

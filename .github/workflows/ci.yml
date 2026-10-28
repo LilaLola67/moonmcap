@@ -151,6 +151,9 @@ jobs:
       - name: Verify recording session interruption and idempotent recovery
         if: matrix.target == 'js'
         run: python tools/recording_session_workflows.py
+      - name: Verify quality events context capture and calibrated clocks
+        if: matrix.target == 'js'
+        run: python tools/incident_workflows.py
       - name: Verify real codec workers order cancellation budgets and faults
         if: matrix.target == 'js'
         run: python tools/worker_workflows.py
@@ -241,6 +244,7 @@ jobs:
             _interop/ros1/report.json
             _interop/temporal-join/report.json
             _interop/recording-sessions/report.json
+            _interop/incidents/report.json
   current-toolchain:
     runs-on: ubuntu-latest
     steps:
@@ -299,7 +303,10 @@ jobs:
       - run: python tools/corpus_workflows.py --public
       - run: python tools/cdr_workflows.py --public
       - run: python tools/ros1_workflows.py --public
+      - run: python tools/incident_workflows.py --public
       - uses: actions/upload-artifact@v4
         with:
           name: public-corpus-report
-          path: _interop/corpus/report-public.json
+          path: |
+            _interop/corpus/report-public.json
+            _interop/incidents/report-public.json

@@ -1,0 +1,5 @@
+{
+  "anchors": [{"source": "0", "target": "1000"}, {"source": "1000000000000", "target": "1000000001000"}],
+  "same_publish_clock": false,
+  "probes": [{"source": "10000000000", "target": "10000001000"}]
+}

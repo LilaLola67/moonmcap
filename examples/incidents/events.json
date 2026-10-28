@@ -1,0 +1,4 @@
+{
+  "rule": {"topic": "/imu", "enter": true, "max_gap": "5000000000", "pre": "0", "post": "0"},
+  "topics": ["/imu"]
+}
