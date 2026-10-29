@@ -52,6 +52,7 @@ async fn smoke() -> Unit {
   // STREAM_CLIP_SMOKE
   // PAYLOAD_REWRITE_SMOKE
   // SCHEMA_EVOLUTION_SMOKE
+  // SYNCHRONIZATION_SMOKE
   println("INSTALLED_SMOKE_PASSED: unified worker query, paged fields, binary views, ROS1, temporal join, durable recording")
 }
 
@@ -123,6 +124,16 @@ SCHEMA_EVOLUTION = r"""let old_schema : @mcap.Schema = {id:1,name:"demo/Value",e
 """
 
 
+SYNCHRONIZATION = r"""let synchronized = @mcap.synchronize([
+    @mcap.sync_input("a",stream([10UL,20UL])),
+    @mcap.sync_input("b",stream([11UL,21UL])),
+    @mcap.sync_input("c",stream([9UL,19UL]))
+  ],options={..@mcap.sync_options(),tolerance:1UL})
+  assert_true(synchronized.next() is Some(row) && row.cells.length()==3 && row.cells[2].source_time==Some(9UL))
+  synchronized.cancel()
+"""
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--version')
@@ -137,6 +148,8 @@ def main():
     source=source.replace('// PAYLOAD_REWRITE_SMOKE',PAYLOAD_REWRITE if rewrites else '')
     evolution=tuple(map(int,version.split('.'))) >= (0,16,3)
     source=source.replace('// SCHEMA_EVOLUTION_SMOKE',SCHEMA_EVOLUTION if evolution else '')
+    synchronization=tuple(map(int,version.split('.'))) >= (0,16,4)
+    source=source.replace('// SYNCHRONIZATION_SMOKE',SYNCHRONIZATION if synchronization else '')
     work=ROOT/'_interop/installed'/uuid.uuid4().hex;worker=work/'cmd/worker';worker.mkdir(parents=True)
     (work/'moon.mod').write_text(f'name = "local/installed-smoke"\nversion = "0.0.1"\nimport {{ "LilaLola67/moonmcap@{version}", "moonbitlang/async@0.20.2", }}\n',encoding='utf-8')
     for path,text in [(work/'main.mbt',source),(work/'moon.pkg',PACKAGE),(worker/'main.mbt',WORKER),(worker/'moon.pkg',WORKER_PACKAGE)]:path.write_text(text,encoding='utf-8')
@@ -154,6 +167,7 @@ def main():
     if stream_clips:report['features']+=['stream context clips','artifact batch resume']
     if rewrites:report['features']+=['typed payload encoding and rewrites']
     if evolution:report['features']+=['directional schema comparison','normalized query views']
+    if synchronization:report['features']+=['N-topic synchronization']
     (work/'report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     (ROOT/'_interop/installed/report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print(f"Installed {version} consumer passed: {len(report['features'])} public API workflows and consumer-owned worker")

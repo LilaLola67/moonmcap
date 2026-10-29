@@ -193,6 +193,8 @@ pub fn merge_logs(Array[Log], chronological? : Bool) -> Log raise McapError
 
 pub fn message_stream(() -> Message? raise McapError, () -> Unit, pending_bytes? : () -> Int) -> MessageStream
 
+pub fn message_timestamp(Message, SyncClock, max_bytes? : Int) -> UInt64 raise McapError
+
 pub fn messages_csv(Array[Message], Array[Channel]) -> String
 
 pub fn messages_json(Array[Message], Array[Channel]) -> Json
@@ -267,6 +269,8 @@ pub fn repair_prefix(Bytes, limits? : Limits) -> (Bytes, RecoveryReport) raise M
 
 pub fn replay(QuerySource, query? : Query, rate_numerator? : Int, rate_denominator? : Int, pending_bytes? : Int) -> Replay raise McapError
 
+pub fn resample(Array[SyncInput], UInt64, UInt64, UInt64, options? : SyncOptions, cancelled? : () -> Bool) -> SyncStream raise McapError
+
 pub fn resumable_chunk_merge(Array[ReadSource], SortStorage, SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, max_parts? : Int, cancelled? : () -> Bool) -> Json raise McapError
 
 pub fn resumable_chunk_pipeline(Array[ReadSource], SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, max_parts? : Int, cancelled? : () -> Bool) -> Json raise McapError
@@ -306,6 +310,14 @@ pub fn stream_rewrite_payload(ReadSource, WriteSink, Array[PayloadEdit], topics?
 pub fn stream_transform(ReadSource, SortStorage, WriteSink, TransformOptions, external? : ExternalOptions, content? : JsonFilter, cancelled? : () -> Bool) -> TransformReport raise McapError
 
 pub fn summarize(Log) -> LogStats raise McapError
+
+pub fn sync_input(String, MessageStream, clock? : (Message) -> UInt64 raise McapError, interpolation_paths? : Array[String]) -> SyncInput
+
+pub fn sync_options() -> SyncOptions
+
+pub fn sync_row_json(SyncRow, payload? : (Message) -> Json raise McapError) -> Json raise McapError
+
+pub fn synchronize(Array[SyncInput], options? : SyncOptions, cancelled? : () -> Bool) -> SyncStream raise McapError
 
 pub fn temporal_join(MessageStream, MessageStream, options? : JoinOptions) -> TemporalJoinStream raise McapError
 
@@ -1653,6 +1665,81 @@ pub(all) struct SummaryOffset {
   length : UInt64
 }
 
+pub(all) struct SyncCell {
+  name : String
+  synthetic : Bool
+  message : Message?
+  before : Message?
+  after : Message?
+  source_time : UInt64?
+  before_time : UInt64?
+  after_time : UInt64?
+  distance : UInt64?
+  interpolated : Json?
+}
+
+pub(all) enum SyncClock {
+  SyncLogTime
+  SyncPublishTime
+  SyncJsonNanoseconds(String)
+  SyncJsonStamp(String, String)
+}
+
+pub struct SyncInput {
+  name : String
+  stream : MessageStream
+  clock : (Message) -> UInt64 raise McapError
+  interpolation_paths : Array[String]?
+  synthetic : Bool
+}
+
+type SyncLane
+
+pub(all) enum SyncMode {
+  SyncNearest
+  SyncPrevious
+  SyncNext
+  SyncLinear
+} derive(Eq)
+
+pub(all) struct SyncOptions {
+  mode : SyncMode
+  reuse : SyncReuse
+  tolerance : UInt64
+  keep_missing : Bool
+  interpolation_paths : Array[String]
+  buffer_bytes : Int
+  json_bytes : Int
+  output_rows : UInt64
+  input_messages : UInt64
+}
+
+pub(all) enum SyncReuse {
+  SyncAllowReuse
+  SyncConsume
+} derive(Eq)
+
+pub(all) struct SyncRow {
+  time : UInt64
+  cells : Array[SyncCell]
+}
+
+pub struct SyncStream {
+  lanes : Array[SyncLane]
+  options : SyncOptions
+  cancelled : () -> Bool
+  mut state : FileCursorState
+  mut read : UInt64
+  mut examined : UInt64
+  mut emitted : UInt64
+  mut missing : UInt64
+  mut peak_bytes : Int
+  mut anchor : TimedSyncMessage?
+}
+pub fn SyncStream::cancel(Self) -> Unit
+pub fn SyncStream::info(Self) -> Json
+pub fn SyncStream::next(Self) -> SyncRow? raise McapError
+
 pub struct TemporalJoinCursor {
   options : JoinOptions
   mut left : Message?
@@ -1694,6 +1781,8 @@ pub(all) struct TemporalMatch {
 } derive(Eq, @debug.Debug)
 
 type TemporaryWorkspace
+
+type TimedSyncMessage
 
 pub(all) struct TopicStats {
   channel_id : Int

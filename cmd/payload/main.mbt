@@ -114,7 +114,7 @@ fn run(
 ) -> Unit raise @mcap.McapError {
   if values.is_empty() || values == ["--help"] {
     println(
-      "payload encode FORMAT SCHEMA TYPE VALUE.json NEW.bin [--big-endian] | raw-rewrite FORMAT SCHEMA TYPE INPUT.bin RULES.json NEW.bin | rewrite INPUT.mcap RULES.json NEW.mcap | compare FORMAT OLD_SCHEMA OLD_TYPE NEW_SCHEMA NEW_TYPE | normalize INPUT.mcap RULES.json NEW.ndjson; see docs/payload-rewrite.md and docs/schema-evolution.md",
+      "payload encode FORMAT SCHEMA TYPE VALUE.json NEW.bin [--big-endian] | raw-rewrite FORMAT SCHEMA TYPE INPUT.bin RULES.json NEW.bin | rewrite INPUT.mcap RULES.json NEW.mcap | compare FORMAT OLD_SCHEMA OLD_TYPE NEW_SCHEMA NEW_TYPE | normalize INPUT.mcap RULES.json NEW.ndjson | sync INPUT.mcap RULES.json NEW.ndjson; see docs/payload-rewrite.md and docs/schema-evolution.md",
     )
     return
   }
@@ -133,6 +133,10 @@ fn run(
       data: @nodeio.read_file(values[4], maximum=4 * 1024 * 1024),
     }
     println(@mcap.compare_payload_schemas(old, new).stringify())
+    return
+  }
+  if values[0] == "sync" && values.length() == 4 {
+    sync_file(values, scope)
     return
   }
   if values[0] == "normalize" && values.length() == 4 {

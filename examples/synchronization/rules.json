@@ -1,0 +1,10 @@
+{
+  "topics": [
+    {"topic": "/odometry", "clock": "log", "paths": ["/position/x"]},
+    {"topic": "/velocity", "clock": "log", "paths": ["/speed"]}
+  ],
+  "mode": "linear",
+  "tolerance": "100000000",
+  "grid": {"start": "1000000000", "end": "2000000000", "period": "20000000"},
+  "keep_missing": true
+}

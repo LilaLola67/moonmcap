@@ -10,6 +10,7 @@ options(
   targets: {
     "main.mbt": [ "js" ],
     "schema_commands.mbt": [ "js" ],
+    "sync_commands.mbt": [ "js" ],
     "unsupported.mbt": [ "not", "js" ],
   },
 )

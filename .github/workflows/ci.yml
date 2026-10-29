@@ -166,6 +166,9 @@ jobs:
       - name: Verify schema evolution and normalized views
         if: matrix.target == 'js'
         run: python tools/schema_evolution_workflows.py
+      - name: Verify N-topic synchronization and uniform resampling
+        if: matrix.target == 'js'
+        run: python tools/synchronization_workflows.py
       - name: Verify real codec workers order cancellation budgets and faults
         if: matrix.target == 'js'
         run: python tools/worker_workflows.py
@@ -261,6 +264,7 @@ jobs:
             _interop/clip-batches/report.json
             _interop/payload-rewrite/report.json
             _interop/schema-evolution/report.json
+            _interop/synchronization/report.json
   current-toolchain:
     runs-on: ubuntu-latest
     steps:
