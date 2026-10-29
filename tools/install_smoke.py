@@ -49,6 +49,8 @@ async fn smoke() -> Unit {
   let resumed=@mcap.open_recording_session(template,directory.storage(),manifest?=directory.manifest(),options~)
   assert_eq(resumed.committed_messages(),5UL);ignore(resumed.finish());directory.close()
   // INCIDENT_SMOKE
+  // STREAM_CLIP_SMOKE
+  // PAYLOAD_REWRITE_SMOKE
   println("INSTALLED_SMOKE_PASSED: unified worker query, paged fields, binary views, ROS1, temporal join, durable recording")
 }
 
@@ -90,6 +92,26 @@ INCIDENT = r"""let incident_source = @mcap.build_query_index(builder.snapshot())
   assert_true(calibrated.next() is Some(m) && m.log_time==134UL);calibrated.cancel()
 """
 
+STREAM_CLIP = r"""let clip_bytes = @buffer.Buffer::Buffer()
+  ignore(@mcap.stream_context_clip(incident_source,@mcap.new_write_sink(fn(b){clip_bytes.write_bytes(b[:])}),1UL,5UL))
+  assert_eq(@mcap.read_log(clip_bytes.to_bytes()).messages.length(),5)
+  let batch_directory = @nodeio.open_artifact_directory("clip-batch-smoke")
+  ignore(@mcap.run_artifact_batch("installed-stream-clips",2,batch_directory.storage(),fn(id,sink){@mcap.stream_context_clip(incident_source,sink,id.to_uint64(),id.to_uint64()+1UL)},stop_after=1))
+  batch_directory.close()
+  let batch_directory = @nodeio.open_artifact_directory("clip-batch-smoke",resume=true)
+  let batch = @mcap.run_artifact_batch("installed-stream-clips",2,batch_directory.storage(),fn(id,sink){@mcap.stream_context_clip(incident_source,sink,id.to_uint64(),id.to_uint64()+1UL)})
+  assert_true(batch is Object(fields) && fields["complete"] == Json::boolean(true))
+  batch_directory.close()
+"""
+
+PAYLOAD_REWRITE = r"""let typed = @mcap.cdr_decoder("demo/Value",b"uint64 counter\nstring frame_id",options={..@mcap.cdr_options(),int64_as_string:true})
+  let typed_value : Json = {"counter":"9007199254740993","frame_id":"sensor"}
+  assert_eq(typed.decode(typed.encode(typed_value,little_endian=false)),typed_value)
+  let edited = @mcap.standard_payload_rewriter().rewrite_message(builder.snapshot().messages[0],template,[{path:"/n",replacement:Some(Json::number(42))}])
+  assert_eq(edited.data,b"{\"n\":42}")
+  assert_eq(edited.log_time,0UL)
+"""
+
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
@@ -99,6 +121,10 @@ def main():
     assert re.fullmatch(r'\d+\.\d+\.\d+',version),'expected a published numeric patch version'
     incidents=tuple(map(int,version.split('.'))) >= (0,15,32)
     source=SOURCE.replace('// INCIDENT_SMOKE',INCIDENT if incidents else '')
+    stream_clips=tuple(map(int,version.split('.'))) >= (0,16,1)
+    rewrites=tuple(map(int,version.split('.'))) >= (0,16,2)
+    source=source.replace('// STREAM_CLIP_SMOKE',STREAM_CLIP if stream_clips else '')
+    source=source.replace('// PAYLOAD_REWRITE_SMOKE',PAYLOAD_REWRITE if rewrites else '')
     work=ROOT/'_interop/installed'/uuid.uuid4().hex;worker=work/'cmd/worker';worker.mkdir(parents=True)
     (work/'moon.mod').write_text(f'name = "local/installed-smoke"\nversion = "0.0.1"\nimport {{ "LilaLola67/moonmcap@{version}", "moonbitlang/async@0.20.2", }}\n',encoding='utf-8')
     for path,text in [(work/'main.mbt',source),(work/'moon.pkg',PACKAGE),(worker/'main.mbt',WORKER),(worker/'moon.pkg',WORKER_PACKAGE)]:path.write_text(text,encoding='utf-8')
@@ -113,6 +139,8 @@ def main():
         if name=='run':assert 'INSTALLED_SMOKE_PASSED' in result.stdout,'missing explicit consumer success marker'
     report={'result':'passed','version':version,'module':'LilaLola67/moonmcap','moonc':compiler[1],'fresh_consumer':True,'source_path_override':False,'own_compiled_worker_entry':True,'features':['unified worker query','paged fields','binary views','ROS1','temporal join','durable recording']}
     if incidents:report['features']+=['quality rules','event detection','context clips','trigger recording','clock maps']
+    if stream_clips:report['features']+=['stream context clips','artifact batch resume']
+    if rewrites:report['features']+=['typed payload encoding and rewrites']
     (work/'report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     (ROOT/'_interop/installed/report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print(f"Installed {version} consumer passed: {len(report['features'])} public API workflows and consumer-owned worker")

@@ -115,6 +115,8 @@ pub fn diff_options() -> DiffOptions
 
 pub fn diff_sources(ReadSource, ReadSource, options? : DiffOptions) -> Json raise McapError
 
+pub fn edit_payload_json(Json, Array[PayloadEdit]) -> Json raise McapError
+
 pub fn empty_log(profile? : String) -> Log
 
 pub fn encode_attachment(Attachment, checksums? : Bool) -> Bytes
@@ -221,6 +223,8 @@ pub fn parse_decimal(String) -> UInt64 raise McapError
 
 pub fn payload_decoder((Schema?, Channel, Bytes) -> Json raise McapError) -> PayloadDecoder
 
+pub fn payload_rewriter((Schema?, Channel, Bytes, Array[PayloadEdit]) -> Bytes raise McapError) -> PayloadRewriter
+
 pub fn protobuf_decoder(Bytes, options? : ProtobufOptions) -> ProtobufDecoder raise McapError
 
 pub fn protobuf_json_options() -> ProtobufOptions
@@ -277,6 +281,8 @@ pub fn source_visitor(schema? : (Schema) -> Unit raise McapError, channel? : (Ch
 
 pub fn standard_payload_decoder(options? : ProtobufOptions, cdr? : CdrOptions, cache_bytes? : Int, max_schemas? : Int, selection? : DecodeSelection) -> PayloadDecoder raise McapError
 
+pub fn standard_payload_rewriter(options? : ProtobufOptions, cdr? : CdrOptions, cache_bytes? : Int, max_schemas? : Int) -> PayloadRewriter raise McapError
+
 pub fn start_disk_sidecar_audit(ReadSource, ReadSource, IndexVerification, limits? : Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64) -> DiskSidecarAudit raise McapError
 
 pub fn stats_report(LogStats) -> String
@@ -284,6 +290,8 @@ pub fn stats_report(LogStats) -> String
 pub fn stream_context_clip(QuerySource, WriteSink, UInt64, UInt64, topics? : Array[String], context? : Array[ContextRule], options? : ClipStreamOptions, auxiliary? : (StreamWriter) -> Unit raise McapError, provenance? : Json, cancelled? : () -> Bool) -> Json raise McapError
 
 pub fn stream_options() -> StreamOptions
+
+pub fn stream_rewrite_payload(ReadSource, WriteSink, Array[PayloadEdit], topics? : Array[String], rewriter? : PayloadRewriter, copy_auxiliary? : Bool, options? : StreamOptions, limits? : Limits, cancelled? : () -> Bool) -> Json raise McapError
 
 pub fn stream_transform(ReadSource, SortStorage, WriteSink, TransformOptions, external? : ExternalOptions, content? : JsonFilter, cancelled? : () -> Bool) -> TransformReport raise McapError
 
@@ -429,6 +437,7 @@ pub struct CdrDecoder {
   ros1 : Bool
 }
 pub fn CdrDecoder::decode(Self, Bytes) -> Json raise McapError
+pub fn CdrDecoder::encode(Self, Json, little_endian? : Bool) -> Bytes raise McapError
 pub fn CdrDecoder::view(Self, Bytes, selection? : DecodeSelection) -> PayloadView raise McapError
 
 type CdrField
@@ -1111,6 +1120,19 @@ pub struct PayloadDecoder {
 pub fn PayloadDecoder::decode_message(Self, Message, Log, max_bytes? : Int) -> Message raise McapError
 pub fn PayloadDecoder::require_filter_fields(Self, JsonFilter) -> Self raise McapError
 
+pub(all) struct PayloadEdit {
+  path : String
+  replacement : Json?
+}
+
+type PayloadOutput
+
+pub struct PayloadRewriter {
+  apply : (Schema?, Channel, Bytes, Array[PayloadEdit]) -> Bytes raise McapError
+}
+pub fn PayloadRewriter::rewrite(Self, Schema?, Channel, Bytes, Array[PayloadEdit]) -> Bytes raise McapError
+pub fn PayloadRewriter::rewrite_message(Self, Message, Log, Array[PayloadEdit]) -> Message raise McapError
+
 pub struct PayloadView {
   source : Bytes
   value : Json
@@ -1134,6 +1156,8 @@ type ProtoItem
 
 type ProtoMessage
 
+type ProtoSlice
+
 type ProtoValue
 
 type ProtoWire
@@ -1146,6 +1170,8 @@ pub struct ProtobufDecoder {
 }
 pub fn ProtobufDecoder::decode(Self, String, Bytes) -> Json raise McapError
 pub fn ProtobufDecoder::decode_selected(Self, String, Bytes, DecodeSelection) -> Json raise McapError
+pub fn ProtobufDecoder::encode(Self, String, Json) -> Bytes raise McapError
+pub fn ProtobufDecoder::rewrite(Self, String, Bytes, Array[PayloadEdit]) -> Bytes raise McapError
 
 pub(all) struct ProtobufOptions {
   descriptor_bytes : Int
@@ -1415,6 +1441,7 @@ pub struct Ros1Decoder {
   layout : CdrDecoder
 }
 pub fn Ros1Decoder::decode(Self, Bytes) -> Json raise McapError
+pub fn Ros1Decoder::encode(Self, Json) -> Bytes raise McapError
 pub fn Ros1Decoder::view(Self, Bytes, selection? : DecodeSelection) -> PayloadView raise McapError
 
 type RunHead
