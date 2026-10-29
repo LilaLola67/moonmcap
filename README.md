@@ -32,7 +32,7 @@ HTTP 远程日志支持有界持久页缓存、并发预取、ETag 快照校验�
 
 [0.15.24 本地验证报告](examples/validation/release-0.15.24.json)记录 41 组回归、11 个语料案例、4719 条公开 CDR 消息的独立解码对照，以及 200 条消息的并行/串行对照，区分真实录制、转换数据与合成样例。
 
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.16.4**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
+MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.16.5**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
 
 ## 安装与运行
 
@@ -79,10 +79,10 @@ JS 目标：`moon test --target js`、`moon run cmd/main --target js`。内存�
 安装 Mooncakes 发行版本：
 
 ```sh
-moon add LilaLola67/moonmcap@0.16.4
+moon add LilaLola67/moonmcap@0.16.5
 ```
 
-已发布版本的独立安装验证：`python tools/install_smoke.py --version 0.16.4`。脚本在全新使用者目录中安装发行包，编译使用者自己的 worker 入口，运行查询、分页字段索引、二进制视图、ROS1、时间关联、录制恢复、质量、事件、上下文、触发录制、时钟映射，以及流式片段、批量恢复、载荷回写、结构比较和归一化共 16 类公开接口样例；产物保存在 `_interop/installed/`，旧版本按其实际可用接口选择样例。
+已发布版本的独立安装验证：`python tools/install_smoke.py --version 0.16.5`。脚本在全新使用者目录中安装发行包，编译使用者自己的 worker 入口，运行查询、分页字段索引、二进制视图、ROS1、时间关联、录制恢复、质量、事件、上下文、触发录制、时钟映射，以及流式片段、批量恢复、载荷回写、结构比较和归一化共 16 类公开接口样例；产物保存在 `_interop/installed/`，旧版本按其实际可用接口选择样例。
 
 也可从 GitHub 克隆复现全部样例；[发布包校验](docs/distribution.md) 可生成经过文件清单检查的模块归档。LZ4/Zstd、xxHash 与字节缓冲使用发行包内的独立内部组件，保留上游 Apache-2.0 许可证及来源，详见 [第三方说明](third_party/README.md)；异步包使用固定版本的 `moonbitlang/async 0.20.2`。运行时不需要 Python，也不调用外部压缩进程。
 
@@ -170,7 +170,7 @@ python tools/conformance.py
 python tools/count_source.py
 ```
 
-- MoonBit 单元/回归测试：Wasm 206 项、JS 228 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
+- MoonBit 单元/回归测试：Wasm 210 项、JS 232 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
 - 真实文件验证：30 项；包含 `3 输入压缩 × 2 摘要布局 × 3 输出压缩 = 18` 组双向读写检查，以及顺序文件、无消息索引、无摘要偏移、混合压缩和查询/合并/恢复工作流。
 - 真实文件验证还覆盖按需读取、三种流式输出、8 项 CLI、4 项批量变换、8 项诊断修复，以及 5 项异步录制、15 项 HTTP 故障、5 项磁盘排序、9 项独立块恢复、108 项固定种子差分检查和 4 组进程 RSS 测量。执行命令见下方，结果位于 `_interop/` 各子目录的 `report.json`。GitHub Actions 完整执行并上传报告。
 - 新增 45 项大文件诊断与恢复故障用例，百万条消息与实际超过 2 GiB 文件的本地验证见 [规模报告](docs/performance.md)。常规 CI 使用缩小规模，完整规模测试可手动启用。
@@ -220,6 +220,8 @@ python tools/package_audit.py
 ## 文件工具
 
 [多话题同步与重采样](docs/synchronization.md) 支持显式时钟、最近/前值/后值、缺失和消费规则，以及保留括点来源的固定网格线性插值。
+
+[列式导出适配器](docs/columnar.md) 将归一化视图按显式类型分批导出 Arrow IPC 或 Parquet，保留 UInt64 纳秒时间。[离线 TF](docs/tf.md) 支持历史坐标查询、旋转插值和保留静态状态及动态括点的语义片段。
 
 [通用命令行](docs/cli.md) 提供 `inspect`、`query`、`slice`、`merge`、`external-merge`、`recover`、`recover-blocks`、`rewrite`、`transform`、`validate`、`reindex`。主题、UInt64 纳秒时间、分页、压缩和预算均可配置；查询支持 JSON/CSV，输出文件拒绝覆盖已有路径。
 

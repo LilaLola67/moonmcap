@@ -136,7 +136,13 @@ pub fn stream_context_clip(
     emit(message)
   }
   let stream = source.stream(
-    query={ ..all_query(), topics, start_time: start, end_time: end, },
+    query={
+      ..all_query(),
+      topics,
+      start_time: start,
+      end_time: end,
+      limit: 2147483647,
+    },
     pending_bytes=options.pending_bytes,
   )
   defer stream.cancel()

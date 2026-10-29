@@ -169,6 +169,17 @@ jobs:
       - name: Verify N-topic synchronization and uniform resampling
         if: matrix.target == 'js'
         run: python tools/synchronization_workflows.py
+      - name: Verify typed columnar export
+        if: matrix.target == 'js'
+        run: |
+          python -m pip install pyarrow==21.0.0
+          python tools/columnar_workflows.py
+      - name: Verify offline TF lookup and semantic context
+        if: matrix.target == 'js'
+        run: python tools/tf_workflows.py
+      - name: Verify streaming reads beyond interactive pagination
+        if: matrix.target == 'js'
+        run: python tools/pull_limit_workflows.py
       - name: Verify real codec workers order cancellation budgets and faults
         if: matrix.target == 'js'
         run: python tools/worker_workflows.py
@@ -265,6 +276,9 @@ jobs:
             _interop/payload-rewrite/report.json
             _interop/schema-evolution/report.json
             _interop/synchronization/report.json
+            _interop/columnar/report.json
+            _interop/tf/report.json
+            _interop/pull-limits/report.json
   current-toolchain:
     runs-on: ubuntu-latest
     steps:

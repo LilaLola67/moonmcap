@@ -1,0 +1,9 @@
+{
+  "frames":["camera"],
+  "start":"1500000000",
+  "end":"1600000000",
+  "tf_start":"1500000000",
+  "tf_end":"1600000000",
+  "topics":["/camera/image"],
+  "copy_auxiliary":false
+}

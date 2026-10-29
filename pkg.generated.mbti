@@ -231,6 +231,8 @@ pub fn parse_command(Array[String]) -> CommandOptions raise McapError
 
 pub fn parse_decimal(String) -> UInt64 raise McapError
 
+pub fn parse_tf_message(Json, Bool, origin? : Message) -> Array[TfStamped] raise McapError
+
 pub fn payload_decoder((Schema?, Channel, Bytes) -> Json raise McapError) -> PayloadDecoder
 
 pub fn payload_normalizer(Array[NormalizedField]) -> PayloadNormalizer raise McapError
@@ -322,6 +324,20 @@ pub fn synchronize(Array[SyncInput], options? : SyncOptions, cancelled? : () -> 
 pub fn temporal_join(MessageStream, MessageStream, options? : JoinOptions) -> TemporalJoinStream raise McapError
 
 pub fn temporal_join_cursor(options? : JoinOptions) -> TemporalJoinCursor raise McapError
+
+pub fn tf_apply(TfTransform, TfVector) -> TfVector raise McapError
+
+pub fn tf_compose(TfTransform, TfTransform) -> TfTransform raise McapError
+
+pub fn tf_identity() -> TfTransform
+
+pub fn tf_inverse(TfTransform) -> TfTransform raise McapError
+
+pub fn tf_stamped_json(TfStamped) -> Json
+
+pub fn tf_transform_json(TfTransform) -> Json
+
+pub fn tf_tree(sample_limit? : Int, byte_limit? : Int) -> TfTree raise McapError
 
 pub fn transform_log(Log, TransformOptions) -> Log raise McapError
 
@@ -1781,6 +1797,52 @@ pub(all) struct TemporalMatch {
 } derive(Eq, @debug.Debug)
 
 type TemporaryWorkspace
+
+type TfEdge
+
+pub(all) struct TfLookup {
+  transform : TfTransform
+  evidence : Array[TfStamped]
+  interpolated : Bool
+}
+
+pub(all) struct TfQuaternion {
+  x : Double
+  y : Double
+  z : Double
+  w : Double
+} derive(Eq, @debug.Debug)
+
+pub(all) struct TfStamped {
+  parent : String
+  child : String
+  time : UInt64
+  transform : TfTransform
+  is_static : Bool
+  origin : Message?
+}
+
+pub(all) struct TfTransform {
+  translation : TfVector
+  rotation : TfQuaternion
+} derive(Eq, @debug.Debug)
+
+pub struct TfTree {
+  edges : Map[String, TfEdge]
+  sample_limit : Int
+  byte_limit : Int
+  mut count : Int
+  mut bytes : Int
+}
+pub fn TfTree::add(Self, TfStamped) -> Unit raise McapError
+pub fn TfTree::context(Self, Array[String], UInt64, UInt64) -> Array[TfStamped] raise McapError
+pub fn TfTree::lookup(Self, String, String, UInt64, interpolate? : Bool, max_gap? : UInt64) -> TfLookup raise McapError
+
+pub(all) struct TfVector {
+  x : Double
+  y : Double
+  z : Double
+} derive(Eq, @debug.Debug)
 
 type TimedSyncMessage
 

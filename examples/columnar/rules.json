@@ -1,0 +1,10 @@
+{
+  "format": "parquet",
+  "batch_rows": 1000,
+  "fields": [
+    {"name": "topic", "path": "/topic", "type": "string", "nullable": false},
+    {"name": "log_time_ns", "path": "/log_time", "type": "uint64", "nullable": false},
+    {"name": "speed", "path": "/data/motion/speed_m_s", "type": "float64"},
+    {"name": "counter", "path": "/data/counter", "type": "uint64"}
+  ]
+}

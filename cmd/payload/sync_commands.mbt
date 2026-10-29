@@ -118,7 +118,11 @@ fn sync_file(
     if !declarations.channels.any(fn(c) { c.topic == topic }) {
       raise @mcap.io_error("synchronization topic absent: " + topic)
     }
-    let stream = provider.stream(query={ ..@mcap.all_query(), topics: [topic], })
+    let stream = provider.stream(query={
+      ..@mcap.all_query(),
+      topics: [topic],
+      limit: 2147483647,
+    })
     streams.push(stream)
     @mcap.sync_input(
       topic,

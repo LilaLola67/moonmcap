@@ -53,6 +53,7 @@ async fn smoke() -> Unit {
   // PAYLOAD_REWRITE_SMOKE
   // SCHEMA_EVOLUTION_SMOKE
   // SYNCHRONIZATION_SMOKE
+  // TF_SMOKE
   println("INSTALLED_SMOKE_PASSED: unified worker query, paged fields, binary views, ROS1, temporal join, durable recording")
 }
 
@@ -134,6 +135,14 @@ SYNCHRONIZATION = r"""let synchronized = @mcap.synchronize([
 """
 
 
+TF = r"""let tf = @mcap.tf_tree()
+  tf.add({parent:"world",child:"base",time:0UL,transform:@mcap.tf_identity(),is_static:false,origin:None})
+  tf.add({parent:"world",child:"base",time:10UL,transform:{..@mcap.tf_identity(),translation:{x:10.0,y:0.0,z:0.0}},is_static:false,origin:None})
+  assert_eq(tf.lookup("world","base",5UL).transform.translation.x,5.0)
+  assert_eq(tf.context(["base"],2UL,8UL).length(),2)
+"""
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--version')
@@ -150,6 +159,8 @@ def main():
     source=source.replace('// SCHEMA_EVOLUTION_SMOKE',SCHEMA_EVOLUTION if evolution else '')
     synchronization=tuple(map(int,version.split('.'))) >= (0,16,4)
     source=source.replace('// SYNCHRONIZATION_SMOKE',SYNCHRONIZATION if synchronization else '')
+    tf=tuple(map(int,version.split('.'))) >= (0,16,5)
+    source=source.replace('// TF_SMOKE',TF if tf else '')
     work=ROOT/'_interop/installed'/uuid.uuid4().hex;worker=work/'cmd/worker';worker.mkdir(parents=True)
     (work/'moon.mod').write_text(f'name = "local/installed-smoke"\nversion = "0.0.1"\nimport {{ "LilaLola67/moonmcap@{version}", "moonbitlang/async@0.20.2", }}\n',encoding='utf-8')
     for path,text in [(work/'main.mbt',source),(work/'moon.pkg',PACKAGE),(worker/'main.mbt',WORKER),(worker/'moon.pkg',WORKER_PACKAGE)]:path.write_text(text,encoding='utf-8')
@@ -168,6 +179,7 @@ def main():
     if rewrites:report['features']+=['typed payload encoding and rewrites']
     if evolution:report['features']+=['directional schema comparison','normalized query views']
     if synchronization:report['features']+=['N-topic synchronization']
+    if tf:report['features']+=['historical TF and semantic context']
     (work/'report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     (ROOT/'_interop/installed/report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print(f"Installed {version} consumer passed: {len(report['features'])} public API workflows and consumer-owned worker")
