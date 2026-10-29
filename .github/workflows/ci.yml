@@ -27,6 +27,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
       - name: Install tested MoonBit toolchain
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.14+7d59c7ec9'
@@ -304,6 +307,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
       - name: Install current official toolchain
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
@@ -323,6 +329,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
       - name: Install tested toolchain and reference codecs
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.14+7d59c7ec9'
@@ -345,6 +354,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
       - name: Install tested toolchain and reference codecs
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.14+7d59c7ec9'
