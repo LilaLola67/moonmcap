@@ -11,6 +11,7 @@ options(
     "managed.mbt": [ "js" ],
     "fingerprint.mbt": [ "js" ],
     "recording_js.mbt": [ "js" ],
+    "artifact_js.mbt": [ "js" ],
     "files_test.mbt": [ "js" ],
     "unsupported.mbt": [ "not", "js" ],
   },

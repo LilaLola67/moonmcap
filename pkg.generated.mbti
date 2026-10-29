@@ -15,6 +15,8 @@ pub fn aggregate_options() -> AggregateOptions
 
 pub fn all_query() -> Query
 
+pub fn artifact_batch_storage(() -> Bytes? raise McapError, (Bytes) -> Unit raise McapError, (Int) -> WriteSink raise McapError, (Int) -> Unit raise McapError, (Int) -> String raise McapError, (Int) -> Unit raise McapError, (Int) -> Bool raise McapError, (Int) -> Unit raise McapError, () -> Array[Int] raise McapError) -> ArtifactBatchStorage
+
 pub fn block_recovery_json(BlockRecoveryReport) -> Json
 
 pub fn build_disk_sidecar(ReadSource, SortStorage, WriteSink, (ReadSource) -> String raise McapError, identity? : String, page_entries? : Int, options? : ExternalOptions, cancelled? : () -> Bool) -> Json raise McapError
@@ -41,6 +43,8 @@ pub fn checkpoint_progress(Bytes) -> Json raise McapError
 
 pub fn checkpoint_run_ids(Bytes) -> Array[Int] raise McapError
 
+pub fn clip_stream_options() -> ClipStreamOptions
+
 pub fn clock_map(Array[ClockAnchor], extrapolate? : Bool) -> ClockMap raise McapError
 
 pub fn codec_worker_handler(input_bytes? : Int, output_bytes? : Int, context_bytes? : Int) -> ((String) -> String) raise McapError
@@ -50,6 +54,8 @@ pub fn compress_payload(Bytes, Compression) -> Bytes
 pub fn compute_file_statistics(Log, UInt) -> FileStatistics
 
 pub fn context_rule(String) -> ContextRule
+
+pub fn copy_clip_auxiliary(ReadSource, StreamWriter, attachment_names? : Array[String], metadata_names? : Array[String], limits? : Limits, cancelled? : () -> Bool) -> UInt64 raise McapError
 
 pub fn copy_log(Log) -> Log
 
@@ -255,6 +261,8 @@ pub fn resumable_merge(Array[ReadSource], SortStorage, WriteSink, (ReadSource) -
 
 pub fn ros1_decoder(String, Bytes, options? : CdrOptions) -> Ros1Decoder raise McapError
 
+pub fn run_artifact_batch(String, Int, ArtifactBatchStorage, (Int, WriteSink) -> Json raise McapError, stop_after? : Int, cancelled? : () -> Bool) -> Json raise McapError
+
 pub fn scan_file(Bytes, limits? : Limits) -> Array[Record] raise McapError
 
 pub fn scan_source(ReadSource, SourceVisitor, limits? : Limits, declaration_bytes? : Int, cancelled? : () -> Bool, trace? : (SourceScanEvent) -> Unit) -> UInt64 raise McapError
@@ -272,6 +280,8 @@ pub fn standard_payload_decoder(options? : ProtobufOptions, cdr? : CdrOptions, c
 pub fn start_disk_sidecar_audit(ReadSource, ReadSource, IndexVerification, limits? : Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64) -> DiskSidecarAudit raise McapError
 
 pub fn stats_report(LogStats) -> String
+
+pub fn stream_context_clip(QuerySource, WriteSink, UInt64, UInt64, topics? : Array[String], context? : Array[ContextRule], options? : ClipStreamOptions, auxiliary? : (StreamWriter) -> Unit raise McapError, provenance? : Json, cancelled? : () -> Bool) -> Json raise McapError
 
 pub fn stream_options() -> StreamOptions
 
@@ -342,6 +352,20 @@ type AggregateRun
 type AggregateSpill
 
 type AggregateState
+
+pub struct ArtifactBatchStorage {
+  load : () -> Bytes? raise McapError
+  save : (Bytes) -> Unit raise McapError
+  create : (Int) -> WriteSink raise McapError
+  seal : (Int) -> Unit raise McapError
+  digest : (Int) -> String raise McapError
+  publish : (Int) -> Unit raise McapError
+  published : (Int) -> Bool raise McapError
+  discard : (Int) -> Unit raise McapError
+  inventory : () -> Array[Int] raise McapError
+}
+
+type ArtifactReceipt
 
 pub(all) struct Attachment {
   log_time : UInt64
@@ -464,6 +488,16 @@ pub(all) struct ChunkReadRequest {
 }
 
 type ChunkSegment
+
+pub(all) struct ClipStreamOptions {
+  context_bytes : Int
+  context_messages : Int
+  output_messages : UInt64
+  output_payload_bytes : UInt64
+  pending_bytes : Int
+  writer : StreamOptions
+  limits : Limits
+}
 
 pub(all) struct ClockAnchor {
   source : UInt64

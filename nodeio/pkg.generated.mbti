@@ -12,6 +12,8 @@ pub fn file_identity_token(String) -> String raise @moonmcap.McapError
 
 pub fn file_scope(max_open? : Int, read_ahead_bytes? : Int) -> FileScope
 
+pub fn open_artifact_directory(String, resume? : Bool) -> ArtifactDirectory raise @moonmcap.McapError
+
 pub fn open_file(String) -> @moonmcap.ReadSource raise @moonmcap.McapError
 
 pub fn open_managed_file(String, read_ahead_bytes? : Int) -> ManagedFile raise @moonmcap.McapError
@@ -35,6 +37,13 @@ pub fn write_new_file(String, Bytes) -> Unit raise @moonmcap.McapError
 // Errors
 
 // Types and methods
+pub struct ArtifactDirectory {
+  operate : (String, Int, Bytes) -> String
+  mut closed : Bool
+}
+pub fn ArtifactDirectory::close(Self) -> Unit raise @moonmcap.McapError
+pub fn ArtifactDirectory::storage(Self) -> @moonmcap.ArtifactBatchStorage
+
 pub(all) struct FileIoMetrics {
   physical_reads : Int
   physical_bytes : UInt64

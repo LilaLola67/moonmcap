@@ -1,4 +1,13 @@
 ///|
+pub fn open_artifact_directory(
+  _path : String,
+  resume? : Bool = false,
+) -> ArtifactDirectory raise @mcap.McapError {
+  ignore(resume)
+  raise @mcap.io_error("artifact directory requires JS")
+}
+
+///|
 pub fn open_recording_directory(
   _path : String,
   resume? : Bool = false,

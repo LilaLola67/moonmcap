@@ -175,23 +175,89 @@ fn emit_clip(
 }
 
 ///|
+fn clip_options(
+  config : Map[String, Json],
+) -> @mcap.ClipStreamOptions raise @mcap.McapError {
+  {
+    ..@mcap.clip_stream_options(),
+    context_bytes: count(config, "context_bytes", 8 * 1024 * 1024),
+    context_messages: count(config, "context_messages", 10000),
+    output_messages: nanoseconds(config, "output_messages", 10000000UL),
+    output_payload_bytes: nanoseconds(
+      config, "output_payload_bytes", 107374182400UL,
+    ),
+    limits: {
+      ..@mcap.default_limits(),
+      max_records: count(config, "input_records", 30000000),
+    },
+    writer: { ..@mcap.stream_options(), compression: @mcap.Zstd, },
+  }
+}
+
+///|
+fn stream_clip(
+  provider : @mcap.QuerySource,
+  source : @mcap.ReadSource,
+  output : String,
+  config : Map[String, Json],
+  start : UInt64,
+  end : UInt64,
+  provenance : Json,
+) -> Json raise @mcap.McapError {
+  let options = clip_options(config)
+  let selected_topics = topics(config)
+  let context = context_rules(config)
+  let copy_auxiliary = boolean(config, "copy_auxiliary", false)
+  let transaction = @nodeio.output_transaction(output)
+  try {
+    let report = @mcap.stream_context_clip(
+      provider,
+      transaction.sink(),
+      start,
+      end,
+      topics=selected_topics,
+      context~,
+      options~,
+      provenance~,
+      auxiliary=fn(writer) {
+        if copy_auxiliary {
+          ignore(
+            @mcap.copy_clip_auxiliary(source, writer, limits=options.limits),
+          )
+        }
+      },
+    )
+    transaction.publish()
+    { "output": output, "manifest": report }
+  } catch {
+    error => {
+      transaction.abort()
+      raise error
+    }
+  }
+}
+
+///|
 fn run(
   values : Array[String],
   scope : @nodeio.FileScope,
 ) -> Unit raise @mcap.McapError {
   if values.is_empty() || values == ["--help"] {
     println(
-      "incident quality|events|clip|capture|clock INPUT CONFIG.json [NEW_OUTPUT_OR_PREFIX]; see docs/incident-workflows.md",
+      "incident quality|events|clip|capture|clock|batch|resume-batch INPUT CONFIG.json [NEW_OUTPUT_OR_PREFIX_OR_JOB]; see docs/incident-workflows.md",
     )
     return
   }
   if values.length() < 3 ||
     values.length() > 4 ||
-    !["quality", "events", "clip", "capture", "clock"].contains(values[0]) {
+    !["quality", "events", "clip", "capture", "clock", "batch", "resume-batch"].contains(
+      values[0],
+    ) {
     raise @mcap.io_error("invalid incident command")
   }
   let mode = values[0]
-  if ["clip", "capture", "clock"].contains(mode) && values.length() != 4 {
+  if ["clip", "capture", "clock", "batch", "resume-batch"].contains(mode) &&
+    values.length() != 4 {
     raise @mcap.io_error("this command requires a new output path or prefix")
   }
   if mode == "quality" && values.length() != 3 {
@@ -203,10 +269,20 @@ fn run(
     "events" =>
       [
         "rule", "start", "end", "event_limit", "merge_gap", "topics", "context",
-        "clip_bytes", "clip_messages", "decode",
+        "clip_bytes", "clip_messages", "decode", "stream", "context_bytes", "context_messages",
+        "output_messages", "output_payload_bytes", "copy_auxiliary", "input_records",
       ]
     "clip" =>
-      ["start", "end", "topics", "context", "clip_bytes", "clip_messages"]
+      [
+        "start", "end", "topics", "context", "clip_bytes", "clip_messages", "stream",
+        "context_bytes", "context_messages", "output_messages", "output_payload_bytes",
+        "copy_auxiliary", "input_records",
+      ]
+    "batch" | "resume-batch" =>
+      [
+        "windows", "topics", "context", "context_bytes", "context_messages", "output_messages",
+        "output_payload_bytes", "copy_auxiliary", "input_records", "stop_after",
+      ]
     "capture" =>
       [
         "rule", "buffer_bytes", "buffer_messages", "clip_bytes", "clip_messages",
@@ -218,8 +294,15 @@ fn run(
       ]
   }
   let config = object(configuration, allowed)
+  let streaming = ["batch", "resume-batch"].contains(mode) ||
+    boolean(config, "stream", false)
+  let limits = if streaming {
+    clip_options(config).limits
+  } else {
+    @mcap.default_limits()
+  }
   let source = scope.open(values[1])
-  let _ = @mcap.scan_source(source, @mcap.source_visitor())
+  let _ = @mcap.scan_source(source, @mcap.source_visitor(), limits~)
   let fingerprint = @nodeio.source_sha256(source)
   let output = if values.length() == 4 { values[3] } else { "" }
   if mode == "clock" {
@@ -266,7 +349,75 @@ fn run(
     )
     return
   }
-  let raw = @mcap.open_reader(source).query_source()
+  let raw = @mcap.open_reader(source, limits~).query_source()
+  if ["batch", "resume-batch"].contains(mode) {
+    let windows = array(config, "windows").map(fn(value) {
+      let fields = object(value, ["start", "end"])
+      let start = @mcap.parse_decimal(text(fields, "start"))
+      let end = @mcap.parse_decimal(text(fields, "end"))
+      if start > end {
+        raise @mcap.io_error("invalid batch window")
+      }
+      (start, end)
+    })
+    if windows.length() > 4096 {
+      raise @mcap.io_error("too many batch windows")
+    }
+    let recipe : Map[String, Json] = Map([])
+    for key in config.keys() {
+      if key != "stop_after" {
+        recipe[key] = config[key]
+      }
+    }
+    let plan : Json = {
+      "format": "moonmcap.clip-batch.1",
+      "source_sha256": fingerprint,
+      "library": @mcap.empty_log().header.library,
+      "recipe": Json::object(recipe),
+    }
+    let options = clip_options(config)
+    let selected_topics = topics(config)
+    let context = context_rules(config)
+    let copy_auxiliary = boolean(config, "copy_auxiliary", false)
+    let directory = @nodeio.open_artifact_directory(
+      output,
+      resume=mode == "resume-batch",
+    )
+    let report = @mcap.run_artifact_batch(
+      plan.stringify(),
+      windows.length(),
+      directory.storage(),
+      fn(id, sink) {
+        let (start, end) = windows[id]
+        @mcap.stream_context_clip(
+          raw,
+          sink,
+          start,
+          end,
+          topics=selected_topics,
+          context~,
+          options~,
+          provenance={ "source_sha256": fingerprint, "batch_ordinal": id },
+          auxiliary=fn(writer) {
+            if copy_auxiliary {
+              ignore(@mcap.copy_clip_auxiliary(source, writer, limits~))
+            }
+          },
+        )
+      },
+      stop_after=count(config, "stop_after", 4096),
+    ) catch {
+      error => {
+        directory.close() catch {
+          _ => ()
+        }
+        raise error
+      }
+    }
+    directory.close()
+    println(report.stringify())
+    return
+  }
   let decoded = if boolean(config, "decode", false) {
     raw.decode_payload(
       @mcap.standard_payload_decoder(),
@@ -356,6 +507,19 @@ fn run(
     return
   }
   if mode == "clip" {
+    if boolean(config, "stream", false) {
+      let manifest = stream_clip(
+        raw,
+        source,
+        output,
+        config,
+        @mcap.parse_decimal(text(config, "start")),
+        @mcap.parse_decimal(text(config, "end")),
+        { "source_sha256": fingerprint },
+      )
+      println(manifest.stringify())
+      return
+    }
     let clip = @mcap.extract_context_clip(
       raw,
       @mcap.parse_decimal(text(config, "start")),
@@ -403,6 +567,20 @@ fn run(
         "events": window.events.map(@mcap.event_span_json),
       }
       if output != "" {
+        if boolean(config, "stream", false) {
+          outputs.push(
+            stream_clip(
+              raw,
+              source,
+              output + "-" + i.to_string() + ".mcap",
+              config,
+              window.start,
+              window.end,
+              { "source_sha256": fingerprint, "event": manifest },
+            ),
+          )
+          continue
+        }
         let clip = @mcap.extract_context_clip(
           raw,
           window.start,

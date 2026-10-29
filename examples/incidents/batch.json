@@ -1,0 +1,9 @@
+{
+  "windows": [
+    {"start": "20000000000", "end": "25000000000"},
+    {"start": "25000000001", "end": "30000000000"}
+  ],
+  "topics": ["/imu"],
+  "context": [],
+  "copy_auxiliary": true
+}
