@@ -1,0 +1,11 @@
+{
+  "time_tolerance":"10000000",
+  "baseline_offset":"0",
+  "candidate_offset":"0",
+  "consume":true,
+  "fields":[
+    {"path":"/motion/speed_m_s","abs":"0.05","rel":"0.01"},
+    {"path":"/frame_id","kind":"exact"}
+  ],
+  "thresholds":{"field_failures":0,"missing":0,"extra":0,"minimum_pairs":1}
+}

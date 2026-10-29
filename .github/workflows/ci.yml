@@ -188,6 +188,9 @@ jobs:
         run: |
           python -m pip install foxglove-sdk==0.30.3 websockets==15.0.1
           python tools/device_workflows.py
+      - name: Verify tolerant experiment regression and evidence clips
+        if: matrix.target == 'js'
+        run: python tools/regression_workflows.py
       - name: Verify real codec workers order cancellation budgets and faults
         if: matrix.target == 'js'
         run: python tools/worker_workflows.py
@@ -289,6 +292,7 @@ jobs:
             _interop/pull-limits/report.json
             _interop/live/report.json
             _interop/device/report.json
+            _interop/regression/report.json
   current-toolchain:
     runs-on: ubuntu-latest
     steps:
