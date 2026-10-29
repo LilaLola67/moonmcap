@@ -1,0 +1,12 @@
+{
+  "identity":"experiment-live-1",
+  "mode":"file",
+  "units":32,
+  "topics":["/motion"],
+  "decode":true,
+  "quality":{
+    "start":"0",
+    "lateness":"100000000",
+    "rules":[{"topic":"/motion","max_gap":"200000000","check_sequence":true}]
+  }
+}

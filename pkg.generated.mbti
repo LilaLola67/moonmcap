@@ -173,6 +173,8 @@ pub fn find_attachments(Log, name? : String, media_type? : String) -> Array[Atta
 
 pub fn frame(Byte, Bytes) -> Bytes raise McapError
 
+pub fn growing_tail(String, (ReadSource) -> String raise McapError, snapshot? : Bytes, limits? : Limits, batch_bytes? : Int) -> GrowingTail raise McapError
+
 pub fn inspect_json(Log) -> Json raise McapError
 
 pub fn inspect_recording_manifest(Bytes) -> Json raise McapError
@@ -184,6 +186,8 @@ pub fn join_options() -> JoinOptions
 pub fn json_filter(String, select? : Array[String], invalid? : JsonInvalidPolicy, max_bytes? : Int, max_depth? : Int) -> JsonFilter raise McapError
 
 pub fn json_query_record(DatasetMessage, Array[Channel], JsonFilter) -> Json raise McapError
+
+pub fn live_quality(Array[QualityRule], UInt64, lateness? : UInt64, pending_limit? : Int, snapshot? : Bytes) -> LiveQuality raise McapError
 
 pub fn magic() -> Bytes
 
@@ -260,6 +264,8 @@ pub fn rebuild_indexes(Bytes, compression? : Compression, messages_per_chunk? : 
 pub fn recording_options() -> RecordingOptions
 
 pub fn recording_storage((Int) -> WriteSink raise McapError, (Int) -> ReadSource raise McapError, (Int) -> Bool raise McapError, (Int) -> Unit raise McapError, (Bytes) -> Unit raise McapError, (Int) -> Unit raise McapError, () -> Array[Int] raise McapError, (ReadSource) -> String raise McapError) -> RecordingStorage
+
+pub fn recording_tail(String, snapshot? : Bytes) -> RecordingTail raise McapError
 
 pub fn recover_blocks(ReadSource, WriteSink, limits? : Limits, options? : StreamOptions, summary_bytes? : Int, on_block? : (BlockRecoveryEvidence) -> Unit raise McapError) -> BlockRecoveryReport raise McapError
 
@@ -987,6 +993,21 @@ pub fn Footer::equal(Self, Self) -> Bool
 pub fn Footer::not_equal(Self, Self) -> Bool
 pub fn Footer::to_repr(Self) -> @debug.Repr
 
+pub struct GrowingTail {
+  identity : String
+  fingerprint : (ReadSource) -> String raise McapError
+  limits : Limits
+  batch_bytes : Int
+  mut offset : UInt64
+  mut digest : String
+  mut declarations : Log
+  mut header_seen : Bool
+  mut data_end : Bool
+  mut complete : Bool
+}
+pub fn GrowingTail::poll(Self, ReadSource, units? : Int) -> LiveBatch raise McapError
+pub fn GrowingTail::snapshot(Self) -> Bytes raise McapError
+
 pub(all) struct Header {
   profile : String
   library : String
@@ -1056,6 +1077,33 @@ pub(all) struct Limits {
 pub fn Limits::equal(Self, Self) -> Bool
 pub fn Limits::not_equal(Self, Self) -> Bool
 pub fn Limits::to_repr(Self) -> @debug.Repr
+
+pub(all) struct LiveBatch {
+  declarations : Log
+  messages : Array[Message]
+  evidence : Json
+}
+
+pub struct LiveQuality {
+  states : Array[QualityState]
+  settings : Json
+  start : UInt64
+  lateness : UInt64
+  pending_limit : Int
+  pending : Array[LiveQualityItem]
+  mut maximum : UInt64?
+  mut watermark : UInt64?
+  mut late : UInt64
+  mut inputs : UInt64
+  mut finished : Bool
+}
+pub fn LiveQuality::advance(Self, UInt64) -> Unit raise McapError
+pub fn LiveQuality::feed(Self, String, Message) -> Bool raise McapError
+pub fn LiveQuality::finish(Self, UInt64) -> Unit raise McapError
+pub fn LiveQuality::report(Self) -> Json
+pub fn LiveQuality::snapshot(Self) -> Bytes raise McapError
+
+type LiveQualityItem
 
 pub(all) struct Log {
   header : Header
@@ -1439,6 +1487,14 @@ pub struct RecordingStorage {
   list : () -> Array[Int] raise McapError
   fingerprint : (ReadSource) -> String raise McapError
 }
+
+pub struct RecordingTail {
+  identity : String
+  mut config : Json?
+  accepted : Array[Json]
+}
+pub fn RecordingTail::poll(Self, Bytes, (Int) -> ReadSource raise McapError, (ReadSource) -> String raise McapError, batch_bytes? : Int) -> LiveBatch? raise McapError
+pub fn RecordingTail::snapshot(Self) -> Bytes raise McapError
 
 pub(all) struct RecoveredBlock {
   start : UInt64

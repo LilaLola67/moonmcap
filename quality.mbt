@@ -100,6 +100,7 @@ pub fn check_quality(
       topics: rules.map(fn(r) { r.topic }),
       start_time: start,
       end_time: end,
+      limit: 2147483647,
     },
     pending_bytes,
   )

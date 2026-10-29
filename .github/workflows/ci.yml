@@ -180,6 +180,9 @@ jobs:
       - name: Verify streaming reads beyond interactive pagination
         if: matrix.target == 'js'
         run: python tools/pull_limit_workflows.py
+      - name: Verify incremental queries and live quality snapshots
+        if: matrix.target == 'js'
+        run: python tools/live_workflows.py
       - name: Verify real codec workers order cancellation budgets and faults
         if: matrix.target == 'js'
         run: python tools/worker_workflows.py
@@ -279,6 +282,7 @@ jobs:
             _interop/columnar/report.json
             _interop/tf/report.json
             _interop/pull-limits/report.json
+            _interop/live/report.json
   current-toolchain:
     runs-on: ubuntu-latest
     steps:

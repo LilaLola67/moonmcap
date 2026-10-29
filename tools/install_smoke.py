@@ -54,6 +54,7 @@ async fn smoke() -> Unit {
   // SCHEMA_EVOLUTION_SMOKE
   // SYNCHRONIZATION_SMOKE
   // TF_SMOKE
+  // LIVE_SMOKE
   println("INSTALLED_SMOKE_PASSED: unified worker query, paged fields, binary views, ROS1, temporal join, durable recording")
 }
 
@@ -143,6 +144,18 @@ TF = r"""let tf = @mcap.tf_tree()
 """
 
 
+LIVE = r"""let growing = @mcap.growing_tail("installed-live",@nodeio.source_sha256)
+  let live_batch = growing.poll(source,units=4096)
+  assert_eq(live_batch.messages.length(),32)
+  let growing = @mcap.growing_tail("installed-live",@nodeio.source_sha256,snapshot=growing.snapshot())
+  assert_eq(growing.poll(source).messages.length(),0)
+  let live_quality = @mcap.live_quality([{..@mcap.quality_rule("/n"),max_gap:Some(1UL)}],0UL)
+  for m in live_batch.messages {ignore(live_quality.feed("/n",m))}
+  live_quality.finish(31UL)
+  assert_true(live_quality.report() is Object(fields) && fields["finished"]==Json::boolean(true))
+"""
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--version')
@@ -161,6 +174,8 @@ def main():
     source=source.replace('// SYNCHRONIZATION_SMOKE',SYNCHRONIZATION if synchronization else '')
     tf=tuple(map(int,version.split('.'))) >= (0,16,5)
     source=source.replace('// TF_SMOKE',TF if tf else '')
+    live=tuple(map(int,version.split('.'))) >= (0,16,6)
+    source=source.replace('// LIVE_SMOKE',LIVE if live else '')
     work=ROOT/'_interop/installed'/uuid.uuid4().hex;worker=work/'cmd/worker';worker.mkdir(parents=True)
     (work/'moon.mod').write_text(f'name = "local/installed-smoke"\nversion = "0.0.1"\nimport {{ "LilaLola67/moonmcap@{version}", "moonbitlang/async@0.20.2", }}\n',encoding='utf-8')
     for path,text in [(work/'main.mbt',source),(work/'moon.pkg',PACKAGE),(worker/'main.mbt',WORKER),(worker/'moon.pkg',WORKER_PACKAGE)]:path.write_text(text,encoding='utf-8')
@@ -180,6 +195,7 @@ def main():
     if evolution:report['features']+=['directional schema comparison','normalized query views']
     if synchronization:report['features']+=['N-topic synchronization']
     if tf:report['features']+=['historical TF and semantic context']
+    if live:report['features']+=['growing-file snapshots','incremental quality watermarks']
     (work/'report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     (ROOT/'_interop/installed/report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print(f"Installed {version} consumer passed: {len(report['features'])} public API workflows and consumer-owned worker")
