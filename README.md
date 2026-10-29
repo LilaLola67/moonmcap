@@ -1,5 +1,12 @@
 # MoonMCAP
 
+0.16.9 的 [验证记录](examples/validation/release-0.16.9.json)：61 个工作流、Wasm 214 项 / JS 236 项测试通过，0.10.14 与 0.10.17 双工具链验证通过。
+
+新增[可复现处理配方](docs/recipes.md)、[容差回归与失败证据](docs/regression.md)、
+[实时设备录制和 Foxglove 桥接](docs/device-bridge.md)、[增量查询与实时质量监控](docs/live-tail.md)、
+[离线 TF](docs/tf.md)、[Arrow/Parquet 导出](docs/columnar.md)及
+[多话题同步和重采样](docs/synchronization.md)。外部 Python/SDK 适配器均为可选组件。
+
 新增[消息定义升级与统一查询视图](docs/schema-evolution.md)：按编码报告双向兼容性，以显式别名、默认值、整数检查和单位规则统一不同版本的数据。
 
 新增[结构化载荷回写](docs/payload-rewrite.md)：JSON、Protobuf、ROS1 和 plain XCDR1 字段修改，提供严格类型检查、反向编码和保留未知 Protobuf 字段的修改路径。
@@ -8,7 +15,7 @@
 
 新增[数据质量与故障复现工作流](docs/incident-workflows.md)：可配置质量规则、持续事件定位、带上下文的片段导出、有界触发录制，以及显式锚点时钟校正。附[可直接运行的配置](examples/incidents/README.md)，文件互操作通过独立 Python MCAP reader/writer 验证；时钟校正不声称真实设备精度。
 
-0.15.32 的 [验证记录](examples/validation/release-0.15.32.json)：49 个工作流、Wasm 185 项 / JS 207 项测试通过，0.10.14 与 0.10.17 双工具链验证通过。
+0.15.32 的 [历史验证记录](examples/validation/release-0.15.32.json)：49 个工作流、Wasm 185 项 / JS 207 项测试通过，0.10.14 与 0.10.17 双工具链验证通过。
 
 统一组合查询入口与复现说明见 [异步查询管线](docs/pipeline.md)。
 
@@ -32,7 +39,7 @@ HTTP 远程日志支持有界持久页缓存、并发预取、ETag 快照校验�
 
 [0.15.24 本地验证报告](examples/validation/release-0.15.24.json)记录 41 组回归、11 个语料案例、4719 条公开 CDR 消息的独立解码对照，以及 200 条消息的并行/串行对照，区分真实录制、转换数据与合成样例。
 
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.16.8**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
+MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.16.9**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
 
 ## 安装与运行
 
@@ -79,10 +86,10 @@ JS 目标：`moon test --target js`、`moon run cmd/main --target js`。内存�
 安装 Mooncakes 发行版本：
 
 ```sh
-moon add LilaLola67/moonmcap@0.16.8
+moon add LilaLola67/moonmcap@0.16.9
 ```
 
-已发布版本的独立安装验证：`python tools/install_smoke.py --version 0.16.8`。脚本在全新使用者目录中安装发行包，编译使用者自己的 worker 入口，运行查询、分页字段索引、二进制视图、ROS1、时间关联、录制恢复、质量、事件、上下文、触发录制、时钟映射，以及流式片段、批量恢复、载荷回写、结构比较和归一化共 16 类公开接口样例；产物保存在 `_interop/installed/`，旧版本按其实际可用接口选择样例。
+已发布版本的独立安装验证：`python tools/install_smoke.py --version 0.16.9`。脚本在全新使用者目录中安装发行包，编译使用者自己的 worker 入口，运行查询、分页字段索引、二进制视图、ROS1、时间关联、录制恢复、质量、事件、上下文、触发录制、时钟映射，以及流式片段、批量恢复、载荷回写、结构比较、归一化、多话题同步、TF 历史上下文、增量读取和质量水位线共 20 类公开接口样例；产物保存在 `_interop/installed/`，旧版本按其实际可用接口选择样例。
 
 也可从 GitHub 克隆复现全部样例；[发布包校验](docs/distribution.md) 可生成经过文件清单检查的模块归档。LZ4/Zstd、xxHash 与字节缓冲使用发行包内的独立内部组件，保留上游 Apache-2.0 许可证及来源，详见 [第三方说明](third_party/README.md)；异步包使用固定版本的 `moonbitlang/async 0.20.2`。运行时不需要 Python，也不调用外部压缩进程。
 

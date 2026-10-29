@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "inputs": {"source": {"path": "../files/zstd-summary.mcap", "kind": "mcap"}},
+  "rules": {"window": "window.json"},
+  "steps": [
+    {"id": "types", "op": "inventory", "input": "source"},
+    {"id": "slice", "op": "clip", "input": "source", "rules": "window"},
+    {"id": "verified", "op": "inventory", "input": "slice"}
+  ]
+}

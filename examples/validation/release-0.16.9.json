@@ -1,0 +1,318 @@
+{
+  "version": "0.16.9",
+  "date": "2026-10-29",
+  "tests": {
+    "wasm": 214,
+    "js": 236
+  },
+  "workflow_count": 61,
+  "workflows": [
+    "tools/interop.py",
+    "tools/conformance.py",
+    "examples/run.py",
+    "tools/range_benchmark.py",
+    "tools/stream_workflows.py",
+    "tools/cli_workflows.py",
+    "tools/batch_workflows.py",
+    "tools/repair_workflows.py",
+    "tools/async_workflows.py",
+    "tools/http_workflows.py",
+    "tools/external_workflows.py",
+    "tools/block_workflows.py",
+    "tools/transform_stream_workflows.py",
+    "tools/dataset_workflows.py",
+    "tools/sidecar_workflows.py",
+    "tools/json_workflows.py",
+    "tools/checkpoint_workflows.py",
+    "tools/input_checkpoint_workflows.py",
+    "tools/io_workflows.py",
+    "tools/aggregate_workflows.py",
+    "tools/diff_workflows.py",
+    "tools/replay_workflows.py",
+    "tools/async_dataset_workflows.py",
+    "tools/source_diagnostic_workflows.py",
+    "tools/large_source_workflows.py",
+    "tools/fuzz_workflows.py",
+    "tools/memory_benchmark.py",
+    "tools/corpus_workflows.py",
+    "tools/disk_index_workflows.py",
+    "tools/disk_index_scale.py",
+    "tools/aggregate_external_workflows.py",
+    "tools/chunk_checkpoint_workflows.py",
+    "tools/protobuf_workflows.py",
+    "tools/cached_http_workflows.py",
+    "tools/protojson_workflows.py",
+    "tools/cdr_workflows.py",
+    "tools/async_paged_workflows.py",
+    "tools/field_index_workflows.py",
+    "tools/chunk_pipeline_workflows.py",
+    "tools/worker_workflows.py",
+    "tools/worker_benchmark.py",
+    "tools/pipeline_workflows.py",
+    "tools/paged_field_workflows.py",
+    "tools/payload_view_workflows.py",
+    "tools/ros1_workflows.py",
+    "tools/temporal_join_workflows.py",
+    "tools/recording_session_workflows.py",
+    "tools/runtime_audit.py",
+    "tools/incident_workflows.py",
+    "tools/stream_clip_workflows.py",
+    "tools/clip_batch_workflows.py",
+    "tools/payload_rewrite_workflows.py",
+    "tools/schema_evolution_workflows.py",
+    "tools/synchronization_workflows.py",
+    "tools/columnar_workflows.py",
+    "tools/tf_workflows.py",
+    "tools/pull_limit_workflows.py",
+    "tools/live_workflows.py",
+    "tools/device_workflows.py",
+    "tools/regression_workflows.py",
+    "tools/recipe_workflows.py"
+  ],
+  "current_toolchain": {
+    "moonc": "0.10.17+d971670cd",
+    "steps": [
+      {
+        "step": "check",
+        "passed": true
+      },
+      {
+        "step": "build",
+        "passed": true
+      },
+      {
+        "step": "test",
+        "passed": true
+      },
+      {
+        "step": "doc",
+        "passed": true
+      }
+    ]
+  },
+  "new_workflow_reports": {
+    "stream-clips": {
+      "result": "passed",
+      "commands": 12,
+      "codecs": 3,
+      "messages_per_output": 1101,
+      "payload_bytes_per_output": 72089602,
+      "independent_reader": "mcap 1.3.0 with CRC validation",
+      "checks": [
+        "payloads and stable order",
+        "auxiliary records",
+        "atomic failure",
+        "existing output refused",
+        "source unchanged"
+      ],
+      "memory_scope": "reported writer chunk state, not total process RSS",
+      "origin": "synthetic independent writer"
+    },
+    "clip-batches": {
+      "result": "passed",
+      "commands": 10,
+      "origin": "synthetic independent writer",
+      "checks": [
+        "per-output resume",
+        "completed output reused without rewriting",
+        "incomplete output restarted",
+        "actual killed-process recovery",
+        "live lock refusal",
+        "configuration change refusal",
+        "completed output SHA-256 validation",
+        "checkpoint CRC validation",
+        "independent MCAP payload/order/CRC checks"
+      ],
+      "checkpoint_scope": "whole completed outputs, not mid-chunk or mid-output"
+    },
+    "payload-rewrite": {
+      "result": "passed",
+      "commands": 43,
+      "message_oracles": 144,
+      "formats": [
+        "JSON",
+        "ordinary Protobuf objects",
+        "ROS1",
+        "plain XCDR1 big/little endian"
+      ],
+      "reference": [
+        "Google protobuf",
+        "rosbags",
+        "Python MCAP CRC reader"
+      ],
+      "checks": [
+        "typed reverse serialization",
+        "uint64 full range",
+        "nested unknown Protobuf retention",
+        "oneof replacement",
+        "message envelope and declarations retained",
+        "auxiliary retention",
+        "source unchanged",
+        "atomic errors including late CRC"
+      ],
+      "data_origin": "synthetic independent reference runtimes"
+    },
+    "schema-evolution": {
+      "result": "passed",
+      "commands": 33,
+      "normalized_rows": 18,
+      "checks": [
+        "directional Protobuf required fields checked with official runtime",
+        "wire-compatible rename separated from query names",
+        "ordered ROS layout and bound changes",
+        "equivalent JSON/CDR views across three codecs",
+        "exact uint64 values",
+        "unit conversions",
+        "default/missing provenance",
+        "filter before limit",
+        "atomic failure"
+      ],
+      "origin": "synthetic independent writers and explicit normalization rules",
+      "scope": "conservative supported-schema comparison, not protoc or application semantic inference"
+    },
+    "synchronization": {
+      "result": "passed",
+      "commands": 33,
+      "rows_checked": 72,
+      "origin": "synthetic independently written MCAP, three compression modes",
+      "checks": [
+        "three topics",
+        "nearest/previous/next",
+        "missing rows",
+        "publish/header clocks",
+        "uniform interpolation and bracket provenance",
+        "no extrapolation",
+        "bounded failure",
+        "atomic output"
+      ]
+    },
+    "columnar": {
+      "result": "passed",
+      "roundtrip_rows": 50,
+      "formats": [
+        "Arrow IPC file",
+        "Parquet 2.6"
+      ],
+      "pyarrow": "21.0.0",
+      "checks": [
+        "explicit types",
+        "nested structs and nullable lists",
+        "binary",
+        "uint64 extremes",
+        "signed timestamp limits",
+        "batch boundaries",
+        "atomic failures",
+        "input/rules metadata"
+      ]
+    },
+    "tf": {
+      "result": "passed",
+      "commands": 36,
+      "origin": "synthetic independent JSON/CDR MCAP writers",
+      "checks": [
+        "three compression modes",
+        "nonidentical TF and log clocks",
+        "historical chain/inverse",
+        "static replay deduplication",
+        "semantic context brackets",
+        "self-contained clip lookup equivalence",
+        "CRC readback",
+        "atomic invalid requests"
+      ]
+    },
+    "pull-limits": {
+      "result": "passed",
+      "input_messages": 200010,
+      "clip_messages": 200010,
+      "last_sample_per_topic": 100004,
+      "origin": "synthetic independent MCAP writer"
+    },
+    "live": {
+      "result": "passed",
+      "commands": 28,
+      "origin": "synthetic independent MCAP writer and manifest envelope",
+      "checks": [
+        "incomplete chunks wait",
+        "CRC distinctions",
+        "SHA256 prefix mutation",
+        "atomic query/quality/snapshot bundle",
+        "unrelated raw topic",
+        "filter before output",
+        "no duplicate resume",
+        "rule binding",
+        "committed segments only",
+        "manifest rewind refused"
+      ]
+    },
+    "device": {
+      "result": "passed",
+      "sdk": "0.30.3",
+      "network_messages_checked": 3,
+      "checks": [
+        "real SDK advertise/subscribe",
+        "independent binary WebSocket frame decoding",
+        "exact UInt64 time",
+        "payload byte equality",
+        "MoonBit durable segments",
+        "CRC reader",
+        "resume",
+        "invalid envelopes rejected"
+      ],
+      "scope": "local synthetic device envelopes; physical device and desktop visualization not tested"
+    },
+    "regression": {
+      "result": "passed",
+      "runs": 27,
+      "brute_force_pairs": 222,
+      "checks": [
+        "exact decimal tolerance boundaries",
+        "UInt64-size counters",
+        "time alignment",
+        "missing/extra thresholds",
+        "event boundaries",
+        "reserved user keys",
+        "greedy brute-force oracle",
+        "fingerprint-checked MCAP evidence with context"
+      ]
+    },
+    "recipes": {
+      "result": "passed",
+      "checks": [
+        "six-step pipeline, exact Parquet readback, MCAP CRC readback, unchanged completed outputs",
+        "completed output modification rejected",
+        "durable pending recovery before and after artifact rename",
+        "rule, code, stored plan and source fingerprint changes rejected",
+        "live owner refused; dead owner recovered",
+        "surviving subprocess blocks retry until exited",
+        "empty initialization recovers only matching plan",
+        "unreceipted staging is quarantined and retried",
+        "analysis failures remain completed reproducible artifacts",
+        "publication budget, forward dependencies and hidden evidence files rejected",
+        "checked-in three-step recipe runs unchanged"
+      ],
+      "pipeline_steps": 6,
+      "table_rows": 12,
+      "clip_messages": 5
+    }
+  },
+  "effective_root_core_lines": 22622,
+  "effective_own_all_mbt_lines": 32200,
+  "count_exclusions": [
+    "comments",
+    "blank lines",
+    "tests",
+    "generated interfaces",
+    "adapted third-party internals",
+    "Python development tools"
+  ],
+  "own_all_scope": "Root core plus asyncio/nodeio/CLI .mbt, including embedded host bridges; not a count of pure MoonBit-only syntax.",
+  "existing_public_function_signatures_preserved_since": "ec2ab7e",
+  "scope": "Prepublication local evidence. Registry installation, hosted docs and exact GitHub CI are verified separately.",
+  "limitations": [
+    "Columnar export, Foxglove bridge, tolerant regression and recipes are optional external adapters; core container processing remains MoonBit.",
+    "Device validation uses real SDK loopback networking and synthetic messages; physical hardware and desktop UI not tested.",
+    "Live quality has explicit watermark and lateness policy; partial prefixes are not full-file verification.",
+    "Synchronization uses explicit clocks and greedy matching; interpolation does not establish measured multi-device clock accuracy.",
+    "Recipe publication and checksums are local integrity and recovery mechanisms, not cryptographic signatures or external exactly-once execution."
+  ]
+}

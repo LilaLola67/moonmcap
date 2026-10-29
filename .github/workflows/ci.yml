@@ -191,6 +191,9 @@ jobs:
       - name: Verify tolerant experiment regression and evidence clips
         if: matrix.target == 'js'
         run: python tools/regression_workflows.py
+      - name: Verify reproducible recipes and publication crash recovery
+        if: matrix.target == 'js'
+        run: python tools/recipe_workflows.py
       - name: Verify real codec workers order cancellation budgets and faults
         if: matrix.target == 'js'
         run: python tools/worker_workflows.py
@@ -293,6 +296,7 @@ jobs:
             _interop/live/report.json
             _interop/device/report.json
             _interop/regression/report.json
+            _interop/recipes/report.json
   current-toolchain:
     runs-on: ubuntu-latest
     steps:

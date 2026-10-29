@@ -126,6 +126,10 @@ fn run(
     tail_file(values, scope)
     return
   }
+  if values[0] == "inventory" && values.length() == 3 {
+    inventory_file(values, scope)
+    return
+  }
   if values[0] == "compare" && values.length() == 6 {
     let schema_encoding = encoding(values[1])
     let old : @mcap.Schema = {
