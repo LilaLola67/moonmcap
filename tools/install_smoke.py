@@ -51,6 +51,7 @@ async fn smoke() -> Unit {
   // INCIDENT_SMOKE
   // STREAM_CLIP_SMOKE
   // PAYLOAD_REWRITE_SMOKE
+  // SCHEMA_EVOLUTION_SMOKE
   println("INSTALLED_SMOKE_PASSED: unified worker query, paged fields, binary views, ROS1, temporal join, durable recording")
 }
 
@@ -112,6 +113,15 @@ PAYLOAD_REWRITE = r"""let typed = @mcap.cdr_decoder("demo/Value",b"uint64 counte
   assert_eq(edited.log_time,0UL)
 """
 
+SCHEMA_EVOLUTION = r"""let old_schema : @mcap.Schema = {id:1,name:"demo/Value",encoding:"ros2msg",data:b"uint32 x"}
+  let new_schema = {..old_schema,data:b"uint32 renamed"}
+  let comparison = @mcap.compare_payload_schemas(old_schema,new_schema)
+  assert_true(comparison is Object(fields) && fields["old_reader_new_data"] == Json::boolean(true) && fields["old_query_new_data"] == Json::boolean(false))
+  let normalized = incident_source.decode_payload(@mcap.normalizing_decoder(@mcap.standard_payload_decoder(),[{..@mcap.normalized_field("/n","/scaled"),conversion:@mcap.ScaleValue(2.0,0.0)}])).stream(query={..@mcap.all_query(),offset:3,limit:1})
+  assert_true(normalized.next() is Some(message) && message.data == b"{\"scaled\":6}")
+  normalized.cancel()
+"""
+
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
@@ -125,6 +135,8 @@ def main():
     rewrites=tuple(map(int,version.split('.'))) >= (0,16,2)
     source=source.replace('// STREAM_CLIP_SMOKE',STREAM_CLIP if stream_clips else '')
     source=source.replace('// PAYLOAD_REWRITE_SMOKE',PAYLOAD_REWRITE if rewrites else '')
+    evolution=tuple(map(int,version.split('.'))) >= (0,16,3)
+    source=source.replace('// SCHEMA_EVOLUTION_SMOKE',SCHEMA_EVOLUTION if evolution else '')
     work=ROOT/'_interop/installed'/uuid.uuid4().hex;worker=work/'cmd/worker';worker.mkdir(parents=True)
     (work/'moon.mod').write_text(f'name = "local/installed-smoke"\nversion = "0.0.1"\nimport {{ "LilaLola67/moonmcap@{version}", "moonbitlang/async@0.20.2", }}\n',encoding='utf-8')
     for path,text in [(work/'main.mbt',source),(work/'moon.pkg',PACKAGE),(worker/'main.mbt',WORKER),(worker/'moon.pkg',WORKER_PACKAGE)]:path.write_text(text,encoding='utf-8')
@@ -141,6 +153,7 @@ def main():
     if incidents:report['features']+=['quality rules','event detection','context clips','trigger recording','clock maps']
     if stream_clips:report['features']+=['stream context clips','artifact batch resume']
     if rewrites:report['features']+=['typed payload encoding and rewrites']
+    if evolution:report['features']+=['directional schema comparison','normalized query views']
     (work/'report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     (ROOT/'_interop/installed/report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print(f"Installed {version} consumer passed: {len(report['features'])} public API workflows and consumer-owned worker")

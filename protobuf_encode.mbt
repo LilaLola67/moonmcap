@@ -53,7 +53,7 @@ fn ProtobufDecoder::encode_scalar(
     }
     2 => {
       let n = payload_float(value)
-      let f = n.to_float()
+      let f = Float::from_double(n)
       if !n.is_inf() && f.to_double().is_inf() {
         raise Invalid("protobuf float32 overflow")
       }

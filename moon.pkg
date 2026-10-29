@@ -6,6 +6,7 @@ import {
   "moonbitlang/core/json",
   "moonbitlang/core/bigint",
   "moonbitlang/core/float",
+  "moonbitlang/core/double",
   "LilaLola67/moonmcap/internal/lz4",
   "LilaLola67/moonmcap/internal/checksum",
   "LilaLola67/moonmcap/internal/zstd",

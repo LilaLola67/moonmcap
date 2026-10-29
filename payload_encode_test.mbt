@@ -9,6 +9,26 @@ fn encoded_has(bytes : Bytes, part : Bytes) -> Bool {
 }
 
 ///|
+test "payload encoders preserve nonfinite floats and reject finite float32 overflow" {
+  let decoder = @moonmcap.cdr_decoder("demo/Float", b"float32 x\nfloat64 y")
+  let proto = @moonmcap.protobuf_decoder(protobuf_fixture())
+  for name in ["NaN", "Infinity", "-Infinity"] {
+    let value : Json = { "x": name, "y": name }
+    assert_eq(decoder.decode(decoder.encode(value)), value)
+    let value : Json = { "f1": name, "f2": name }
+    assert_eq(
+      proto.decode("telemetry.Sample", proto.encode("telemetry.Sample", value)),
+      value,
+    )
+  }
+  try decoder.encode(@json.parse("{\"x\":3.5e38,\"y\":0}")) catch {
+    _ => ()
+  } noraise {
+    _ => fail("float32 overflow accepted")
+  }
+}
+
+///|
 test "CDR and ROS1 encoders roundtrip exact types endian strings and arrays" {
   let definition = b"uint8 prefix\nint64 low\nuint64 high\nfloat64 x\nstring label\nuint16[2] fixed\nint32[] data"
   let value = @json.parse(

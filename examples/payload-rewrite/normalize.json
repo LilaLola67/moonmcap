@@ -1,0 +1,6 @@
+{
+  "fields": [
+    {"source":"/counter","target":"/sample_id","conversion":"unsigned","bits":64},
+    {"source":"/frame_id","target":"/frame","conversion":"text"}
+  ]
+}

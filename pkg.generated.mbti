@@ -49,6 +49,8 @@ pub fn clock_map(Array[ClockAnchor], extrapolate? : Bool) -> ClockMap raise Mcap
 
 pub fn codec_worker_handler(input_bytes? : Int, output_bytes? : Int, context_bytes? : Int) -> ((String) -> String) raise McapError
 
+pub fn compare_payload_schemas(Schema, Schema, issue_limit? : Int) -> Json raise McapError
+
 pub fn compress_payload(Bytes, Compression) -> Bytes
 
 pub fn compute_file_statistics(Log, UInt) -> FileStatistics
@@ -203,6 +205,12 @@ pub fn new_stream_writer(WriteSink, profile? : String, options? : StreamOptions,
 
 pub fn new_write_sink((Bytes) -> Unit raise McapError) -> WriteSink
 
+pub fn normalize_payload(Json, Array[NormalizedField]) -> NormalizedPayload raise McapError
+
+pub fn normalized_field(String, String) -> NormalizedField
+
+pub fn normalizing_decoder(PayloadDecoder, Array[NormalizedField]) -> PayloadDecoder raise McapError
+
 pub fn open_dataset(Array[QuerySource], limits? : Limits, declaration_bytes? : Int, max_sources? : Int) -> Dataset raise McapError
 
 pub fn open_disk_sidecar(ReadSource, ReadSource, IndexVerification, limits? : Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64) -> DiskSidecarReader raise McapError
@@ -222,6 +230,8 @@ pub fn parse_command(Array[String]) -> CommandOptions raise McapError
 pub fn parse_decimal(String) -> UInt64 raise McapError
 
 pub fn payload_decoder((Schema?, Channel, Bytes) -> Json raise McapError) -> PayloadDecoder
+
+pub fn payload_normalizer(Array[NormalizedField]) -> PayloadNormalizer raise McapError
 
 pub fn payload_rewriter((Schema?, Channel, Bytes, Array[PayloadEdit]) -> Bytes raise McapError) -> PayloadRewriter
 
@@ -1107,6 +1117,29 @@ pub(all) enum MissingMatch {
   JoinDrop
 } derive(Eq, @debug.Debug)
 
+pub(all) enum NormalizedConversion {
+  KeepValue
+  SignedValue(Int)
+  UnsignedValue(Int)
+  ScaleValue(Double, Double)
+  TextValue
+  BooleanValue
+}
+
+pub(all) struct NormalizedField {
+  source : String
+  target : String
+  default_value : Json?
+  required : Bool
+  conversion : NormalizedConversion
+}
+
+pub(all) struct NormalizedPayload {
+  value : Json
+  defaulted : Array[String]
+  missing : Array[String]
+}
+
 pub struct PagedFieldHeader {
   template : FieldIndex
   layout : FieldPageLayout
@@ -1124,6 +1157,12 @@ pub(all) struct PayloadEdit {
   path : String
   replacement : Json?
 }
+
+pub struct PayloadNormalizer {
+  fields : Array[NormalizedField]
+  paths : Array[(Array[String], Array[String])]
+}
+pub fn PayloadNormalizer::normalize(Self, Json) -> NormalizedPayload raise McapError
 
 type PayloadOutput
 
@@ -1457,6 +1496,8 @@ pub(all) struct Schema {
 pub fn Schema::equal(Self, Self) -> Bool
 pub fn Schema::not_equal(Self, Self) -> Bool
 pub fn Schema::to_repr(Self) -> @debug.Repr
+
+type SchemaComparison
 
 type SchemaDecoder
 

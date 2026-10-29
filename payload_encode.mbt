@@ -136,9 +136,9 @@ fn payload_signed(value : Json, bits : Int) -> UInt64 raise McapError {
 fn payload_float(value : Json) -> Double raise McapError {
   match value {
     Number(number, ..) if !number.is_nan() && !number.is_inf() => number
-    String("NaN") => Double::nan()
-    String("Infinity") => Double::inf(1)
-    String("-Infinity") => Double::inf(-1)
+    String("NaN") => @double.not_a_number
+    String("Infinity") => @double.infinity
+    String("-Infinity") => @double.neg_infinity
     _ => raise Invalid("payload floating point value expected")
   }
 }
@@ -216,7 +216,7 @@ fn CdrDecoder::encode_value(
     "float64" => wire.unsigned(payload_float(value).reinterpret_as_uint64(), 8)
     "float32" => {
       let number = payload_float(value)
-      let converted = number.to_float()
+      let converted = Float::from_double(number)
       if !number.is_inf() && converted.to_double().is_inf() {
         raise Invalid("payload float32 overflow")
       }

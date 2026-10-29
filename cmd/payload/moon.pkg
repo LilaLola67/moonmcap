@@ -1,10 +1,15 @@
 import {
   "LilaLola67/moonmcap" @mcap,
   "LilaLola67/moonmcap/nodeio",
+  "moonbitlang/core/encoding/utf8",
 }
 
 pkgtype(kind: "executable")
 
 options(
-  targets: { "main.mbt": [ "js" ], "unsupported.mbt": [ "not", "js" ] },
+  targets: {
+    "main.mbt": [ "js" ],
+    "schema_commands.mbt": [ "js" ],
+    "unsupported.mbt": [ "not", "js" ],
+  },
 )
