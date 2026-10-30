@@ -2,8 +2,8 @@
 /// An in-memory time index, not an on-disk MCAP MessageIndex.
 pub struct QueryIndex {
   log : Log
-  by_channel : Map[Int, Array[Int]]
-  all_messages : Array[Int]
+  by_channel : Map[Int32, Array[Int32]]
+  all_messages : Array[Int32]
 }
 
 ///|
@@ -12,8 +12,8 @@ pub(all) struct Query {
   start_time : UInt64
   end_time : UInt64
   descending : Bool
-  offset : Int
-  limit : Int
+  offset : Int32
+  limit : Int32
 }
 
 ///|
@@ -29,7 +29,7 @@ pub fn all_query() -> Query {
 }
 
 ///|
-fn sort_positions(log : Log, positions : Array[Int]) -> Unit {
+fn sort_positions(log : Log, positions : Array[Int32]) -> Unit {
   positions.sort_by(fn(a, b) {
     let ta = log.messages[a].log_time
     let tb = log.messages[b].log_time
@@ -60,7 +60,7 @@ pub fn copy_log(log : Log) -> Log {
 pub fn build_query_index(log : Log) -> QueryIndex raise McapError {
   validate_log(log)
   let log = copy_log(log)
-  let by_channel : Map[Int, Array[Int]] = {}
+  let by_channel : Map[Int32, Array[Int32]] = {}
   let all_messages = []
   for i = 0; i < log.messages.length(); i = i + 1 {
     let id = log.messages[i].channel_id
@@ -80,10 +80,10 @@ pub fn build_query_index(log : Log) -> QueryIndex raise McapError {
 ///|
 fn lower_bound(
   log : Log,
-  positions : Array[Int],
+  positions : Array[Int32],
   time : UInt64,
   exclusive : Bool,
-) -> Int {
+) -> Int32 {
   let mut left = 0
   let mut right = positions.length()
   while left < right {

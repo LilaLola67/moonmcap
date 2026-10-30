@@ -34,7 +34,7 @@ pub fn decompress_payload(
   bytes : Bytes,
   compression : String,
   expected_size : UInt64,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Bytes raise McapError {
   let expected = bounded_length(
     expected_size,
@@ -83,8 +83,8 @@ pub fn decompress_payload(
 /// Preflight the complete frame before a decoder allocates its history/window.
 fn validate_zstd_frame(
   bytes : Bytes,
-  expected : Int,
-  maximum : Int,
+  expected : Int32,
+  maximum : Int32,
 ) -> Unit raise McapError {
   let input = cursor(bytes, default_limits())
   if input.u32() != 0xfd2fb528U {

@@ -9,7 +9,7 @@ pub fn encode_header(value : Header) -> Bytes {
 ///|
 pub fn decode_header(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Header raise McapError {
   let input = cursor(bytes, limits)
   { profile: input.text(), library: input.text(), }
@@ -31,7 +31,7 @@ pub fn encode_schema(value : Schema) -> Bytes raise McapError {
 ///|
 pub fn decode_schema(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Schema raise McapError {
   let input = cursor(bytes, limits)
   let id = input.u16()
@@ -61,7 +61,7 @@ pub fn encode_channel(value : Channel) -> Bytes raise McapError {
 ///|
 pub fn decode_channel(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Channel raise McapError {
   let input = cursor(bytes, limits)
   let id = input.u16()
@@ -86,7 +86,7 @@ pub fn encode_message(value : Message) -> Bytes raise McapError {
 ///|
 pub fn decode_message(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Message raise McapError {
   let input = cursor(bytes, limits)
   let channel_id = input.u16()
@@ -127,7 +127,7 @@ pub fn encode_metadata(value : Metadata) -> Bytes raise McapError {
 ///|
 pub fn decode_metadata(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Metadata raise McapError {
   let input = cursor(bytes, limits)
   { name: input.text(), entries: input.pairs(), }

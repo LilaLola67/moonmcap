@@ -106,7 +106,10 @@ fn protobuf_map_key(value : Json) -> String raise McapError {
 }
 
 ///|
-fn protobuf_packed(kind : Int, wire : ProtoWire) -> ProtoValue raise McapError {
+fn protobuf_packed(
+  kind : Int32,
+  wire : ProtoWire,
+) -> ProtoValue raise McapError {
   if wire.budget[0] <= 0 {
     raise Invalid("protobuf packed item budget exceeded")
   }
@@ -123,8 +126,8 @@ fn ProtobufDecoder::message(
   self : ProtobufDecoder,
   name : String,
   bytes : Bytes,
-  budget : Array[Int],
-  depth : Int,
+  budget : Array[Int32],
+  depth : Int32,
   keep_fields? : Array[String],
 ) -> Json raise McapError {
   if depth > self.options.depth {
@@ -135,9 +138,9 @@ fn ProtobufDecoder::message(
     None => raise Invalid("unknown protobuf message type: \{name}")
   }
   let wire = proto_wire(bytes, budget)
-  let values : Map[Int, Array[ProtoValue]] = Map([])
-  let oneofs : Map[Int, Int] = Map([])
-  let present : Map[Int, Bool] = Map([])
+  let values : Map[Int32, Array[ProtoValue]] = Map([])
+  let oneofs : Map[Int32, Int32] = Map([])
+  let present : Map[Int32, Bool] = Map([])
   while wire.next() is Some(item) {
     guard model.fields.get(item.number) is Some(field) else {
       wire.skip(item, self.options.depth - depth)

@@ -2,11 +2,11 @@
 pub struct AsyncPagedFields {
   index : AsyncSource
   header : @mcap.PagedFieldHeader
-  pages : Array[(Int, @mcap.FieldPage)]
-  cache_limit : Int
-  mut reads : Int
-  mut hits : Int
-  mut peak_pages : Int
+  pages : Array[(Int32, @mcap.FieldPage)]
+  cache_limit : Int32
+  mut reads : Int32
+  mut hits : Int32
+  mut peak_pages : Int32
 }
 
 ///|
@@ -16,7 +16,7 @@ pub async fn open_paged_fields(
   source_size : UInt64,
   digest : String,
   decoder_identity : String,
-  cache_pages? : Int = 4,
+  cache_pages~ : Int32 = 4,
 ) -> AsyncPagedFields {
   if index.size() < 16UL || cache_pages < 0 || cache_pages > 64 {
     raise @mcap.io_error("invalid paged field envelope or cache budget")
@@ -59,7 +59,7 @@ pub async fn open_paged_fields(
 ///|
 async fn AsyncPagedFields::load(
   self : AsyncPagedFields,
-  number : Int,
+  number : Int32,
 ) -> @mcap.FieldPage {
   for i = 0; i < self.pages.length(); i = i + 1 {
     if self.pages[i].0 == number {
@@ -96,7 +96,7 @@ async fn AsyncPagedFields::load(
 pub async fn AsyncPagedFields::may_match(
   self : AsyncPagedFields,
   offset : UInt64,
-  span : Int,
+  span : Int32,
   filter : @mcap.JsonFilter,
 ) -> Bool {
   let mut low = 0

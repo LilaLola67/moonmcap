@@ -1,7 +1,7 @@
 ///|
 struct ChunkPart {
-  input : Int
-  chunk : Int
+  input : Int32
+  chunk : Int32
   messages : UInt64
   bytes : UInt64
   digest : String
@@ -13,8 +13,8 @@ struct ChunkJobState {
   inputs : Array[String]
   parts : Array[ChunkPart]
   crcs : Array[Bool]
-  mut completed : Int
-  mut next_chunk : Int
+  mut completed : Int32
+  mut next_chunk : Int32
 }
 
 ///|
@@ -136,7 +136,7 @@ fn decode_chunk_job(bytes : Bytes) -> ChunkJobState raise McapError {
 }
 
 ///|
-fn chunk_job_ids(bytes : Bytes) -> Array[Int] raise McapError {
+fn chunk_job_ids(bytes : Bytes) -> Array[Int32] raise McapError {
   let state = decode_chunk_job(bytes)
   Array::makei(state.parts.length(), fn(i) { i })
 }
@@ -176,9 +176,9 @@ fn resumable_chunk_merge_internal(
   fingerprint : (ReadSource) -> String raise McapError,
   save : (Bytes) -> Unit raise McapError,
   checkpoint? : Bytes,
-  options? : ExternalOptions = external_options(),
-  max_parts? : Int = 10000,
-  cancelled? : () -> Bool = fn() { false },
+  options~ : ExternalOptions = external_options(),
+  max_parts~ : Int32 = 10000,
+  cancelled~ : () -> Bool = fn() { false },
   finalize? : (ChunkJobState, UInt64) -> Json raise McapError,
 ) -> Json raise McapError {
   let result = try {
@@ -240,7 +240,7 @@ fn resumable_chunk_merge_internal(
     if messages > options.limits.max_records.to_uint64() {
       raise Invalid("chunk merge message count exceeds budget")
     }
-    let sink_for = fn(id : Int) -> WriteSink raise McapError {
+    let sink_for = fn(id : Int32) -> WriteSink raise McapError {
       if id >= max_parts {
         raise Invalid("chunk part count budget exceeded")
       }

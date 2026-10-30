@@ -1,9 +1,9 @@
 ///|
 struct JsonDocumentParser {
   bytes : Bytes
-  depth : Int
-  mut pos : Int
-  mut nodes : Int
+  depth : Int32
+  mut pos : Int32
+  mut nodes : Int32
 }
 
 ///|
@@ -61,7 +61,7 @@ fn JsonDocumentParser::string(
 struct ExactDecimal {
   negative : Bool
   digits : String
-  exponent : Int
+  exponent : Int32
 }
 
 ///|
@@ -149,7 +149,7 @@ fn decimal_parts(text : String) -> ExactDecimal raise McapError {
 }
 
 ///|
-fn compare_decimal(a : String, b : String) -> Int raise McapError {
+fn compare_decimal(a : String, b : String) -> Int32 raise McapError {
   let left = decimal_parts(a)
   let right = decimal_parts(b)
   if left.negative != right.negative {
@@ -188,7 +188,7 @@ fn compare_decimal(a : String, b : String) -> Int raise McapError {
 ///|
 fn JsonDocumentParser::value(
   self : JsonDocumentParser,
-  depth : Int,
+  depth : Int32,
 ) -> Json raise McapError {
   self.space()
   self.nodes += 1
@@ -266,8 +266,8 @@ fn JsonDocumentParser::value(
 ///|
 fn parse_json_document(
   bytes : Bytes,
-  maximum : Int,
-  depth : Int,
+  maximum : Int32,
+  depth : Int32,
 ) -> Json raise McapError {
   if bytes.length() > maximum {
     raise Invalid("JSON payload byte budget exceeded")

@@ -10,13 +10,13 @@ pub fn create_sink(String) -> @moonmcap.WriteSink raise @moonmcap.McapError
 
 pub fn file_identity_token(String) -> String raise @moonmcap.McapError
 
-pub fn file_scope(max_open? : Int, read_ahead_bytes? : Int) -> FileScope
+pub fn file_scope(max_open? : Int32, read_ahead_bytes? : Int32) -> FileScope
 
 pub fn open_artifact_directory(String, resume? : Bool) -> ArtifactDirectory raise @moonmcap.McapError
 
 pub fn open_file(String) -> @moonmcap.ReadSource raise @moonmcap.McapError
 
-pub fn open_managed_file(String, read_ahead_bytes? : Int) -> ManagedFile raise @moonmcap.McapError
+pub fn open_managed_file(String, read_ahead_bytes? : Int32) -> ManagedFile raise @moonmcap.McapError
 
 pub fn open_merge_job(String, resume? : Bool) -> MergeJob raise @moonmcap.McapError
 
@@ -24,7 +24,7 @@ pub fn open_recording_directory(String, resume? : Bool) -> RecordingDirectory ra
 
 pub fn output_transaction(String) -> OutputTransaction raise @moonmcap.McapError
 
-pub fn read_file(String, maximum? : Int) -> Bytes raise @moonmcap.McapError
+pub fn read_file(String, maximum? : Int32) -> Bytes raise @moonmcap.McapError
 
 pub fn sort_directory(String) -> @moonmcap.SortStorage raise @moonmcap.McapError
 
@@ -38,24 +38,24 @@ pub fn write_new_file(String, Bytes) -> Unit raise @moonmcap.McapError
 
 // Types and methods
 pub struct ArtifactDirectory {
-  operate : (String, Int, Bytes) -> String
+  operate : (String, Int32, Bytes) -> String
   mut closed : Bool
 }
 pub fn ArtifactDirectory::close(Self) -> Unit raise @moonmcap.McapError
 pub fn ArtifactDirectory::storage(Self) -> @moonmcap.ArtifactBatchStorage
 
 pub(all) struct FileIoMetrics {
-  physical_reads : Int
+  physical_reads : Int32
   physical_bytes : UInt64
-  cached_bytes : Int
+  cached_bytes : Int32
   closed : Bool
 }
 
 pub struct FileScope {
   paths : Array[String]
   files : Array[ManagedFile]
-  maximum : Int
-  ahead : Int
+  maximum : Int32
+  ahead : Int32
   mut closed : Bool
 }
 pub fn FileScope::close(Self) -> Unit raise @moonmcap.McapError
@@ -96,7 +96,7 @@ pub fn OutputTransaction::publish(Self) -> Unit raise @moonmcap.McapError
 pub fn OutputTransaction::sink(Self) -> @moonmcap.WriteSink
 
 pub struct RecordingDirectory {
-  operate : (String, Int, Bytes) -> String
+  operate : (String, Int32, Bytes) -> String
   mut closed : Bool
 }
 pub fn RecordingDirectory::close(Self) -> Unit raise @moonmcap.McapError

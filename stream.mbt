@@ -3,17 +3,17 @@
 pub struct StreamDecoder {
   limits : Limits
   pending : @buffer.Buffer
-  mut expected : Int
-  mut offset : Int
-  mut count : Int
+  mut expected : Int32
+  mut offset : Int32
+  mut count : Int32
   mut failed : Bool
   mut finished : Bool
 }
 
 ///|
 pub fn StreamDecoder::new(
-  limits? : Limits = default_limits(),
-  base? : Int = 0,
+  limits~ : Limits = default_limits(),
+  base~ : Int32 = 0,
 ) -> StreamDecoder raise McapError {
   if limits.max_record_bytes < 0 || limits.max_records < 0 || base < 0 {
     raise Invalid("invalid stream limits")
@@ -30,12 +30,12 @@ pub fn StreamDecoder::new(
 }
 
 ///|
-pub fn StreamDecoder::buffered_bytes(self : StreamDecoder) -> Int {
+pub fn StreamDecoder::buffered_bytes(self : StreamDecoder) -> Int32 {
   self.pending.length()
 }
 
 ///|
-pub fn StreamDecoder::record_count(self : StreamDecoder) -> Int {
+pub fn StreamDecoder::record_count(self : StreamDecoder) -> Int32 {
   self.count
 }
 

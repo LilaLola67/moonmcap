@@ -2,7 +2,7 @@
 extern "js" fn artifact_host(
   directory : String,
   resume : Bool,
-) -> (String, Int, Bytes) -> String =
+) -> (String, Int32, Bytes) -> String =
   #| (directory,resume)=>{
   #| const fs=process.getBuiltinModule('node:fs'),p=process.getBuiltinModule('node:path'),crypto=process.getBuiltinModule('node:crypto');
   #| const path=p.resolve(directory),owner='MoonMCAP artifact batch 1\n',lock=p.join(path,'lock'),guard=p.join(path,'recovery'),handles=new Map();let key,closed=false;
@@ -44,7 +44,7 @@ extern "js" fn artifact_host(
 ///|
 pub fn open_artifact_directory(
   path : String,
-  resume? : Bool = false,
+  resume~ : Bool = false,
 ) -> ArtifactDirectory raise @mcap.McapError {
   let directory : ArtifactDirectory = {
     operate: artifact_host(path, resume),

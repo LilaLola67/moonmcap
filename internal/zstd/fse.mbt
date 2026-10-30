@@ -5,17 +5,17 @@
 priv struct FseTable {
   symbols : FixedArray[Byte]
   num_bits : FixedArray[Byte]
-  new_state_base : FixedArray[Int]
-  _accuracy_log : Int
-  _table_size : Int
+  new_state_base : FixedArray[Int32]
+  _accuracy_log : Int32
+  _table_size : Int32
 }
 
 ///|
 /// Builds an FSE table from normalized frequencies.
 fn FseTable::build(
-  norm_counts : FixedArray[Int],
-  max_symbol : Int,
-  accuracy_log : Int,
+  norm_counts : FixedArray[Int32],
+  max_symbol : Int32,
+  accuracy_log : Int32,
 ) -> FseTable {
   let table_size = 1 << accuracy_log
   let symbols = FixedArray::make(table_size, b'\x00')
@@ -81,7 +81,7 @@ fn FseTable::build(
 }
 
 ///|
-fn highest_bit(n_ : Int) -> Int {
+fn highest_bit(n_ : Int32) -> Int32 {
   if n_ <= 0 {
     return 0
   }
@@ -93,10 +93,10 @@ fn highest_bit(n_ : Int) -> Int {
 }
 
 ///|
-const FSE_MIN_TABLELOG : Int = 5
+const FSE_MIN_TABLELOG : Int32 = 5
 
 ///|
-fn read_le32_padded(src : BytesView, pos : Int) -> UInt {
+fn read_le32_padded(src : BytesView, pos : Int32) -> UInt32 {
   let b0 = if pos < src.length() { src.unsafe_get(pos).to_uint() } else { 0U }
   let b1 = if pos + 1 < src.length() {
     src.unsafe_get(pos + 1).to_uint()
@@ -119,9 +119,9 @@ fn read_le32_padded(src : BytesView, pos : Int) -> UInt {
 ///|
 fn reload_ncount_bits(
   src : BytesView,
-  ip : Int,
-  bit_count : Int,
-) -> (UInt, Int, Int) {
+  ip : Int32,
+  bit_count : Int32,
+) -> (UInt32, Int32, Int32) {
   let next_ip = ip + (bit_count >> 3)
   let next_bit_count = bit_count & 7
   (read_le32_padded(src, next_ip) >> next_bit_count, next_ip, next_bit_count)
@@ -130,9 +130,9 @@ fn reload_ncount_bits(
 ///|
 fn read_ncount(
   src : BytesView,
-  max_symbol : Int,
-  max_accuracy_log : Int,
-) -> (FixedArray[Int], Int, Int, Int) raise ZstdError {
+  max_symbol : Int32,
+  max_accuracy_log : Int32,
+) -> (FixedArray[Int32], Int32, Int32, Int32) raise ZstdError {
   guard src.length() > 0 else {
     raise ZstdError::CorruptData("empty FSE table description")
   }
@@ -235,9 +235,9 @@ fn read_ncount(
 ///|
 fn build_fse_table_from_description(
   src : BytesView,
-  max_symbol : Int,
-  max_accuracy_log : Int,
-) -> (FseTable, Int) raise ZstdError {
+  max_symbol : Int32,
+  max_accuracy_log : Int32,
+) -> (FseTable, Int32) raise ZstdError {
   let (normalized, actual_max_symbol, table_log, bytes_read) = read_ncount(
     src, max_symbol, max_accuracy_log,
   )
@@ -246,7 +246,7 @@ fn build_fse_table_from_description(
 
 ///|
 /// Decodes an FSE-encoded stream using the given table.
-fn fse_decode_symbol(table : FseTable, state : Int) -> (Byte, Int, Int) {
+fn fse_decode_symbol(table : FseTable, state : Int32) -> (Byte, Int32, Int32) {
   let s = if state >= 0 && state < table.symbols.length() { state } else { 0 }
   let sym = table.symbols.unsafe_get(s)
   let nb = table.num_bits.unsafe_get(s).to_int()
@@ -256,7 +256,7 @@ fn fse_decode_symbol(table : FseTable, state : Int) -> (Byte, Int, Int) {
 
 ///|
 /// Predefined FSE table for literal lengths (from RFC 8878 section 3.1.1).
-let ll_default_norm : FixedArray[Int] = {
+let ll_default_norm : FixedArray[Int32] = {
   let a = FixedArray::make(36, 0)
   a[0] = 4
   a[1] = 3
@@ -299,7 +299,7 @@ let ll_default_norm : FixedArray[Int] = {
 
 ///|
 /// Predefined FSE table for match lengths (from RFC 8878).
-let ml_default_norm : FixedArray[Int] = {
+let ml_default_norm : FixedArray[Int32] = {
   let a = FixedArray::make(53, 0)
   a[0] = 1
   a[1] = 4
@@ -359,7 +359,7 @@ let ml_default_norm : FixedArray[Int] = {
 
 ///|
 /// Predefined FSE table for offset codes (from RFC 8878).
-let of_default_norm : FixedArray[Int] = {
+let of_default_norm : FixedArray[Int32] = {
   let a = FixedArray::make(29, 0)
   a[0] = 1
   a[1] = 1
@@ -395,13 +395,13 @@ let of_default_norm : FixedArray[Int] = {
 
 ///|
 /// Default accuracy logs.
-const LL_DEFAULT_ACCURACY : Int = 6
+const LL_DEFAULT_ACCURACY : Int32 = 6
 
 ///|
-const ML_DEFAULT_ACCURACY : Int = 6
+const ML_DEFAULT_ACCURACY : Int32 = 6
 
 ///|
-const OF_DEFAULT_ACCURACY : Int = 5
+const OF_DEFAULT_ACCURACY : Int32 = 5
 
 ///|
 let ll_default_table : FseTable = FseTable::build(
@@ -426,7 +426,7 @@ let of_default_table : FseTable = FseTable::build(
 
 ///|
 /// Baseline and extra bits tables for literal lengths.
-let ll_baselines : FixedArray[Int] = {
+let ll_baselines : FixedArray[Int32] = {
   let a = FixedArray::make(36, 0)
   // Codes 0-15 map directly to values 0-15
   for i in 0..<16 {
@@ -456,7 +456,7 @@ let ll_baselines : FixedArray[Int] = {
 }
 
 ///|
-let ll_extra_bits : FixedArray[Int] = {
+let ll_extra_bits : FixedArray[Int32] = {
   let a = FixedArray::make(36, 0)
   // Codes 0-15: 0 extra bits
   a[16] = 1
@@ -484,7 +484,7 @@ let ll_extra_bits : FixedArray[Int] = {
 
 ///|
 /// Baseline and extra bits tables for match lengths.
-let ml_baselines : FixedArray[Int] = {
+let ml_baselines : FixedArray[Int32] = {
   let a = FixedArray::make(53, 0)
   // Codes 0-31 map to values 3-34
   for i in 0..<32 {
@@ -515,7 +515,7 @@ let ml_baselines : FixedArray[Int] = {
 }
 
 ///|
-let ml_extra_bits : FixedArray[Int] = {
+let ml_extra_bits : FixedArray[Int32] = {
   let a = FixedArray::make(53, 0)
   // Codes 0-31: 0 extra bits
   a[32] = 1

@@ -1,18 +1,18 @@
 ///|
 pub struct AsyncSource {
   size : UInt64
-  read_at : async (UInt64, Int) -> Bytes
+  read_at : async (UInt64, Int32) -> Bytes
   abort : () -> Unit
   mut cancelled : Bool
-  mut read_calls : Int
+  mut read_calls : Int32
   mut bytes_read : UInt64
 }
 
 ///|
 pub fn new_source(
   size : UInt64,
-  read_at : async (UInt64, Int) -> Bytes,
-  abort? : () -> Unit = fn() { () },
+  read_at : async (UInt64, Int32) -> Bytes,
+  abort~ : () -> Unit = fn() { () },
 ) -> AsyncSource {
   { size, read_at, abort, cancelled: false, read_calls: 0, bytes_read: 0UL, }
 }
@@ -34,7 +34,7 @@ pub fn AsyncSource::cancel(self : AsyncSource) -> Unit {
 pub async fn AsyncSource::read_exact(
   self : AsyncSource,
   offset : UInt64,
-  length : Int,
+  length : Int32,
 ) -> Bytes {
   if self.cancelled {
     raise @mcap.io_error("async source cancelled")
@@ -69,7 +69,7 @@ pub async fn AsyncSource::read_exact(
 
 ///|
 pub(all) struct AsyncReadMetrics {
-  read_calls : Int
+  read_calls : Int32
   bytes_read : UInt64
   cancelled : Bool
 }
@@ -92,10 +92,10 @@ pub struct AsyncReader {
 ///|
 pub async fn open_reader(
   source : AsyncSource,
-  cache_bytes? : Int = 8 * 1024 * 1024,
-  summary_bytes? : Int = 8 * 1024 * 1024,
-  fallback_bytes? : Int = 64 * 1024 * 1024,
-  limits? : @mcap.Limits = @mcap.default_limits(),
+  cache_bytes~ : Int32 = 8 * 1024 * 1024,
+  summary_bytes~ : Int32 = 8 * 1024 * 1024,
+  fallback_bytes~ : Int32 = 64 * 1024 * 1024,
+  limits~ : @mcap.Limits = @mcap.default_limits(),
 ) -> AsyncReader {
   if source.size < 50UL ||
     cache_bytes < 0 ||
@@ -185,7 +185,7 @@ pub async fn open_reader(
 pub struct AsyncCursor {
   source : AsyncSource
   cursor : @mcap.FileCursor
-  select_region : async (UInt64, Int) -> Bool
+  select_region : async (UInt64, Int32) -> Bool
   mut busy : Bool
 }
 
@@ -193,9 +193,9 @@ pub struct AsyncCursor {
 pub fn AsyncReader::cursor(
   self : AsyncReader,
   query : @mcap.Query,
-  pending_bytes? : Int = 64 * 1024 * 1024,
-  span_bytes? : Int = 32 * 1024 * 1024,
-  select_region? : async (UInt64, Int) -> Bool = async fn(_, _) { true },
+  pending_bytes~ : Int32 = 64 * 1024 * 1024,
+  span_bytes~ : Int32 = 32 * 1024 * 1024,
+  select_region~ : async (UInt64, Int32) -> Bool = async fn(_, _) { true },
 ) -> AsyncCursor raise @mcap.McapError {
   {
     source: self.source,
@@ -241,7 +241,7 @@ pub async fn AsyncCursor::next(self : AsyncCursor) -> @mcap.Message? {
 ///|
 pub async fn AsyncCursor::next_page(
   self : AsyncCursor,
-  size : Int,
+  size : Int32,
 ) -> Array[@mcap.Message] {
   if size <= 0 {
     raise @mcap.io_error("async page size must be positive")

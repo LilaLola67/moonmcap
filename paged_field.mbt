@@ -1,8 +1,8 @@
 ///|
 pub(all) struct FieldPageLayout {
-  header_bytes : Int
-  page_bytes : Int
-  pages : Int
+  header_bytes : Int32
+  page_bytes : Int32
+  pages : Int32
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -20,7 +20,7 @@ pub struct FieldPage {
 }
 
 ///|
-fn field_bloom_positions(text : String) -> Array[Int] {
+fn field_bloom_positions(text : String) -> Array[Int32] {
   let bytes = @utf8.encode(text[:])
   let a = crc32(bytes)
   let b = crc32(b"MFLD2-string\x00" + bytes) | 1U
@@ -76,7 +76,7 @@ pub fn FieldPage::end_offset(self : FieldPage) -> UInt64 {
 pub fn FieldPage::may_match(
   self : FieldPage,
   offset : UInt64,
-  span : Int,
+  span : Int32,
   filter : JsonFilter,
 ) -> Bool raise McapError {
   let check = self.index.location_filter(filter)
@@ -245,11 +245,11 @@ pub fn build_paged_field_index(
   paths : Array[String],
   fingerprint : (ReadSource) -> String raise McapError,
   decoder_identity : String,
-  page_bytes? : Int = 65536,
-  page_zones? : Int = 32,
-  bloom? : Bool = true,
-  limits? : Limits = default_limits(),
-  cancelled? : () -> Bool = fn() { false },
+  page_bytes~ : Int32 = 65536,
+  page_zones~ : Int32 = 32,
+  bloom~ : Bool = true,
+  limits~ : Limits = default_limits(),
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Json raise McapError {
   if page_bytes < 4096 ||
     page_bytes > 1024 * 1024 ||

@@ -2,7 +2,7 @@
 pub fn AsyncQuerySource::decode_payload(
   self : AsyncQuerySource,
   decoder : @mcap.PayloadDecoder,
-  max_bytes? : Int = 1024 * 1024,
+  max_bytes~ : Int32 = 1024 * 1024,
 ) -> AsyncQuerySource raise @mcap.McapError {
   if max_bytes < 1 {
     raise @mcap.io_error("invalid decoded JSON byte budget")

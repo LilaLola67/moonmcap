@@ -1,6 +1,6 @@
 ///|
 fn memory_sort_storage(
-  files : Map[Int, @buffer.Buffer],
+  files : Map[Int32, @buffer.Buffer],
   closed : Array[Bool],
 ) -> @moonmcap.SortStorage {
   @moonmcap.sort_storage(
@@ -30,7 +30,7 @@ test "external merge uses multiple bounded runs and preserves stable duplicates"
     @moonmcap.memory_source(@moonmcap.write_log(log)),
   ]
   let output = @buffer.Buffer::Buffer()
-  let files : Map[Int, @buffer.Buffer] = Map([])
+  let files : Map[Int32, @buffer.Buffer] = Map([])
   let closed = [false]
   let options = {
     ..@moonmcap.external_options(),
@@ -70,7 +70,7 @@ test "external merge remaps conflicting IDs and retains attachments and metadata
     data: b"data",
   })
   first.metadata.push({ name: "run", entries: [("id", "first")], })
-  let files : Map[Int, @buffer.Buffer] = Map([])
+  let files : Map[Int32, @buffer.Buffer] = Map([])
   let closed = [false]
   let output = @buffer.Buffer::Buffer()
   ignore(
@@ -95,7 +95,7 @@ test "external merge remaps conflicting IDs and retains attachments and metadata
 test "external merge cleans temporary storage on budget failure and cancellation" {
   let bytes = @moonmcap.write_indexed(cursor_fixture())
   for mode in [0, 1, 2] {
-    let files : Map[Int, @buffer.Buffer] = Map([])
+    let files : Map[Int32, @buffer.Buffer] = Map([])
     let closed = [false]
     let options = {
       ..@moonmcap.external_options(),
@@ -132,7 +132,7 @@ test "external merge rejects corruption in inputs and temporary runs" {
   let log = cursor_fixture()
   let valid = @moonmcap.write_indexed(log)
   for corrupt_run in [false, true] {
-    let files : Map[Int, @buffer.Buffer] = Map([])
+    let files : Map[Int32, @buffer.Buffer] = Map([])
     let closed = [false]
     let storage = @moonmcap.sort_storage(
       fn(id) {
@@ -183,7 +183,7 @@ test "external merge rejects corruption in inputs and temporary runs" {
 ///|
 test "external cancellation after ingestion starts removes every run" {
   let bytes = @moonmcap.write_indexed(cursor_fixture(), messages_per_chunk=9)
-  let files : Map[Int, @buffer.Buffer] = Map([])
+  let files : Map[Int32, @buffer.Buffer] = Map([])
   let closed = [false]
   let checks = [0]
   try

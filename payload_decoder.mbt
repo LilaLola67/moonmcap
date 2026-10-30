@@ -49,16 +49,16 @@ struct ProtoCache {
   data : Bytes
   encoding : String
   decoder : SchemaDecoder
-  charge : Int
+  charge : Int32
 }
 
 ///|
 /// Schema identity includes descriptor bytes, not just a source-local schema ID.
 pub fn standard_payload_decoder(
-  options? : ProtobufOptions = protobuf_options(),
-  cdr? : CdrOptions = cdr_options(),
-  cache_bytes? : Int = 8 * 1024 * 1024,
-  max_schemas? : Int = 64,
+  options~ : ProtobufOptions = protobuf_options(),
+  cdr~ : CdrOptions = cdr_options(),
+  cache_bytes~ : Int32 = 8 * 1024 * 1024,
+  max_schemas~ : Int32 = 64,
   selection? : DecodeSelection,
 ) -> PayloadDecoder raise McapError {
   if cache_bytes < 1 || max_schemas < 1 {
@@ -145,7 +145,7 @@ pub fn PayloadDecoder::decode_message(
   self : PayloadDecoder,
   message : Message,
   declarations : Log,
-  max_bytes? : Int = 1024 * 1024,
+  max_bytes~ : Int32 = 1024 * 1024,
 ) -> Message raise McapError {
   if max_bytes < 1 {
     raise Invalid("invalid decoded JSON byte budget")
@@ -177,7 +177,7 @@ pub fn PayloadDecoder::decode_message(
 pub fn QuerySource::decode_payload(
   self : QuerySource,
   decoder : PayloadDecoder,
-  max_bytes? : Int = 1024 * 1024,
+  max_bytes~ : Int32 = 1024 * 1024,
 ) -> QuerySource raise McapError {
   if max_bytes < 1 {
     raise Invalid("invalid decoded JSON byte budget")

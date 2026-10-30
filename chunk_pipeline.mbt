@@ -7,9 +7,9 @@ pub fn resumable_chunk_merge(
   fingerprint : (ReadSource) -> String raise McapError,
   save : (Bytes) -> Unit raise McapError,
   checkpoint? : Bytes,
-  options? : ExternalOptions = external_options(),
-  max_parts? : Int = 10000,
-  cancelled? : () -> Bool = fn() { false },
+  options~ : ExternalOptions = external_options(),
+  max_parts~ : Int32 = 10000,
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Json raise McapError {
   resumable_chunk_merge_internal(
     sources,
@@ -79,10 +79,10 @@ fn decode_chunk_pipeline(bytes : Bytes) -> (Bytes, Bytes) raise McapError {
 
 ///|
 fn chunk_pipeline_run(
-  id : Int,
-  maximum : Int,
-  run_limit : Int,
-) -> Int raise McapError {
+  id : Int32,
+  maximum : Int32,
+  run_limit : Int32,
+) -> Int32 raise McapError {
   if id >= 0 {
     if id >= run_limit {
       raise Invalid("pipeline final run ID exceeds configured limit")
@@ -97,7 +97,7 @@ fn chunk_pipeline_run(
 }
 
 ///|
-fn chunk_pipeline_ids(bytes : Bytes) -> Array[Int] raise McapError {
+fn chunk_pipeline_ids(bytes : Bytes) -> Array[Int32] raise McapError {
   let (chunk, merge) = decode_chunk_pipeline(bytes)
   let state = decode_chunk_job(chunk)
   let maximum = cursor(state.settings[65:69].to_owned(), default_limits())
@@ -272,9 +272,9 @@ pub fn resumable_chunk_pipeline(
   fingerprint : (ReadSource) -> String raise McapError,
   save : (Bytes) -> Unit raise McapError,
   checkpoint? : Bytes,
-  options? : ExternalOptions = external_options(),
-  max_parts? : Int = 10000,
-  cancelled? : () -> Bool = fn() { false },
+  options~ : ExternalOptions = external_options(),
+  max_parts~ : Int32 = 10000,
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Json raise McapError {
   if options.run_limit < 1 ||
     options.run_limit > 32768 ||

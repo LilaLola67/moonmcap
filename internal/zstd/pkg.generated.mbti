@@ -10,7 +10,7 @@ pub fn decompress(Bytes, dict? : Bytes) -> Bytes raise ZstdError
 pub(all) suberror ZstdError {
   InvalidHeader(String)
   CorruptData(String)
-  ChecksumMismatch(expected~ : UInt, got~ : UInt)
+  ChecksumMismatch(expected~ : UInt32, got~ : UInt32)
   WindowTooLarge(String)
   UnexpectedEOF
 } derive(Show)
@@ -20,7 +20,7 @@ pub(all) enum CompressionLevel {
   Fast
   Default
   Best
-  Level(Int)
+  Level(Int32)
 } derive(Eq, Show)
 
 pub(all) enum Decode {
@@ -43,8 +43,8 @@ pub(all) enum Encode {
 
 type Inflater
 pub fn Inflater::decode(Self) -> Decode
-pub fn Inflater::enable_direct_output(Self, Int) -> Unit
-pub fn Inflater::new(dict? : Bytes, output_limit? : Int) -> Self
+pub fn Inflater::enable_direct_output(Self, Int32) -> Unit
+pub fn Inflater::new(dict? : Bytes, output_limit? : Int32) -> Self
 pub fn Inflater::src(Self, BytesView) -> Unit
 pub fn Inflater::take_output(Self) -> Bytes
 

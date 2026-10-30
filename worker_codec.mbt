@@ -1,7 +1,7 @@
 ///|
 pub fn decode_chunk(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Chunk raise McapError {
   decode_chunk_internal(bytes, limits, limits.max_record_bytes)
 }
@@ -10,8 +10,8 @@ pub fn decode_chunk(
 /// Validated response bound from the original Chunk envelope, before expansion.
 pub fn worker_chunk_properties(
   body : Bytes,
-  limits? : Limits = default_limits(),
-) -> (Int, String) raise McapError {
+  limits~ : Limits = default_limits(),
+) -> (Int32, String) raise McapError {
   if body.length() > limits.max_record_bytes ||
     limits.max_decompressed_bytes > 2147483607 {
     raise Invalid("worker Chunk envelope exceeds budget")
@@ -37,7 +37,7 @@ pub fn worker_chunk_properties(
 /// Pure MoonBit work unit: bounded decompression and CRC, preserving raw records.
 pub fn expand_worker_chunk(
   body : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Bytes raise McapError {
   if body.length() > limits.max_record_bytes ||
     limits.max_decompressed_bytes > 2147483607 {
@@ -79,15 +79,15 @@ pub fn expand_worker_chunk(
 ///|
 pub(all) struct ChunkReadRequest {
   span : ReadSpan
-  chunk_bytes : Int
-  expanded_bytes : Int
+  chunk_bytes : Int32
+  expanded_bytes : Int32
   compression : String
 }
 
 ///|
 pub fn FileCursor::upcoming_reads(
   self : FileCursor,
-  maximum : Int,
+  maximum : Int32,
 ) -> Array[ChunkReadRequest] raise McapError {
   if maximum < 1 || maximum > 16 {
     raise Invalid("invalid worker prefetch count")

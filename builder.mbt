@@ -4,15 +4,15 @@ pub struct LogBuilder {
   log : Log
   limits : Limits
   mut closed : Bool
-  mut next_schema : Int
-  mut next_channel : Int
-  sequences : Map[Int, UInt]
+  mut next_schema : Int32
+  mut next_channel : Int32
+  sequences : Map[Int32, UInt32]
 }
 
 ///|
 pub fn new_builder(
-  profile? : String = "",
-  limits? : Limits = default_limits(),
+  profile~ : String = "",
+  limits~ : Limits = default_limits(),
 ) -> LogBuilder raise McapError {
   let log = empty_log(profile~)
   validate_log(log, limits~)
@@ -39,7 +39,7 @@ pub fn LogBuilder::register_schema(
   name : String,
   encoding : String,
   data : Bytes,
-) -> Int raise McapError {
+) -> Int32 raise McapError {
   self.require_open()
   for schema in self.log.schemas {
     if schema.name == name && schema.encoding == encoding && schema.data == data {
@@ -68,9 +68,9 @@ pub fn LogBuilder::register_channel(
   self : LogBuilder,
   topic : String,
   message_encoding : String,
-  schema_id? : Int = 0,
-  metadata? : Array[(String, String)] = [],
-) -> Int raise McapError {
+  schema_id~ : Int32 = 0,
+  metadata~ : Array[(String, String)] = [],
+) -> Int32 raise McapError {
   self.require_open()
   for channel in self.log.channels {
     if channel.topic == topic &&
@@ -102,10 +102,10 @@ pub fn LogBuilder::register_channel(
 ///|
 pub fn LogBuilder::append(
   self : LogBuilder,
-  channel_id : Int,
+  channel_id : Int32,
   log_time : UInt64,
   data : Bytes,
-  publish_time? : UInt64 = log_time,
+  publish_time~ : UInt64 = log_time,
 ) -> Unit raise McapError {
   self.require_open()
   let sequence = match self.sequences.get(channel_id) {
@@ -164,9 +164,9 @@ pub fn LogBuilder::snapshot(self : LogBuilder) -> Log {
 ///|
 pub fn LogBuilder::finish(
   self : LogBuilder,
-  indexed? : Bool = true,
-  messages_per_chunk? : Int = 256,
-  compression? : Compression = Uncompressed,
+  indexed~ : Bool = true,
+  messages_per_chunk~ : Int32 = 256,
+  compression~ : Compression = Uncompressed,
 ) -> Bytes raise McapError {
   self.require_open()
   let bytes = if indexed {
@@ -191,6 +191,6 @@ pub fn LogBuilder::finish(
 }
 
 ///|
-pub fn LogBuilder::message_count(self : LogBuilder) -> Int {
+pub fn LogBuilder::message_count(self : LogBuilder) -> Int32 {
   self.log.messages.length()
 }

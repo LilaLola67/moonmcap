@@ -15,7 +15,7 @@ pub struct ClockMap {
 /// are supplied by the caller, never inferred from unrelated sensor values.
 pub fn clock_map(
   anchors : Array[ClockAnchor],
-  extrapolate? : Bool = false,
+  extrapolate~ : Bool = false,
 ) -> ClockMap raise McapError {
   if anchors.length() < 2 || anchors.length() > 4096 {
     raise Invalid("clock map needs 2..4096 anchors")
@@ -111,7 +111,7 @@ pub fn ClockMap::residuals(
 pub fn QuerySource::calibrate_time(
   self : QuerySource,
   mapping : ClockMap,
-  same_publish_clock? : Bool = false,
+  same_publish_clock~ : Bool = false,
 ) -> QuerySource raise McapError {
   query_source(
     self.declarations,
@@ -198,7 +198,7 @@ pub fn QuerySource::calibrate_time(
 pub fn calibrate_log(
   log : Log,
   mapping : ClockMap,
-  same_publish_clock? : Bool = false,
+  same_publish_clock~ : Bool = false,
 ) -> Log raise McapError {
   validate_log(log)
   let messages = build_query_index(log)

@@ -110,7 +110,7 @@ async test "asynchronous MIDX2 reads pages and participates in decoded dataset p
     )
   }
   let raw = builder.finish(compression=@mcap.Zstd, messages_per_chunk=7)
-  let files : Map[Int, @buffer.Buffer] = Map([])
+  let files : Map[Int32, @buffer.Buffer] = Map([])
   let storage = @mcap.sort_storage(
     fn(id) {
       let buffer = @buffer.Buffer::Buffer()

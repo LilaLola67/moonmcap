@@ -37,7 +37,7 @@ test "external aggregates exactly match memory groups across repeated spills and
     dataset.channels(),
     options~,
   )
-  let files : Map[Int, @buffer.Buffer] = Map([])
+  let files : Map[Int32, @buffer.Buffer] = Map([])
   let closed = [false]
   let out = @buffer.Buffer::Buffer()
   let report = @moonmcap.aggregate_external(
@@ -70,7 +70,7 @@ test "external aggregate budgets cancellation and run corruption discard tempora
   let log = spill_fixture()
   for mode in [0, 1, 2, 3] {
     let dataset = spill_dataset(log)
-    let files : Map[Int, @buffer.Buffer] = Map([])
+    let files : Map[Int32, @buffer.Buffer] = Map([])
     let closed = [false]
     let base = memory_sort_storage(files, closed)
     let storage = @moonmcap.sort_storage(

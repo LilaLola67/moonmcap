@@ -15,9 +15,9 @@ pub async fn open_sidecar(
   source : AsyncSource,
   bytes : Bytes,
   verification : AsyncIndexVerification,
-  limits? : @mcap.Limits = @mcap.default_limits(),
-  index_bytes? : Int = 32 * 1024 * 1024,
-  cache_bytes? : Int = 8 * 1024 * 1024,
+  limits~ : @mcap.Limits = @mcap.default_limits(),
+  index_bytes~ : Int32 = 32 * 1024 * 1024,
+  cache_bytes~ : Int32 = 8 * 1024 * 1024,
 ) -> AsyncSidecarReader {
   if source.size < 50UL {
     raise @mcap.io_error("short async sidecar source")
@@ -59,7 +59,7 @@ pub async fn open_sidecar(
 pub struct AsyncSidecarCursor {
   source : AsyncSource
   cursor : @mcap.SidecarCursor
-  budget : Int
+  budget : Int32
   mut busy : Bool
 }
 
@@ -67,7 +67,7 @@ pub struct AsyncSidecarCursor {
 pub fn AsyncSidecarReader::cursor(
   self : AsyncSidecarReader,
   query : @mcap.Query,
-  pending_bytes? : Int = 32 * 1024 * 1024,
+  pending_bytes~ : Int32 = 32 * 1024 * 1024,
 ) -> AsyncSidecarCursor raise @mcap.McapError {
   if pending_bytes < 1 {
     raise @mcap.io_error("invalid sidecar span budget")

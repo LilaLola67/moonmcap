@@ -5,13 +5,13 @@ type WorkerHost
 ///|
 extern "js" fn worker_open(
   path : String,
-  workers : Int,
-  max_jobs : Int,
-  input : Int,
-  output : Int,
-  context : Int,
-  budget : Int,
-  timeout : Int,
+  workers : Int32,
+  max_jobs : Int32,
+  input : Int32,
+  output : Int32,
+  context : Int32,
+  budget : Int32,
+  timeout : Int32,
   signal : @js_async.AbortSignal,
 ) -> @js_async.Promise[WorkerHost] =
   #| async(path,count,maxJobs,input,output,context,budget,timeout,signal)=>{
@@ -67,7 +67,7 @@ extern "js" fn worker_stats(host : WorkerHost) -> String =
 extern "js" fn worker_submit(
   host : WorkerHost,
   job : String,
-  maximum : Int,
+  maximum : Int32,
   signal : @js_async.AbortSignal,
 ) -> @js_async.Promise[String] =
   #| (h,j,m,s)=>h.submit(j,m,s)
@@ -81,7 +81,7 @@ extern "js" fn worker_register(callback : (String) -> String) -> String =
   #| callback=>{const {parentPort,threadId}=process.getBuiltinModule('node:worker_threads');if(!parentPort)return 'codec entry must run in a worker thread';parentPort.on('message',m=>{try{parentPort.postMessage({id:m.id,result:callback(m.payload),thread:threadId});}catch(e){parentPort.postMessage({id:m.id,result:'!'+e.message,thread:threadId});}});parentPort.postMessage({ready:true});return '';}
 
 ///|
-extern "js" fn worker_config(key : String, fallback : Int) -> Int =
+extern "js" fn worker_config(key : String, fallback : Int32) -> Int32 =
   #| (key,fallback)=>process.getBuiltinModule('node:worker_threads').workerData?.moonmcap?.[key]??fallback
 
 ///|
@@ -100,7 +100,7 @@ pub fn run_codec_worker() -> Unit raise @mcap.McapError {
 ///|
 pub async fn open_worker_pool(
   path : String,
-  options? : WorkerOptions = worker_options(),
+  options~ : WorkerOptions = worker_options(),
 ) -> WorkerPool {
   if options.workers < 1 ||
     options.workers > 8 ||

@@ -1,10 +1,10 @@
 ///|
 struct MergeState {
-  runs : Array[Int]
-  hashes : Map[Int, String]
+  runs : Array[Int32]
+  hashes : Map[Int32, String]
   inputs : Array[String]
   auxiliary : String
-  completed : Int
+  completed : Int32
   input_auxiliary : Array[String]
 }
 
@@ -151,7 +151,7 @@ fn restore_merge(
     "checkpoint live run count",
   )
   let runs = []
-  let hashes : Map[Int, String] = Map([])
+  let hashes : Map[Int32, String] = Map([])
   for i = 0; i < count; i = i + 1 {
     let id = bounded_length(
       c.u32().to_uint64(),
@@ -181,9 +181,9 @@ fn restore_merge(
 fn checkpoint_input_state(
   c : Cursor,
   bytes : Bytes,
-  inputs : Int,
+  inputs : Int32,
   auxiliary : String,
-) -> (Int, Array[String]) raise McapError {
+) -> (Int32, Array[String]) raise McapError {
   if bytes[0:8].to_owned() == b"MJOB1\r\n\x00" {
     if auxiliary == "" {
       raise Invalid("legacy checkpoint missing auxiliary fingerprint")
@@ -210,7 +210,7 @@ fn checkpoint_input_state(
 
 ///|
 /// Read owned run IDs for a storage adapter's orphan cleanup. No path strings.
-pub fn checkpoint_run_ids(bytes : Bytes) -> Array[Int] raise McapError {
+pub fn checkpoint_run_ids(bytes : Bytes) -> Array[Int32] raise McapError {
   if bytes.length() >= 8 && bytes[0:8].to_owned() == b"CJOB2\r\n\x00" {
     return chunk_pipeline_ids(bytes)
   }
@@ -291,7 +291,7 @@ pub fn checkpoint_progress(bytes : Bytes) -> Json raise McapError {
 ///|
 fn SortSession::auxiliary_sink(
   self : SortSession,
-  id : Int,
+  id : Int32,
 ) -> WriteSink raise McapError {
   let raw = (self.storage.create)(id)
   new_write_sink(fn(bytes) {
@@ -342,8 +342,8 @@ pub fn resumable_merge(
   fingerprint : (ReadSource) -> String raise McapError,
   save : (Bytes) -> Unit raise McapError,
   checkpoint? : Bytes,
-  options? : ExternalOptions = external_options(),
-  cancelled? : () -> Bool = fn() { false },
+  options~ : ExternalOptions = external_options(),
+  cancelled~ : () -> Bool = fn() { false },
 ) -> ExternalReport raise McapError {
   if sources.is_empty() ||
     sources.length() > 64 ||

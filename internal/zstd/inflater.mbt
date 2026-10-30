@@ -4,7 +4,7 @@
 priv enum InflatePhase {
   FrameHeader
   BlockHeader
-  BlockBody(Int, Int, Bool)
+  BlockBody(Int32, Int32, Bool)
   Checksum
   Done
 }
@@ -13,7 +13,7 @@ priv enum InflatePhase {
 /// Incremental Zstandard decompressor using signal protocol.
 priv struct InflaterState {
   mut input_buf : @blit.Buffer
-  mut input_pos : Int
+  mut input_pos : Int32
   mut phase : InflatePhase
   mut failed : ZstdError?
   mut sink : @blit.Buffer?
@@ -22,11 +22,11 @@ priv struct InflaterState {
   mut header : ZstdFrameHeader?
   mut prev_lit_table : ZstdHuffmanTable?
   mut prev_seq_tables : SeqTables?
-  mut rep : Array[Int]
+  mut rep : Array[Int32]
   mut history : @blit.Buffer
-  mut total_output : Int
+  mut total_output : Int32
   xxh : @checksum.XXH64
-  output_limit : Int
+  output_limit : Int32
 }
 
 ///|
@@ -34,8 +34,8 @@ struct Inflater(InflaterState)
 
 ///|
 pub fn Inflater::new(
-  dict? : Bytes = Bytes::default(),
-  output_limit? : Int = 64 * 1024 * 1024,
+  dict~ : Bytes = Bytes::default(),
+  output_limit~ : Int32 = 64 * 1024 * 1024,
 ) -> Inflater {
   let parsed = Result::Ok(parse_dictionary_bytes(dict)) catch {
     error => Result::Err(error)
@@ -89,7 +89,10 @@ pub fn Inflater::src(self : Inflater, data : BytesView) -> Unit {
 }
 
 ///|
-pub fn Inflater::enable_direct_output(self : Inflater, capacity : Int) -> Unit {
+pub fn Inflater::enable_direct_output(
+  self : Inflater,
+  capacity : Int32,
+) -> Unit {
   self.0.sink = Some(@blit.Buffer::new(size_hint=capacity))
 }
 
@@ -274,7 +277,7 @@ pub fn Inflater::decode(self : Inflater) -> Decode {
 fn decode_raw_block(
   s : InflaterState,
   input : Bytes,
-  block_size : Int,
+  block_size : Int32,
 ) -> Result[Bytes?, ZstdError] {
   if s.input_pos + block_size > input.length() {
     return Ok(None)
@@ -288,7 +291,7 @@ fn decode_raw_block(
 fn decode_rle_block(
   s : InflaterState,
   input : Bytes,
-  block_size : Int,
+  block_size : Int32,
 ) -> Result[Bytes?, ZstdError] {
   if s.input_pos >= input.length() {
     return Ok(None)
@@ -302,7 +305,7 @@ fn decode_rle_block(
 fn decode_compressed_block(
   s : InflaterState,
   input : Bytes,
-  block_size : Int,
+  block_size : Int32,
 ) -> Result[Bytes?, ZstdError] {
   if s.input_pos + block_size > input.length() {
     return Ok(None)

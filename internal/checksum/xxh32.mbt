@@ -3,34 +3,34 @@
 
 ///|
 /// XXH32 prime constants.
-const XXH32_PRIME1 : UInt = 0x9E3779B1_U
+const XXH32_PRIME1 : UInt32 = 0x9E3779B1_U
 
 ///|
-const XXH32_PRIME2 : UInt = 0x85EBCA77_U
+const XXH32_PRIME2 : UInt32 = 0x85EBCA77_U
 
 ///|
-const XXH32_PRIME3 : UInt = 0xC2B2AE3D_U
+const XXH32_PRIME3 : UInt32 = 0xC2B2AE3D_U
 
 ///|
-const XXH32_PRIME4 : UInt = 0x27D4EB2F_U
+const XXH32_PRIME4 : UInt32 = 0x27D4EB2F_U
 
 ///|
-const XXH32_PRIME5 : UInt = 0x165667B1_U
+const XXH32_PRIME5 : UInt32 = 0x165667B1_U
 
 ///|
-fn xxh32_round(acc : UInt, input : UInt) -> UInt {
+fn xxh32_round(acc : UInt32, input : UInt32) -> UInt32 {
   let acc = acc + input * XXH32_PRIME2
   let acc = xxh32_rotl(acc, 13)
   acc * XXH32_PRIME1
 }
 
 ///|
-fn xxh32_rotl(val : UInt, bits : Int) -> UInt {
+fn xxh32_rotl(val : UInt32, bits : Int32) -> UInt32 {
   (val << bits) | (val >> (32 - bits))
 }
 
 ///|
-fn xxh32_read32(data : BytesView, offset : Int) -> UInt {
+fn xxh32_read32(data : BytesView, offset : Int32) -> UInt32 {
   data.unsafe_get(offset).to_uint() |
   (data.unsafe_get(offset + 1).to_uint() << 8) |
   (data.unsafe_get(offset + 2).to_uint() << 16) |
@@ -38,7 +38,7 @@ fn xxh32_read32(data : BytesView, offset : Int) -> UInt {
 }
 
 ///|
-fn xxh32_avalanche(h_ : UInt) -> UInt {
+fn xxh32_avalanche(h_ : UInt32) -> UInt32 {
   let mut h = h_
   h = h ^ (h >> 15)
   h = h * XXH32_PRIME2
@@ -50,7 +50,7 @@ fn xxh32_avalanche(h_ : UInt) -> UInt {
 
 ///|
 /// Computes XXH32 checksum of the given bytes in one shot.
-pub fn xxh32(data : BytesView, seed? : UInt = 0U) -> UInt {
+pub fn xxh32(data : BytesView, seed~ : UInt32 = 0U) -> UInt32 {
   let h = XXH32::new(seed~)
   h.update(data)
   h.checksum()
@@ -59,19 +59,19 @@ pub fn xxh32(data : BytesView, seed? : UInt = 0U) -> UInt {
 ///|
 /// XXH32 is an incremental XXH32 hasher.
 pub struct XXH32 {
-  seed : UInt
-  mut v1 : UInt
-  mut v2 : UInt
-  mut v3 : UInt
-  mut v4 : UInt
-  mut total_len : UInt
+  seed : UInt32
+  mut v1 : UInt32
+  mut v2 : UInt32
+  mut v3 : UInt32
+  mut v4 : UInt32
+  mut total_len : UInt32
   buf : FixedArray[Byte]
-  mut buf_used : Int
+  mut buf_used : Int32
 }
 
 ///|
 /// Creates a new XXH32 hasher.
-pub fn XXH32::new(seed? : UInt = 0U) -> XXH32 {
+pub fn XXH32::new(seed~ : UInt32 = 0U) -> XXH32 {
   {
     seed,
     v1: seed + XXH32_PRIME1 + XXH32_PRIME2,
@@ -85,7 +85,7 @@ pub fn XXH32::new(seed? : UInt = 0U) -> XXH32 {
 }
 
 ///|
-pub impl Hasher for XXH32 with fn size(_self) -> Int {
+pub impl Hasher for XXH32 with fn size(_self) -> Int32 {
   4
 }
 
@@ -139,8 +139,8 @@ pub impl Hasher for XXH32 with fn update(self, data) -> Unit {
 }
 
 ///|
-pub impl Hasher for XXH32 with fn checksum(self) -> UInt {
-  let mut h : UInt = if self.total_len >= 16U {
+pub impl Hasher for XXH32 with fn checksum(self) -> UInt32 {
+  let mut h : UInt32 = if self.total_len >= 16U {
     xxh32_rotl(self.v1, 1) +
     xxh32_rotl(self.v2, 7) +
     xxh32_rotl(self.v3, 12) +

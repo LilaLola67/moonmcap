@@ -4,7 +4,7 @@
 ///|
 /// Compresses a block using the LZ4 block format.
 /// Returns the number of bytes written to dst, or 0 if incompressible.
-fn block_compress(src : BytesView, dst : FixedArray[Byte]) -> Int {
+fn block_compress(src : BytesView, dst : FixedArray[Byte]) -> Int32 {
   let src_len = src.length()
   if src_len < 13 {
     // Too small to compress
@@ -147,7 +147,7 @@ fn block_compress(src : BytesView, dst : FixedArray[Byte]) -> Int {
 }
 
 ///|
-fn lz4_hash(data : BytesView, pos : Int) -> Int {
+fn lz4_hash(data : BytesView, pos : Int32) -> Int32 {
   let u = data.unsafe_get(pos).to_int() |
     (data.unsafe_get(pos + 1).to_int() << 8) |
     (data.unsafe_get(pos + 2).to_int() << 16) |

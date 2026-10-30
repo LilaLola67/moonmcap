@@ -7,10 +7,10 @@ pub(all) enum SequencePolicy {
 ///|
 pub(all) struct RecordingOptions {
   stream : StreamOptions
-  segment_messages : Int
+  segment_messages : Int32
   segment_bytes_target : UInt64
   segment_span : UInt64
-  segment_limit : Int
+  segment_limit : Int32
   sequences : SequencePolicy
   source_identity : String
 } derive(Eq, @debug.Debug)
@@ -32,25 +32,25 @@ pub fn recording_options() -> RecordingOptions {
 /// save/seal must return only after their durable atomic publication. create
 /// owns a new empty segment; quarantine preserves its bytes outside the set.
 pub struct RecordingStorage {
-  create : (Int) -> WriteSink raise McapError
-  open : (Int) -> ReadSource raise McapError
-  exists : (Int) -> Bool raise McapError
-  seal : (Int) -> Unit raise McapError
+  create : (Int32) -> WriteSink raise McapError
+  open : (Int32) -> ReadSource raise McapError
+  exists : (Int32) -> Bool raise McapError
+  seal : (Int32) -> Unit raise McapError
   save : (Bytes) -> Unit raise McapError
-  quarantine : (Int) -> Unit raise McapError
-  list : () -> Array[Int] raise McapError
+  quarantine : (Int32) -> Unit raise McapError
+  list : () -> Array[Int32] raise McapError
   fingerprint : (ReadSource) -> String raise McapError
 }
 
 ///|
 pub fn recording_storage(
-  create : (Int) -> WriteSink raise McapError,
-  open : (Int) -> ReadSource raise McapError,
-  exists : (Int) -> Bool raise McapError,
-  seal : (Int) -> Unit raise McapError,
+  create : (Int32) -> WriteSink raise McapError,
+  open : (Int32) -> ReadSource raise McapError,
+  exists : (Int32) -> Bool raise McapError,
+  seal : (Int32) -> Unit raise McapError,
   save : (Bytes) -> Unit raise McapError,
-  quarantine : (Int) -> Unit raise McapError,
-  list : () -> Array[Int] raise McapError,
+  quarantine : (Int32) -> Unit raise McapError,
+  list : () -> Array[Int32] raise McapError,
   fingerprint : (ReadSource) -> String raise McapError,
 ) -> RecordingStorage {
   { create, open, exists, seal, save, quarantine, list, fingerprint, }
@@ -63,17 +63,17 @@ pub struct RecordingSession {
   options : RecordingOptions
   storage : RecordingStorage
   completed : Array[Json]
-  mut next_ordinal : Int
-  mut active : Int?
+  mut next_ordinal : Int32
+  mut active : Int32?
   mut writer : StreamWriter?
-  mut next_sequence : Map[Int, UInt64]
-  mut committed_next : Map[Int, UInt64]
+  mut next_sequence : Map[Int32, UInt64]
+  mut committed_next : Map[Int32, UInt64]
   mut total : UInt64
   mut start_time : UInt64
   mut end_time : UInt64
   mut state : WriterState
-  mut adopted : Int
-  mut quarantined : Int
+  mut adopted : Int32
+  mut quarantined : Int32
 }
 
 ///|
@@ -181,7 +181,7 @@ fn RecordingSession::save(
 }
 
 ///|
-fn sequence_json(sequences : Map[Int, UInt64]) -> Json {
+fn sequence_json(sequences : Map[Int32, UInt64]) -> Json {
   let ids = sequences.keys().to_array()
   ids.sort()
   Json::array(
@@ -195,16 +195,16 @@ fn sequence_json(sequences : Map[Int, UInt64]) -> Json {
 /// Revalidate the complete container and derive counters from its actual data.
 fn RecordingSession::summarize(
   self : RecordingSession,
-  id : Int,
-) -> (Json, Map[Int, UInt64]) raise McapError {
+  id : Int32,
+) -> (Json, Map[Int32, UInt64]) raise McapError {
   let source = (self.storage.open)(id)
   let header = source.record(8UL, source.size(), default_limits())
   if header.opcode != 0x01 ||
     decode_header(header.body).profile != self.template.header.profile {
     raise Invalid("recording segment profile mismatch")
   }
-  let schemas : Map[Int, Bool] = Map([])
-  let channels : Map[Int, Bool] = Map([])
+  let schemas : Map[Int32, Bool] = Map([])
+  let channels : Map[Int32, Bool] = Map([])
   let next = self.committed_next.copy()
   let count = [0UL]
   let times = [0UL, 0UL]
@@ -282,7 +282,7 @@ fn RecordingSession::summarize(
 fn RecordingSession::accept_segment(
   self : RecordingSession,
   row : Json,
-  next : Map[Int, UInt64],
+  next : Map[Int32, UInt64],
 ) -> Unit raise McapError {
   let messages = parse_decimal(
     field_text(field_get(field_object(row), "messages")),
@@ -302,7 +302,7 @@ pub fn open_recording_session(
   template : Log,
   storage : RecordingStorage,
   manifest? : Bytes,
-  options? : RecordingOptions = recording_options(),
+  options~ : RecordingOptions = recording_options(),
 ) -> RecordingSession raise McapError {
   let config = recording_config(template, options)
   let session : RecordingSession = {
@@ -349,7 +349,7 @@ pub fn open_recording_session(
     if completed.length() > options.segment_limit {
       raise Invalid("recording segment count exceeded")
     }
-    let ids : Map[Int, Bool] = Map([])
+    let ids : Map[Int32, Bool] = Map([])
     let mut previous = -1
     for row in completed {
       let entry = field_object(row)

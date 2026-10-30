@@ -6,12 +6,12 @@ type CacheHost
 extern "js" fn cache_open(
   url : String,
   directory : String,
-  page : Int,
-  capacity : Int,
-  parallel : Int,
-  ahead : Int,
-  timeout : Int,
-  retries : Int,
+  page : Int32,
+  capacity : Int32,
+  parallel : Int32,
+  ahead : Int32,
+  timeout : Int32,
+  retries : Int32,
   signal : @js_async.AbortSignal,
 ) -> @js_async.Promise[CacheHost] =
   #| async (url,directory,page,capacity,parallel,ahead,timeout,retries,signal) => {
@@ -204,7 +204,7 @@ extern "js" fn cache_close(host : CacheHost) -> @js_async.Promise[String] =
 extern "js" fn cache_read(
   host : CacheHost,
   offset : String,
-  length : Int,
+  length : Int32,
   signal : @js_async.AbortSignal,
 ) -> @js_async.Promise[String] =
   #| (h,o,n,s)=>h.read(o,n,s)
@@ -213,7 +213,7 @@ extern "js" fn cache_read(
 pub async fn open_cached_http(
   url : String,
   directory : String,
-  options? : HttpCacheOptions = http_cache_options(),
+  options~ : HttpCacheOptions = http_cache_options(),
 ) -> CachedHttpSource {
   if options.page_bytes < 4096 ||
     options.page_bytes > 4 * 1024 * 1024 ||

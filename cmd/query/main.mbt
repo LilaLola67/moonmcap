@@ -106,7 +106,7 @@ async fn main {
         "query needs one index per input when supplied, with full content verification",
       )
     }
-    async fn open(path : String, number : Int) -> @aio.AsyncSource {
+    async fn open(path : String, number : Int32) -> @aio.AsyncSource {
       let remote = path.has_prefix("https://") || path.has_prefix("http://")
       let source = if remote && cache_dir != "" {
         let cache = @aio.open_cached_http(path, cache_dir + "/item-\{number}")

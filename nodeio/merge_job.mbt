@@ -35,7 +35,7 @@ extern "js" fn job_operation(
 ///|
 pub fn open_merge_job(
   path : String,
-  resume? : Bool = false,
+  resume~ : Bool = false,
 ) -> MergeJob raise @mcap.McapError {
   let key = job_open(path, resume)
   if key.has_prefix("!") {

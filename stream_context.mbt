@@ -1,10 +1,10 @@
 ///|
 pub(all) struct ClipStreamOptions {
-  context_bytes : Int
-  context_messages : Int
+  context_bytes : Int32
+  context_messages : Int32
   output_messages : UInt64
   output_payload_bytes : UInt64
-  pending_bytes : Int
+  pending_bytes : Int32
   writer : StreamOptions
   limits : Limits
 }
@@ -30,12 +30,12 @@ pub fn stream_context_clip(
   sink : WriteSink,
   start : UInt64,
   end : UInt64,
-  topics? : Array[String] = [],
-  context? : Array[ContextRule] = [],
-  options? : ClipStreamOptions = clip_stream_options(),
-  auxiliary? : (StreamWriter) -> Unit raise McapError = fn(_) { () },
-  provenance? : Json = Json::null(),
-  cancelled? : () -> Bool = fn() { false },
+  topics~ : Array[String] = [],
+  context~ : Array[ContextRule] = [],
+  options~ : ClipStreamOptions = clip_stream_options(),
+  auxiliary~ : (StreamWriter) -> Unit raise McapError = fn(_) { () },
+  provenance~ : Json = Json::null(),
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Json raise McapError {
   if start > end ||
     context.length() > 128 ||
@@ -190,10 +190,10 @@ pub fn stream_context_clip(
 pub fn copy_clip_auxiliary(
   source : ReadSource,
   writer : StreamWriter,
-  attachment_names? : Array[String] = [],
-  metadata_names? : Array[String] = [],
-  limits? : Limits = default_limits(),
-  cancelled? : () -> Bool = fn() { false },
+  attachment_names~ : Array[String] = [],
+  metadata_names~ : Array[String] = [],
+  limits~ : Limits = default_limits(),
+  cancelled~ : () -> Bool = fn() { false },
 ) -> UInt64 raise McapError {
   scan_source(
     source,

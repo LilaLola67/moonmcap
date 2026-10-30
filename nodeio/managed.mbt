@@ -3,7 +3,7 @@
 type NativeFile
 
 ///|
-extern "js" fn managed_open(path : String, ahead : Int) -> NativeFile =
+extern "js" fn managed_open(path : String, ahead : Int32) -> NativeFile =
   #| (path,ahead)=>{const fs=process.getBuiltinModule('node:fs');let fd;try{fd=fs.openSync(path,'r');const s=fs.fstatSync(fd,{bigint:true});if(!s.isFile())throw new Error('not a regular file');const signature=`${s.size}|${s.dev}|${s.ino}|${s.mtimeNs}|${s.ctimeNs}`;return {path,fd,ahead,signature,size:String(s.size),cache:new Uint8Array(),start:0,error:'',reads:0,bytes:0n,closed:false};}catch(e){if(fd!==undefined)fs.closeSync(fd);return {error:e.message};}}
 
 ///|
@@ -18,7 +18,7 @@ extern "js" fn managed_size(state : NativeFile) -> String =
 extern "js" fn managed_read(
   state : NativeFile,
   offset : String,
-  length : Int,
+  length : Int32,
 ) -> FileRead =
   #| (s,offset,length)=>{const fs=process.getBuiltinModule('node:fs');try{
   #|   if(s.closed)throw new Error('managed file is closed');const sig=t=>`${t.size}|${t.dev}|${t.ino}|${t.mtimeNs}|${t.ctimeNs}`;
@@ -36,7 +36,7 @@ extern "js" fn managed_close(state : NativeFile) -> String =
   #| s=>{if(s.closed)return '';s.closed=true;s.cache=new Uint8Array();try{process.getBuiltinModule('node:fs').closeSync(s.fd);return '';}catch(e){return e.message;}}
 
 ///|
-extern "js" fn managed_counter(state : NativeFile, field : Int) -> Int =
+extern "js" fn managed_counter(state : NativeFile, field : Int32) -> Int32 =
   #| (s,f)=>f===0?s.reads:f===1?s.cache.length:s.closed?1:0
 
 ///|
@@ -46,7 +46,7 @@ extern "js" fn managed_bytes(state : NativeFile) -> String =
 ///|
 pub fn open_managed_file(
   path : String,
-  read_ahead_bytes? : Int = 65536,
+  read_ahead_bytes~ : Int32 = 65536,
 ) -> ManagedFile raise @mcap.McapError {
   if read_ahead_bytes < 0 || read_ahead_bytes > 16 * 1024 * 1024 {
     raise @mcap.io_error("read-ahead budget must be 0..16 MiB")

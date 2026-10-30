@@ -1,10 +1,10 @@
 ///|
 struct ArtifactMemory {
   mut checkpoint : Bytes?
-  data : Map[Int, Bytes]
-  published : Map[Int, Bool]
-  mut saves : Int
-  mut fail_save : Int
+  data : Map[Int32, Bytes]
+  published : Map[Int32, Bool]
+  mut saves : Int32
+  mut fail_save : Int32
   mut fail_publish : Bool
 }
 
@@ -70,7 +70,7 @@ fn ArtifactMemory::storage(
 
 ///|
 fn artifact_execute(
-  id : Int,
+  id : Int32,
   sink : @moonmcap.WriteSink,
 ) -> Json raise @moonmcap.McapError {
   sink.write([id.to_byte()])

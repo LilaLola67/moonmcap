@@ -10,7 +10,7 @@ pub(all) struct PayloadEdit {
 fn payload_edit_at(
   document : Json,
   path : Array[String],
-  position : Int,
+  position : Int32,
   replacement : Json?,
 ) -> Json raise McapError {
   if position == path.length() {
@@ -110,7 +110,7 @@ pub fn edit_payload_json(
 }
 
 ///|
-fn payload_unsigned(value : Json, bits : Int) -> UInt64 raise McapError {
+fn payload_unsigned(value : Json, bits : Int32) -> UInt64 raise McapError {
   let text = match value {
     String(text) => text
     Number(_, ..) => value.stringify()
@@ -124,7 +124,7 @@ fn payload_unsigned(value : Json, bits : Int) -> UInt64 raise McapError {
 }
 
 ///|
-fn payload_signed(value : Json, bits : Int) -> UInt64 raise McapError {
+fn payload_signed(value : Json, bits : Int32) -> UInt64 raise McapError {
   let number = proto_integer(value)
   if bits < 64 && (number < -(1L << (bits - 1)) || number >= 1L << (bits - 1)) {
     raise Invalid("payload signed integer out of range")
@@ -146,8 +146,8 @@ fn payload_float(value : Json) -> Double raise McapError {
 ///|
 struct PayloadOutput {
   buffer : @buffer.Buffer
-  maximum : Int
-  budget : Array[Int]
+  maximum : Int32
+  budget : Array[Int32]
   little : Bool
   aligned : Bool
 }
@@ -175,7 +175,7 @@ fn PayloadOutput::item(self : PayloadOutput) -> Unit raise McapError {
 fn PayloadOutput::unsigned(
   self : PayloadOutput,
   number : UInt64,
-  width : Int,
+  width : Int32,
 ) -> Unit raise McapError {
   let padding = if self.aligned {
     (width - (self.buffer.length() - 4) % width) % width
@@ -195,7 +195,7 @@ fn CdrDecoder::encode_value(
   wire : PayloadOutput,
   field : CdrField,
   value : Json,
-  depth : Int,
+  depth : Int32,
 ) -> Unit raise McapError {
   wire.item()
   match field.base {
@@ -251,7 +251,7 @@ fn CdrDecoder::encode_message(
   wire : PayloadOutput,
   name : String,
   value : Json,
-  depth : Int,
+  depth : Int32,
 ) -> Unit raise McapError {
   if depth > self.options.depth {
     raise Invalid("payload encoding depth exceeded")
@@ -303,7 +303,7 @@ fn CdrDecoder::encode_message(
 pub fn CdrDecoder::encode(
   self : CdrDecoder,
   value : Json,
-  little_endian? : Bool = true,
+  little_endian~ : Bool = true,
 ) -> Bytes raise McapError {
   let wire : PayloadOutput = {
     buffer: @buffer.Buffer::Buffer(),

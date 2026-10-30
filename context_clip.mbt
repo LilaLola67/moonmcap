@@ -1,7 +1,7 @@
 ///|
 pub(all) struct ContextRule {
   topic : String
-  depth : Int
+  depth : Int32
   max_age : UInt64
   required : Bool
 }
@@ -25,12 +25,12 @@ pub fn extract_context_clip(
   source : QuerySource,
   start : UInt64,
   end : UInt64,
-  topics? : Array[String] = [],
-  context? : Array[ContextRule] = [],
-  message_limit? : Int = 100000,
-  byte_limit? : Int = 64 * 1024 * 1024,
-  pending_bytes? : Int = 64 * 1024 * 1024,
-  cancelled? : () -> Bool = fn() { false },
+  topics~ : Array[String] = [],
+  context~ : Array[ContextRule] = [],
+  message_limit~ : Int32 = 100000,
+  byte_limit~ : Int32 = 64 * 1024 * 1024,
+  pending_bytes~ : Int32 = 64 * 1024 * 1024,
+  cancelled~ : () -> Bool = fn() { false },
 ) -> ContextClip raise McapError {
   if start > end ||
     context.length() > 128 ||

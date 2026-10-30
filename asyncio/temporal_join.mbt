@@ -11,7 +11,7 @@ pub struct AsyncTemporalJoin {
 pub fn temporal_join(
   left : AsyncMessageStream,
   right : AsyncMessageStream,
-  options? : @mcap.JoinOptions = @mcap.join_options(),
+  options~ : @mcap.JoinOptions = @mcap.join_options(),
 ) -> AsyncTemporalJoin raise @mcap.McapError {
   {
     cursor: @mcap.temporal_join_cursor(options~),

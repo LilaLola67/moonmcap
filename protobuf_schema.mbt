@@ -2,25 +2,25 @@
 struct ProtoField {
   name : String
   json_name : String
-  number : Int
-  kind : Int
-  label : Int
+  number : Int32
+  kind : Int32
+  label : Int32
   type_name : String
-  oneof : Int?
+  oneof : Int32?
   optional : Bool
 }
 
 ///|
 struct ProtoMessage {
-  fields : Map[Int, ProtoField]
+  fields : Map[Int32, ProtoField]
   map_entry : Bool
   proto3 : Bool
 }
 
 ///|
 struct ProtoEnum {
-  values : Map[Int, String]
-  first : Int
+  values : Map[Int32, String]
+  first : Int32
 }
 
 ///|
@@ -28,7 +28,7 @@ pub struct ProtobufDecoder {
   messages : Map[String, ProtoMessage]
   enums : Map[String, ProtoEnum]
   options : ProtobufOptions
-  field_count : Array[Int]
+  field_count : Array[Int32]
 }
 
 ///|
@@ -85,7 +85,7 @@ fn proto_json_name(name : String) -> String {
 fn ProtobufDecoder::field(
   self : ProtobufDecoder,
   bytes : Bytes,
-  budget : Array[Int],
+  budget : Array[Int32],
 ) -> ProtoField raise McapError {
   let value = proto_wire(bytes, budget)
   let mut name = ""
@@ -94,7 +94,7 @@ fn ProtobufDecoder::field(
   let mut kind = 0
   let mut label = 1
   let mut type_name = ""
-  let mut oneof : Int? = None
+  let mut oneof : Int32? = None
   let mut optional = false
   while value.next() is Some(item) {
     match item.number {
@@ -148,7 +148,7 @@ fn ProtobufDecoder::enum_type(
   self : ProtobufDecoder,
   prefix : String,
   bytes : Bytes,
-  budget : Array[Int],
+  budget : Array[Int32],
 ) -> Unit raise McapError {
   let value = proto_wire(bytes, budget)
   let mut name = ""
@@ -168,8 +168,8 @@ fn ProtobufDecoder::enum_type(
     self.messages.contains(full) {
     raise Invalid("duplicate or empty protobuf enum")
   }
-  let values : Map[Int, String] = Map([])
-  let mut first : Int? = None
+  let values : Map[Int32, String] = Map([])
+  let mut first : Int32? = None
   let labels : Map[String, Bool] = Map([])
   for bytes in entries {
     let entry = proto_wire(bytes, budget)
@@ -210,8 +210,8 @@ fn ProtobufDecoder::message_type(
   self : ProtobufDecoder,
   prefix : String,
   bytes : Bytes,
-  budget : Array[Int],
-  depth : Int,
+  budget : Array[Int32],
+  depth : Int32,
   proto3 : Bool,
 ) -> Unit raise McapError {
   if depth > self.options.depth {
@@ -253,7 +253,7 @@ fn ProtobufDecoder::message_type(
     self.enums.contains(full) {
     raise Invalid("duplicate or empty protobuf message")
   }
-  let by_number : Map[Int, ProtoField] = Map([])
+  let by_number : Map[Int32, ProtoField] = Map([])
   let names : Map[String, Bool] = Map([])
   let source_names : Map[String, Bool] = Map([])
   for bytes in fields {
@@ -298,7 +298,7 @@ fn ProtobufDecoder::message_type(
 ///|
 pub fn protobuf_decoder(
   descriptor_set : Bytes,
-  options? : ProtobufOptions = protobuf_options(),
+  options~ : ProtobufOptions = protobuf_options(),
 ) -> ProtobufDecoder raise McapError {
   if options.descriptor_bytes < 0 ||
     descriptor_set.length() > options.descriptor_bytes ||

@@ -7,7 +7,7 @@ fn tf_file(
     "queries", "frames", "start", "end", "tf_start", "tf_end", "topics", "sample_limit",
     "byte_limit", "copy_auxiliary",
   ])
-  fn budget(key : String, fallback : Int) -> Int raise @mcap.McapError {
+  fn budget(key : String, fallback : Int32) -> Int32 raise @mcap.McapError {
     match config.get(key) {
       None => fallback
       Some(Number(_, ..) as value) => {
@@ -140,7 +140,7 @@ fn tf_file(
         raise @mcap.io_error("TF clip topic absent")
       }
     }
-    let selected : Map[Int, Bool] = {}
+    let selected : Map[Int32, Bool] = {}
     for channel in template.channels {
       if topics.is_empty() || topics.contains(channel.topic) {
         selected[channel.id] = true

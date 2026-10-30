@@ -3,11 +3,11 @@ pub fn open_disk_sidecar(
   source : ReadSource,
   index : ReadSource,
   verification : IndexVerification,
-  limits? : Limits = default_limits(),
-  declaration_bytes? : Int = 8 * 1024 * 1024,
-  cache_pages? : Int = 4,
-  chunk_cache_bytes? : Int = 8 * 1024 * 1024,
-  index_bytes? : UInt64 = 1099511627776UL,
+  limits~ : Limits = default_limits(),
+  declaration_bytes~ : Int32 = 8 * 1024 * 1024,
+  cache_pages~ : Int32 = 4,
+  chunk_cache_bytes~ : Int32 = 8 * 1024 * 1024,
+  index_bytes~ : UInt64 = 1099511627776UL,
 ) -> DiskSidecarReader raise McapError {
   open_disk_sidecar_internal(
     source,
@@ -24,7 +24,7 @@ pub fn open_disk_sidecar(
 ///|
 pub struct DiskSidecarAudit {
   reader : DiskSidecarReader
-  mut page : Int
+  mut page : Int32
   mut previous : DiskIndexEntry?
   mut failed : Bool
 }
@@ -35,11 +35,11 @@ pub fn start_disk_sidecar_audit(
   source : ReadSource,
   index : ReadSource,
   verification : IndexVerification,
-  limits? : Limits = default_limits(),
-  declaration_bytes? : Int = 8 * 1024 * 1024,
-  cache_pages? : Int = 4,
-  chunk_cache_bytes? : Int = 8 * 1024 * 1024,
-  index_bytes? : UInt64 = 1099511627776UL,
+  limits~ : Limits = default_limits(),
+  declaration_bytes~ : Int32 = 8 * 1024 * 1024,
+  cache_pages~ : Int32 = 4,
+  chunk_cache_bytes~ : Int32 = 8 * 1024 * 1024,
+  index_bytes~ : UInt64 = 1099511627776UL,
 ) -> DiskSidecarAudit raise McapError {
   {
     reader: open_disk_sidecar_internal(
@@ -129,17 +129,17 @@ pub(all) enum DiskSidecarPoll {
 pub struct DiskSidecarPollCursor {
   reader : DiskSidecarReader
   original : Query
-  allowed : Map[Int, Bool]
+  allowed : Map[Int32, Bool]
   mut query : Query
-  mut low : Int
-  mut high : Int
+  mut low : Int32
+  mut high : Int32
   mut searching : Bool
-  mut position : Int
-  mut offset : Int
-  mut remaining : Int
+  mut position : Int32
+  mut offset : Int32
+  mut remaining : Int32
   mut state : FileCursorState
-  mut current : (Int, Array[DiskIndexEntry])?
-  mut waiting_page : Int?
+  mut current : (Int32, Array[DiskIndexEntry])?
+  mut waiting_page : Int32?
   mut waiting_entry : SidecarEntry?
   mut ready : Message?
 }
@@ -153,7 +153,7 @@ pub fn DiskSidecarReader::poll_cursor(
     raise Invalid("invalid disk index query")
   }
   let query = { ..query, topics: query.topics.copy(), }
-  let allowed : Map[Int, Bool] = Map([])
+  let allowed : Map[Int32, Bool] = Map([])
   for channel in self.base.declarations.channels {
     if query.topics.is_empty() || query.topics.contains(channel.topic) {
       allowed[channel.id] = true
@@ -185,7 +185,7 @@ pub fn DiskSidecarReader::poll_cursor(
 ///|
 fn DiskSidecarPollCursor::entry(
   self : DiskSidecarPollCursor,
-  position : Int,
+  position : Int32,
 ) -> SidecarEntry? {
   let page = position / self.reader.width
   if self.current is Some((number, entries)) && number == page {
@@ -388,7 +388,7 @@ pub fn DiskSidecarPollCursor::skip_source(
 ///|
 pub fn DiskSidecarPollCursor::pending_bytes(
   self : DiskSidecarPollCursor,
-) -> Int {
+) -> Int32 {
   self.ready.map(fn(m) { m.data.length() + 31 }).unwrap_or(0)
 }
 

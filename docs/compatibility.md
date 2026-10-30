@@ -1,8 +1,12 @@
 # MCAP 0 compatibility
 
-MoonMCAP **0.16.9** targets MCAP major version **0**, identified by the `MCAP0`
+MoonMCAP **0.16.10** targets MCAP major version **0**, identified by the `MCAP0`
 magic bytes. The official Python `mcap==1.3.0` package is the interoperability
 reference; this is a package version, not an MCAP format version.
+
+The project toolchain baseline is `moonc 0.10.17+d971670cd`, meeting the
+`moonc >= 0.10.16` requirement. CI pins that compiler for Wasm/JS and the full
+interoperability workflows, with an additional current-toolchain JS/doc job.
 
 ## Standard container records
 
@@ -122,7 +126,7 @@ attachments and metadata, with separate limits for declarations, input chunks an
 [Independent recovery](block-recovery.md) requires CRC-checked summary indexes and individual
 chunks and explicitly reports partial extraction; prefix recovery remains unchanged.
 These additions retain the container/compression boundary above. The module is distributed as
-`LilaLola67/moonmcap@0.16.9` on Mooncakes; GitHub contains the complete source and reproduction tools.
+`LilaLola67/moonmcap@0.16.10` on Mooncakes; GitHub contains the complete source and reproduction tools.
 
 Sources: [MCAP specification](https://mcap.dev/spec),
 [compression registry](https://mcap.dev/spec/registry),

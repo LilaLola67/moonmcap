@@ -2,13 +2,13 @@
 struct CdrWire {
   bytes : Bytes
   little : Bool
-  mut position : Int
-  budget : Array[Int]
+  mut position : Int32
+  budget : Array[Int32]
   aligned : Bool
 }
 
 ///|
-fn CdrWire::take(self : CdrWire, count : Int) -> Bytes raise McapError {
+fn CdrWire::take(self : CdrWire, count : Int32) -> Bytes raise McapError {
   if count < 0 || count > self.bytes.length() - self.position {
     raise Invalid("truncated XCDR1 payload")
   }
@@ -18,7 +18,7 @@ fn CdrWire::take(self : CdrWire, count : Int) -> Bytes raise McapError {
 }
 
 ///|
-fn CdrWire::unsigned(self : CdrWire, width : Int) -> UInt64 raise McapError {
+fn CdrWire::unsigned(self : CdrWire, width : Int32) -> UInt64 raise McapError {
   let padding = if self.aligned {
     (width - (self.position - 4) % width) % width
   } else {
@@ -47,7 +47,7 @@ fn CdrDecoder::value(
   self : CdrDecoder,
   wire : CdrWire,
   field : CdrField,
-  depth : Int,
+  depth : Int32,
 ) -> Json raise McapError {
   wire.item()
   match field.base {
@@ -139,7 +139,7 @@ fn CdrDecoder::message(
   self : CdrDecoder,
   wire : CdrWire,
   name : String,
-  depth : Int,
+  depth : Int32,
 ) -> Json raise McapError {
   if depth > self.options.depth {
     raise Invalid("CDR message depth budget exceeded")

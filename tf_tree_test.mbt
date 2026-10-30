@@ -4,7 +4,7 @@ fn tf_test_sample(
   child : String,
   time : UInt64,
   x : Double,
-  is_static? : Bool = false,
+  is_static~ : Bool = false,
 ) -> @moonmcap.TfStamped {
   {
     parent,

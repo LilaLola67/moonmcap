@@ -2,7 +2,7 @@
 struct TemporaryWorkspace {
   storage : SortStorage
   maximum : UInt64
-  live : Map[Int, UInt64]
+  live : Map[Int32, UInt64]
   mut bytes : UInt64
   mut peak : UInt64
 }
@@ -10,7 +10,7 @@ struct TemporaryWorkspace {
 ///|
 fn TemporaryWorkspace::create(
   self : TemporaryWorkspace,
-  id : Int,
+  id : Int32,
 ) -> WriteSink raise McapError {
   if self.live.contains(id) {
     raise Invalid("temporary identifier already exists")
@@ -33,7 +33,7 @@ fn TemporaryWorkspace::create(
 ///|
 fn TemporaryWorkspace::remove(
   self : TemporaryWorkspace,
-  id : Int,
+  id : Int32,
 ) -> Unit raise McapError {
   if self.live.get(id) is Some(size) {
     (self.storage.remove)(id)

@@ -1,7 +1,7 @@
 ///|
 pub fn open_artifact_directory(
   _path : String,
-  resume? : Bool = false,
+  resume~ : Bool = false,
 ) -> ArtifactDirectory raise @mcap.McapError {
   ignore(resume)
   raise @mcap.io_error("artifact directory requires JS")
@@ -10,7 +10,7 @@ pub fn open_artifact_directory(
 ///|
 pub fn open_recording_directory(
   _path : String,
-  resume? : Bool = false,
+  resume~ : Bool = false,
 ) -> RecordingDirectory raise @mcap.McapError {
   ignore(resume)
   raise @mcap.io_error("recording directory requires JS")
@@ -19,7 +19,7 @@ pub fn open_recording_directory(
 ///|
 pub fn open_managed_file(
   _path : String,
-  read_ahead_bytes? : Int = 65536,
+  read_ahead_bytes~ : Int32 = 65536,
 ) -> ManagedFile raise @mcap.McapError {
   ignore(read_ahead_bytes)
   raise @mcap.io_error("managed files require JS")
@@ -28,7 +28,7 @@ pub fn open_managed_file(
 ///|
 pub fn open_merge_job(
   _path : String,
-  resume? : Bool = false,
+  resume~ : Bool = false,
 ) -> MergeJob raise @mcap.McapError {
   ignore(resume)
   raise @mcap.io_error("merge jobs require JS")
@@ -158,7 +158,7 @@ pub fn write_atomic_new(
 ///|
 pub fn read_file(
   _path : String,
-  maximum? : Int = 64 * 1024 * 1024,
+  maximum~ : Int32 = 64 * 1024 * 1024,
 ) -> Bytes raise @mcap.McapError {
   ignore(maximum)
   raise @mcap.io_error("nodeio requires the JS target")

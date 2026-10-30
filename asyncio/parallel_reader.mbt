@@ -11,19 +11,19 @@ pub struct ParallelReader {
   base : AsyncReader
   pool : WorkerPool
   limits : @mcap.Limits
-  select_region : async (UInt64, Int) -> Bool
-  mut batch_peak : Int
+  select_region : async (UInt64, Int32) -> Bool
+  mut batch_peak : Int32
 }
 
 ///|
 pub async fn open_parallel_reader(
   source : AsyncSource,
   pool : WorkerPool,
-  cache_bytes? : Int = 8 * 1024 * 1024,
-  summary_bytes? : Int = 8 * 1024 * 1024,
-  fallback_bytes? : Int = 64 * 1024 * 1024,
-  limits? : @mcap.Limits = @mcap.default_limits(),
-  select_region? : async (UInt64, Int) -> Bool = async fn(_, _) { true },
+  cache_bytes~ : Int32 = 8 * 1024 * 1024,
+  summary_bytes~ : Int32 = 8 * 1024 * 1024,
+  fallback_bytes~ : Int32 = 64 * 1024 * 1024,
+  limits~ : @mcap.Limits = @mcap.default_limits(),
+  select_region~ : async (UInt64, Int32) -> Bool = async fn(_, _) { true },
 ) -> ParallelReader {
   {
     base: open_reader(
@@ -52,8 +52,8 @@ pub struct ParallelCursor {
 pub fn ParallelReader::cursor(
   self : ParallelReader,
   query : @mcap.Query,
-  pending_bytes? : Int = 64 * 1024 * 1024,
-  span_bytes? : Int = 32 * 1024 * 1024,
+  pending_bytes~ : Int32 = 64 * 1024 * 1024,
+  span_bytes~ : Int32 = 32 * 1024 * 1024,
 ) -> ParallelCursor raise @mcap.McapError {
   {
     owner: self,
@@ -290,7 +290,7 @@ struct ParallelPayload {
 pub fn AsyncQuerySource::decode_parallel(
   self : AsyncQuerySource,
   pool : WorkerPool,
-  max_bytes? : Int = 1024 * 1024,
+  max_bytes~ : Int32 = 1024 * 1024,
 ) -> AsyncQuerySource raise @mcap.McapError {
   if max_bytes < 1 || max_bytes > pool.options.output_bytes {
     raise @mcap.io_error("invalid parallel decoded JSON budget")

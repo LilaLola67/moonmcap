@@ -20,32 +20,32 @@ pub(all) enum ReplayPoll {
 pub(all) struct ReplayProgress {
   state : ReplayState
   position : UInt64
-  emitted : Int
-  rate_numerator : Int
-  rate_denominator : Int
-  generation : Int
+  emitted : Int32
+  rate_numerator : Int32
+  rate_denominator : Int32
+  generation : Int32
 }
 
 ///|
 pub struct Replay {
   source : QuerySource
   query : Query
-  budget : Int
+  budget : Int32
   mut stream : MessageStream
   mut pending : Message?
   mut state : ReplayState
   mut position : UInt64
   mut wall : UInt64
   mut last_clock : UInt64?
-  mut numerator : Int
-  mut denominator : Int
-  mut emitted : Int
-  mut generation : Int
+  mut numerator : Int32
+  mut denominator : Int32
+  mut emitted : Int32
+  mut generation : Int32
   mut previous : UInt64?
 }
 
 ///|
-fn replay_rate(numerator : Int, denominator : Int) -> Unit raise McapError {
+fn replay_rate(numerator : Int32, denominator : Int32) -> Unit raise McapError {
   if numerator < 1 ||
     denominator < 1 ||
     numerator > 1000000 ||
@@ -57,10 +57,10 @@ fn replay_rate(numerator : Int, denominator : Int) -> Unit raise McapError {
 ///|
 pub fn replay(
   source : QuerySource,
-  query? : Query = all_query(),
-  rate_numerator? : Int = 1,
-  rate_denominator? : Int = 1,
-  pending_bytes? : Int = 64 * 1024 * 1024,
+  query~ : Query = all_query(),
+  rate_numerator~ : Int32 = 1,
+  rate_denominator~ : Int32 = 1,
+  pending_bytes~ : Int32 = 64 * 1024 * 1024,
 ) -> Replay raise McapError {
   replay_rate(rate_numerator, rate_denominator)
   if query.descending ||
@@ -223,8 +223,8 @@ pub fn Replay::resume(self : Replay, now : UInt64) -> Unit raise McapError {
 ///|
 pub fn Replay::set_rate(
   self : Replay,
-  numerator : Int,
-  denominator : Int,
+  numerator : Int32,
+  denominator : Int32,
   now : UInt64,
 ) -> Unit raise McapError {
   replay_rate(numerator, denominator)

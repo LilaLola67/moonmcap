@@ -10,8 +10,8 @@ pub fn encode_chunk(
   records : Array[Record],
   start_time : UInt64,
   end_time : UInt64,
-  checksums? : Bool = true,
-  compression? : Compression = Uncompressed,
+  checksums~ : Bool = true,
+  compression~ : Compression = Uncompressed,
 ) -> Bytes raise McapError {
   if start_time > end_time {
     raise Invalid("inverted chunk time range")
@@ -43,7 +43,7 @@ pub fn encode_chunk(
 fn decode_chunk_internal(
   bytes : Bytes,
   limits : Limits,
-  wire_limit : Int,
+  wire_limit : Int32,
 ) -> Chunk raise McapError {
   let input = cursor(bytes, { ..limits, max_record_bytes: wire_limit, })
   let start_time = input.u64()
@@ -88,10 +88,10 @@ fn decode_chunk_internal(
 ///|
 pub fn write_chunked(
   log : Log,
-  messages_per_chunk? : Int = 256,
-  checksums? : Bool = true,
-  compression? : Compression = Uncompressed,
-  limits? : Limits = default_limits(),
+  messages_per_chunk~ : Int32 = 256,
+  checksums~ : Bool = true,
+  compression~ : Compression = Uncompressed,
+  limits~ : Limits = default_limits(),
 ) -> Bytes raise McapError {
   validate_log(log, limits~)
   if messages_per_chunk <= 0 {

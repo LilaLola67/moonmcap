@@ -2,9 +2,9 @@
 /// Physical scan evidence. Accepted records can still fail the final data CRC.
 pub(all) enum SourceScanEvent {
   RecordStart(UInt64)
-  RecordRead(UInt64, Byte, Int)
-  RecordAccepted(UInt64, Byte, Int)
-  DataChecksum(UInt64, UInt, UInt)
+  RecordRead(UInt64, Byte, Int32)
+  RecordAccepted(UInt64, Byte, Int32)
+  DataChecksum(UInt64, UInt32, UInt32)
   DataValidated(UInt64, Bool)
   SummaryStart(UInt64)
 }
@@ -12,8 +12,8 @@ pub(all) enum SourceScanEvent {
 ///|
 pub(all) struct MessageLocation {
   offset : UInt64
-  span : Int
-  inner : Int?
+  span : Int32
+  inner : Int32?
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -27,13 +27,13 @@ pub(all) struct SourceVisitor {
 
 ///|
 pub fn source_visitor(
-  schema? : (Schema) -> Unit raise McapError = fn(_) { () },
-  channel? : (Channel) -> Unit raise McapError = fn(_) { () },
-  message? : (Message, MessageLocation) -> Unit raise McapError = fn(_, _) {
+  schema~ : (Schema) -> Unit raise McapError = fn(_) { () },
+  channel~ : (Channel) -> Unit raise McapError = fn(_) { () },
+  message~ : (Message, MessageLocation) -> Unit raise McapError = fn(_, _) {
     ()
   },
-  attachment? : (Attachment) -> Unit raise McapError = fn(_) { () },
-  metadata? : (Metadata) -> Unit raise McapError = fn(_) { () },
+  attachment~ : (Attachment) -> Unit raise McapError = fn(_) { () },
+  metadata~ : (Metadata) -> Unit raise McapError = fn(_) { () },
 ) -> SourceVisitor {
   { schema, channel, message, attachment, metadata, }
 }
@@ -44,10 +44,10 @@ pub fn source_visitor(
 pub fn scan_source(
   source : ReadSource,
   visitor : SourceVisitor,
-  limits? : Limits = default_limits(),
-  declaration_bytes? : Int = 8 * 1024 * 1024,
-  cancelled? : () -> Bool = fn() { false },
-  trace? : (SourceScanEvent) -> Unit = fn(_) { () },
+  limits~ : Limits = default_limits(),
+  declaration_bytes~ : Int32 = 8 * 1024 * 1024,
+  cancelled~ : () -> Bool = fn() { false },
+  trace~ : (SourceScanEvent) -> Unit = fn(_) { () },
 ) -> UInt64 raise McapError {
   if declaration_bytes < 0 {
     raise Invalid("negative scan declaration budget")

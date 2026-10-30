@@ -2,7 +2,7 @@
 package "LilaLola67/moonmcap/internal/checksum"
 
 // Values
-pub fn xxh32(BytesView, seed? : UInt) -> UInt
+pub fn xxh32(BytesView, seed? : UInt32) -> UInt32
 
 pub fn xxh64(BytesView, seed? : UInt64) -> UInt64
 
@@ -10,16 +10,16 @@ pub fn xxh64(BytesView, seed? : UInt64) -> UInt64
 
 // Types and methods
 pub struct XXH32 {
-  seed : UInt
-  mut v1 : UInt
-  mut v2 : UInt
-  mut v3 : UInt
-  mut v4 : UInt
-  mut total_len : UInt
+  seed : UInt32
+  mut v1 : UInt32
+  mut v2 : UInt32
+  mut v3 : UInt32
+  mut v4 : UInt32
+  mut total_len : UInt32
   buf : FixedArray[Byte]
-  mut buf_used : Int
+  mut buf_used : Int32
 }
-pub fn XXH32::new(seed? : UInt) -> Self
+pub fn XXH32::new(seed? : UInt32) -> Self
 pub impl Hasher for XXH32
 
 pub struct XXH64 {
@@ -30,20 +30,20 @@ pub struct XXH64 {
   mut v4 : UInt64
   mut total_len : UInt64
   buf : FixedArray[Byte]
-  mut buf_used : Int
+  mut buf_used : Int32
 }
 pub fn XXH64::checksum64(Self) -> UInt64
 pub fn XXH64::new(seed? : UInt64) -> Self
 pub fn XXH64::reset(Self) -> Unit
-pub fn XXH64::size(Self) -> Int
+pub fn XXH64::size(Self) -> Int32
 pub fn XXH64::update(Self, BytesView) -> Unit
 
 // Type aliases
 
 // Traits
 pub(open) trait Hasher {
-  fn size(Self) -> Int
+  fn size(Self) -> Int32
   fn reset(Self) -> Unit
   fn update(Self, BytesView) -> Unit
-  fn checksum(Self) -> UInt
+  fn checksum(Self) -> UInt32
 }

@@ -30,7 +30,7 @@ fn cursor_fixture() -> @moonmcap.Log {
 ///|
 fn collect_cursor(
   cursor : @moonmcap.QueryCursor,
-  page_size : Int,
+  page_size : Int32,
 ) -> Array[@moonmcap.Message] raise @moonmcap.McapError {
   let result = []
   while true {

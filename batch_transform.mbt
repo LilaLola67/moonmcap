@@ -69,7 +69,7 @@ pub fn transform_log(
     limit: default_limits().max_records,
   })
   let sampled : Array[Message] = []
-  let buckets : Map[Int, UInt64] = Map([])
+  let buckets : Map[Int32, UInt64] = Map([])
   for message in selected {
     if options.sample_period != 0UL {
       if message.log_time < options.sample_origin {
@@ -94,7 +94,7 @@ pub fn transform_log(
       position
     }]
   })
-  let used : Map[Int, Bool] = Map([])
+  let used : Map[Int32, Bool] = Map([])
   for message in messages {
     used[message.channel_id] = true
   }

@@ -1,5 +1,5 @@
 ///|
-fn AggregateState::charge(self : AggregateState, key : String) -> Int {
+fn AggregateState::charge(self : AggregateState, key : String) -> Int32 {
   @utf8.encode(key[:]).length() * 2 +
   self.coefficient.to_string().length() +
   self.minimum.map(fn(s) { s.length() }).unwrap_or(0) +
@@ -151,7 +151,7 @@ fn aggregate_encode(key : String, state : AggregateState) -> Bytes {
 struct AggregateRow {
   key : String
   state : AggregateState
-  charge : Int
+  charge : Int32
 }
 
 ///|
@@ -247,7 +247,7 @@ fn aggregate_decode(
 struct AggregateRun {
   source : ReadSource
   limits : Limits
-  quota : Int
+  quota : Int32
   mut position : UInt64
   mut previous : String?
 }
@@ -281,17 +281,17 @@ struct AggregateSpill {
   storage : SortStorage
   options : ExternalOptions
   cancelled : () -> Bool
-  live : Map[Int, UInt64]
-  mut next_id : Int
+  live : Map[Int32, UInt64]
+  mut next_id : Int32
   mut spool : UInt64
   mut peak_spool : UInt64
-  mut peak_merge : Int
+  mut peak_merge : Int32
 }
 
 ///|
 fn AggregateSpill::create(
   self : AggregateSpill,
-) -> (Int, WriteSink) raise McapError {
+) -> (Int32, WriteSink) raise McapError {
   if self.next_id >= self.options.run_limit {
     raise Invalid("aggregate run count budget exceeded")
   }
@@ -320,7 +320,7 @@ fn AggregateSpill::create(
 ///|
 fn AggregateSpill::remove(
   self : AggregateSpill,
-  id : Int,
+  id : Int32,
 ) -> Unit raise McapError {
   (self.storage.remove)(id)
   self.spool -= self.live[id]
@@ -349,7 +349,7 @@ fn AggregateSpill::write_row(
 ///|
 fn AggregateSpill::merge(
   self : AggregateSpill,
-  ids : Array[Int],
+  ids : Array[Int32],
   emit : (String, AggregateState) -> Unit raise McapError,
 ) -> Unit raise McapError {
   let inputs = []
@@ -414,9 +414,9 @@ pub fn aggregate_external(
   channels : Array[Channel],
   storage : SortStorage,
   output : WriteSink,
-  aggregate? : AggregateOptions = aggregate_options(),
-  external? : ExternalOptions = external_options(),
-  cancelled? : () -> Bool = fn() { false },
+  aggregate~ : AggregateOptions = aggregate_options(),
+  external~ : ExternalOptions = external_options(),
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Json raise McapError {
   let session : AggregateSpill = {
     storage: buffered_sort_storage(storage, 65536),

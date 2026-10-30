@@ -1,7 +1,7 @@
 ///|
 pub fn validate_log(
   log : Log,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Unit raise McapError {
   if limits.max_record_bytes < 22 ||
     limits.max_string_bytes < 0 ||
@@ -9,7 +9,7 @@ pub fn validate_log(
     limits.max_decompressed_bytes < 0 {
     raise Invalid("invalid resource limits")
   }
-  let schema_ids : Map[Int, Bool] = {}
+  let schema_ids : Map[Int32, Bool] = {}
   for schema in log.schemas {
     if schema_ids.contains(schema.id) {
       raise Invalid("duplicate schema id")
@@ -21,7 +21,7 @@ pub fn validate_log(
     }
     ignore(decode_schema(body, limits~))
   }
-  let channel_ids : Map[Int, Bool] = {}
+  let channel_ids : Map[Int32, Bool] = {}
   for channel in log.channels {
     if channel_ids.contains(channel.id) {
       raise Invalid("duplicate channel id")
@@ -81,8 +81,8 @@ pub fn validate_log(
 /// Minimal interoperable layout; zero summary pointers mean a sequential file.
 pub fn write_log(
   log : Log,
-  checksums? : Bool = true,
-  limits? : Limits = default_limits(),
+  checksums~ : Bool = true,
+  limits~ : Limits = default_limits(),
 ) -> Bytes raise McapError {
   validate_log(log, limits~)
   let out = @buffer.Buffer::Buffer()

@@ -1,7 +1,7 @@
 ///|
 pub(all) struct QualityRule {
   topic : String
-  minimum_messages : Int
+  minimum_messages : Int32
   max_gap : UInt64?
   check_sequence : Bool
   condition : String?
@@ -26,7 +26,7 @@ struct QualityState {
   predicate : JsonFilter?
   mut count : UInt64
   mut previous : UInt64?
-  sequences : Map[Int, UInt]
+  sequences : Map[Int32, UInt32]
   mut violations : UInt64
   details : Array[Json]
 }
@@ -37,7 +37,7 @@ fn QualityState::issue(
   kind : String,
   start : UInt64,
   end : UInt64,
-  maximum : Int,
+  maximum : Int32,
 ) -> Unit {
   self.violations += 1UL
   if self.details.length() < maximum {
@@ -57,9 +57,9 @@ pub fn check_quality(
   rules : Array[QualityRule],
   start : UInt64,
   end : UInt64,
-  detail_limit? : Int = 64,
-  pending_bytes? : Int = 64 * 1024 * 1024,
-  cancelled? : () -> Bool = fn() { false },
+  detail_limit~ : Int32 = 64,
+  pending_bytes~ : Int32 = 64 * 1024 * 1024,
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Json raise McapError {
   if start > end ||
     rules.is_empty() ||
@@ -90,7 +90,7 @@ pub fn check_quality(
       details: [],
     }
   })
-  let channels : Map[Int, String] = {}
+  let channels : Map[Int32, String] = {}
   for channel in source.declarations.channels {
     channels[channel.id] = channel.topic
   }
@@ -210,7 +210,7 @@ pub fn check_match_quality(
   left : MessageStream,
   right : MessageStream,
   tolerance : UInt64,
-  minimum_basis_points : Int,
+  minimum_basis_points : Int32,
 ) -> Json raise McapError {
   if minimum_basis_points < 0 || minimum_basis_points > 10000 {
     (left.stop)()

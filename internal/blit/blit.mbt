@@ -6,10 +6,10 @@
 /// Note: `src_offset` is relative to the underlying Bytes, not the view's start.
 pub fn blit_bytesview(
   dst : FixedArray[Byte],
-  dst_offset : Int,
+  dst_offset : Int32,
   src : BytesView,
-  src_offset : Int,
-  length : Int,
+  src_offset : Int32,
+  length : Int32,
 ) -> Unit {
   blit_bytes(dst, dst_offset, src.data(), src_offset, length)
 }
@@ -17,6 +17,11 @@ pub fn blit_bytesview(
 ///|
 /// Word-at-a-time match length comparison on BytesView.
 /// Returns the number of matching bytes between src[a..] and src[b..], up to max_len.
-pub fn match_length_bv(src : BytesView, a : Int, b : Int, max_len : Int) -> Int {
+pub fn match_length_bv(
+  src : BytesView,
+  a : Int32,
+  b : Int32,
+  max_len : Int32,
+) -> Int32 {
   match_length_bytes(src.data(), a, src.data(), b, max_len)
 }

@@ -1,8 +1,8 @@
 ///|
 pub(all) struct QueryDiagnostics {
-  total_chunks : Int
-  candidate_chunks : Int
-  matching_messages : Int
+  total_chunks : Int32
+  candidate_chunks : Int32
+  matching_messages : Int32
   used_file_indexes : Bool
 }
 
@@ -18,7 +18,7 @@ pub(all) struct QueryResult {
 pub fn query_file(
   bytes : Bytes,
   query : Query,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> QueryResult raise McapError {
   if query.start_time > query.end_time || query.offset < 0 || query.limit < 0 {
     raise Invalid("invalid query range or pagination")
@@ -49,13 +49,13 @@ pub fn query_file(
       _ => ()
     }
   }
-  let allowed : Map[Int, Bool] = {}
+  let allowed : Map[Int32, Bool] = {}
   for channel in declarations.channels {
     if query.topics.is_empty() || query.topics.contains(channel.topic) {
       allowed[channel.id] = true
     }
   }
-  let selected : Array[(Message, UInt64, Int)] = []
+  let selected : Array[(Message, UInt64, Int32)] = []
   let mut candidate_chunks = 0
   for index in indexes {
     if index.end_time < query.start_time || index.start_time > query.end_time {

@@ -6,7 +6,7 @@ pub async fn playback(
   clock : () -> UInt64,
   wait : async (UInt64) -> Unit,
   emit : async (@mcap.Message) -> Unit,
-  cancelled? : () -> Bool = fn() { false },
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Unit {
   try {
     while true {

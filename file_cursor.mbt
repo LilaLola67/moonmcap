@@ -1,7 +1,7 @@
 ///|
 pub(all) struct ReadSpan {
   offset : UInt64
-  length : Int
+  length : Int32
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -22,13 +22,13 @@ pub(all) enum FileCursorState {
 ///|
 pub(all) struct FileProgress {
   state : FileCursorState
-  candidate_chunks : Int
-  loaded_chunks : Int
-  emitted_messages : Int
-  skipped_messages : Int
-  pending_messages : Int
-  pending_bytes : Int
-  peak_pending_bytes : Int
+  candidate_chunks : Int32
+  loaded_chunks : Int32
+  emitted_messages : Int32
+  skipped_messages : Int32
+  pending_messages : Int32
+  pending_bytes : Int32
+  peak_pending_bytes : Int32
   used_fallback : Bool
 } derive(Eq, @debug.Debug)
 
@@ -36,7 +36,7 @@ pub(all) struct FileProgress {
 struct FileItem {
   message : Message
   chunk_position : UInt64
-  record_position : Int
+  record_position : Int32
 }
 
 ///|
@@ -45,20 +45,20 @@ pub struct FileCursor {
   original : Query
   candidates : Array[ChunkIndex]
   heap : Array[FileItem]
-  allowed : Map[Int, Bool]
-  pending_budget : Int
-  span_budget : Int
+  allowed : Map[Int32, Bool]
+  pending_budget : Int32
+  span_budget : Int32
   mut active : Query
   mut fallback : QueryCursor?
   mut state : FileCursorState
-  mut loaded : Int
-  mut visited : Int
-  mut emitted : Int
-  mut skipped : Int
-  mut offset_left : Int
-  mut remaining : Int
-  mut pending_bytes : Int
-  mut peak_pending : Int
+  mut loaded : Int32
+  mut visited : Int32
+  mut emitted : Int32
+  mut skipped : Int32
+  mut offset_left : Int32
+  mut remaining : Int32
+  mut pending_bytes : Int32
+  mut peak_pending : Int32
 }
 
 ///|
@@ -203,8 +203,8 @@ fn FileCursor::reset(self : FileCursor, query : Query) -> Unit raise McapError {
 pub fn RangeReader::cursor(
   self : RangeReader,
   query : Query,
-  pending_bytes? : Int = 64 * 1024 * 1024,
-  span_bytes? : Int = 32 * 1024 * 1024,
+  pending_bytes~ : Int32 = 64 * 1024 * 1024,
+  span_bytes~ : Int32 = 32 * 1024 * 1024,
 ) -> FileCursor raise McapError {
   if query.start_time > query.end_time ||
     query.offset < 0 ||
@@ -440,7 +440,7 @@ pub fn FileCursor::next(self : FileCursor) -> Message? raise McapError {
 ///|
 pub fn FileCursor::next_page(
   self : FileCursor,
-  size : Int,
+  size : Int32,
 ) -> Array[Message] raise McapError {
   if size <= 0 {
     raise Invalid("page size must be positive")

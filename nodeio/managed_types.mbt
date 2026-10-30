@@ -1,8 +1,8 @@
 ///|
 pub(all) struct FileIoMetrics {
-  physical_reads : Int
+  physical_reads : Int32
   physical_bytes : UInt64
-  cached_bytes : Int
+  cached_bytes : Int32
   closed : Bool
 }
 
@@ -32,15 +32,15 @@ pub fn ManagedFile::metrics(self : ManagedFile) -> FileIoMetrics {
 pub struct FileScope {
   paths : Array[String]
   files : Array[ManagedFile]
-  maximum : Int
-  ahead : Int
+  maximum : Int32
+  ahead : Int32
   mut closed : Bool
 }
 
 ///|
 pub fn file_scope(
-  max_open? : Int = 64,
-  read_ahead_bytes? : Int = 65536,
+  max_open~ : Int32 = 64,
+  read_ahead_bytes~ : Int32 = 65536,
 ) -> FileScope {
   {
     paths: [],

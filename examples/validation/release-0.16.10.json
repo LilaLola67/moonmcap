@@ -1,0 +1,45 @@
+{
+  "version": "0.16.10",
+  "date": "2026-10-30",
+  "toolchain_baseline": "0.10.17+d971670cd",
+  "required_compiler_minimum": "0.10.16",
+  "baseline_checks": [
+    "check wasm",
+    "build wasm",
+    "test wasm",
+    "check js",
+    "build js",
+    "test js"
+  ],
+  "baseline_tests": {
+    "wasm": 214,
+    "js": 236
+  },
+  "current_toolchain": {
+    "moonc": "0.10.18+6c83a7f62",
+    "steps": [
+      {
+        "step": "check",
+        "passed": true
+      },
+      {
+        "step": "build",
+        "passed": true
+      },
+      {
+        "step": "test",
+        "passed": true
+      },
+      {
+        "step": "doc",
+        "passed": true
+      }
+    ]
+  },
+  "ci_fixed_compiler": "0.10.17+d971670cd",
+  "ci_python": "3.12",
+  "ci_full_workflow_count": 61,
+  "scope": "Local compiler validation. Full integration workflows run on the pinned baseline in GitHub Actions; registry build, hosted docs and fresh installs are checked after publication.",
+  "api_change": "No semantic API change; canonical Int32/UInt32 aliases, defaulted parameter spelling and generated interfaces updated by baseline formatter.",
+  "previous_release_evidence": "release-0.16.9.json"
+}

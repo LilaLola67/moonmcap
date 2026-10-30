@@ -1,25 +1,25 @@
 // Derived from bikallem/compress 0.3.4, Apache-2.0. Adapter formatting; see third_party/README.md.
 
 ///|
-const ZSTD_HUFFMAN_MAX_BITS : Int = 12
+const ZSTD_HUFFMAN_MAX_BITS : Int32 = 12
 
 ///|
 priv struct ZstdHuffmanTable {
-  entries : FixedArray[UInt]
-  max_bits : Int
+  entries : FixedArray[UInt32]
+  max_bits : Int32
 }
 
 ///|
 fn ZstdHuffmanTable::from_description(
   src : BytesView,
-) -> (ZstdHuffmanTable, Int) raise ZstdError {
+) -> (ZstdHuffmanTable, Int32) raise ZstdError {
   guard src.length() > 0 else { raise ZstdError::UnexpectedEOF }
   let header = src.unsafe_get(0).to_int()
   if header >= 128 {
     let num_weights = header - 127
     let bytes_used = 1 + ((num_weights + 1) >> 1)
     guard bytes_used <= src.length() else { raise ZstdError::UnexpectedEOF }
-    let weights : Array[Int] = []
+    let weights : Array[Int32] = []
     for i in 0..<num_weights {
       let packed = src.unsafe_get(1 + (i >> 1)).to_int()
       let weight = if (i & 1) == 0 { packed >> 4 } else { packed & 0x0F }
@@ -38,7 +38,7 @@ fn ZstdHuffmanTable::from_description(
 
 ///|
 fn ZstdHuffmanTable::from_weights(
-  partial_weights : Array[Int],
+  partial_weights : Array[Int32],
 ) -> ZstdHuffmanTable raise ZstdError {
   guard partial_weights.length() > 0 else {
     raise ZstdError::CorruptData("empty Huffman weight description")
@@ -83,9 +83,9 @@ fn ZstdHuffmanTable::from_weights(
 
 ///|
 fn build_huffman_table(
-  weights : FixedArray[Int],
-  num_symbols : Int,
-  table_log : Int,
+  weights : FixedArray[Int32],
+  num_symbols : Int32,
+  table_log : Int32,
 ) -> ZstdHuffmanTable raise ZstdError {
   let entries = FixedArray::make(1 << table_log, 0U)
   let rank_val = FixedArray::make(table_log + 1, 0)
@@ -151,7 +151,7 @@ fn ZstdHuffmanTable::decode_symbol(
 fn ZstdHuffmanTable::decode_stream(
   self : ZstdHuffmanTable,
   src : BytesView,
-  output_size : Int,
+  output_size : Int32,
 ) -> Bytes raise ZstdError {
   guard output_size >= 0 else {
     raise ZstdError::CorruptData("negative Huffman output size")
@@ -190,8 +190,8 @@ fn ZstdHuffmanTable::decode_stream(
 fn decode_huffman_literals(
   table : ZstdHuffmanTable,
   src : BytesView,
-  regenerated_size : Int,
-  num_streams : Int,
+  regenerated_size : Int32,
+  num_streams : Int32,
 ) -> Bytes raise ZstdError {
   if num_streams == 1 {
     return table.decode_stream(src, regenerated_size)
@@ -238,7 +238,7 @@ fn decode_huffman_literals(
 }
 
 ///|
-fn decode_huffman_weights_fse(src : BytesView) -> Array[Int] raise ZstdError {
+fn decode_huffman_weights_fse(src : BytesView) -> Array[Int32] raise ZstdError {
   let (table, header_size) = build_fse_table_from_description(src, 255, 6)
   let br = BackwardBitReader::new(src[header_size:])
   let mut state1 = br
@@ -253,7 +253,7 @@ fn decode_huffman_weights_fse(src : BytesView) -> Array[Int] raise ZstdError {
       raise ZstdError::CorruptData("truncated Huffman weight stream")
     _ => ()
   }
-  let weights : Array[Int] = []
+  let weights : Array[Int32] = []
   let mut status = br.reload()
   while true {
     guard status is BitReloadStatus::Unfinished else { break }

@@ -7,8 +7,8 @@ test "chunk checkpoints reuse committed parts and match stable merge reference" 
     messages_per_chunk=17,
   )
   let source = @moonmcap.memory_source(bytes)
-  let parts : Map[Int, @buffer.Buffer] = Map([])
-  let create = fn(id : Int) -> @moonmcap.WriteSink raise @moonmcap.McapError {
+  let parts : Map[Int32, @buffer.Buffer] = Map([])
+  let create = fn(id : Int32) -> @moonmcap.WriteSink raise @moonmcap.McapError {
     if parts.contains(id) {
       raise @moonmcap.io_error("committed part recreated")
     }

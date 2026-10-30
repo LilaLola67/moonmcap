@@ -5,7 +5,7 @@ pub struct AsyncDiskSidecarReader {
   reader : @mcap.DiskSidecarReader
   pool : WorkerPool?
   limits : @mcap.Limits
-  select_region : async (UInt64, Int) -> Bool
+  select_region : async (UInt64, Int32) -> Bool
 }
 
 ///|
@@ -13,13 +13,13 @@ pub async fn open_disk_sidecar(
   source : AsyncSource,
   index : AsyncSource,
   verification : AsyncIndexVerification,
-  limits? : @mcap.Limits = @mcap.default_limits(),
-  declaration_bytes? : Int = 8 * 1024 * 1024,
-  cache_pages? : Int = 4,
-  chunk_cache_bytes? : Int = 8 * 1024 * 1024,
-  index_bytes? : UInt64 = 1099511627776UL,
+  limits~ : @mcap.Limits = @mcap.default_limits(),
+  declaration_bytes~ : Int32 = 8 * 1024 * 1024,
+  cache_pages~ : Int32 = 4,
+  chunk_cache_bytes~ : Int32 = 8 * 1024 * 1024,
+  index_bytes~ : UInt64 = 1099511627776UL,
   pool? : WorkerPool,
-  select_region? : async (UInt64, Int) -> Bool = async fn(_, _) { true },
+  select_region~ : async (UInt64, Int32) -> Bool = async fn(_, _) { true },
 ) -> AsyncDiskSidecarReader {
   if source.size() < 50UL ||
     index.size() < 16UL ||
@@ -91,7 +91,7 @@ pub async fn open_disk_sidecar(
 pub struct AsyncDiskSidecarCursor {
   owner : AsyncDiskSidecarReader
   cursor : @mcap.DiskSidecarPollCursor
-  budget : Int
+  budget : Int32
   mut busy : Bool
 }
 
@@ -99,7 +99,7 @@ pub struct AsyncDiskSidecarCursor {
 pub fn AsyncDiskSidecarReader::cursor(
   self : AsyncDiskSidecarReader,
   query : @mcap.Query,
-  pending_bytes? : Int = 32 * 1024 * 1024,
+  pending_bytes~ : Int32 = 32 * 1024 * 1024,
 ) -> AsyncDiskSidecarCursor raise @mcap.McapError {
   if pending_bytes < 1 {
     raise @mcap.io_error("invalid async indexed read budget")
@@ -220,7 +220,7 @@ pub fn AsyncDiskSidecarReader::info(self : AsyncDiskSidecarReader) -> Json {
 ///|
 pub fn AsyncDiskSidecarReader::query_source(
   self : AsyncDiskSidecarReader,
-  abort_sources_on_cancel? : Bool = false,
+  abort_sources_on_cancel~ : Bool = false,
 ) -> AsyncQuerySource raise @mcap.McapError {
   async_query_source(self.reader.declaration_log(), fn(query, budget) {
     let cursor = self.cursor(query, pending_bytes=budget)

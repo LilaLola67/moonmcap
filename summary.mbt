@@ -17,7 +17,7 @@ pub fn encode_metadata_index(value : MetadataIndex) -> Bytes {
 ///|
 pub fn decode_metadata_index(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> MetadataIndex raise McapError {
   let input = cursor(bytes, limits)
   let offset = input.u64()
@@ -30,8 +30,8 @@ pub fn decode_metadata_index(
 /// Check grouped summary records and every declared SummaryOffset span.
 pub fn validate_summary(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
-) -> Int raise McapError {
+  limits~ : Limits = default_limits(),
+) -> Int32 raise McapError {
   let records = scan_file(bytes, limits~)
   let footer = decode_footer(records[records.length() - 1].body)
   let footer_offset = records[records.length() - 1].offset.to_uint64()
@@ -124,8 +124,8 @@ pub fn validate_summary(
 ///|
 pub fn validate_metadata_indexes(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
-) -> Int raise McapError {
+  limits~ : Limits = default_limits(),
+) -> Int32 raise McapError {
   let records = scan_file(bytes, limits~)
   let physical : Map[UInt64, Record] = {}
   for record in records {

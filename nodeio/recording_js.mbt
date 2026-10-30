@@ -2,7 +2,7 @@
 extern "js" fn recording_host(
   path : String,
   resume : Bool,
-) -> (String, Int, Bytes) -> String =
+) -> (String, Int32, Bytes) -> String =
   #| (directory,resume)=>{
   #| const fs=process.getBuiltinModule('node:fs'),p=process.getBuiltinModule('node:path'),crypto=process.getBuiltinModule('node:crypto');
   #| const path=p.resolve(directory),owner='MoonMCAP recording session 1\n',handles=new Map();let key,closed=false;
@@ -42,7 +42,7 @@ extern "js" fn recording_host(
 ///|
 pub fn open_recording_directory(
   path : String,
-  resume? : Bool = false,
+  resume~ : Bool = false,
 ) -> RecordingDirectory raise @mcap.McapError {
   let directory : RecordingDirectory = {
     operate: recording_host(path, resume),

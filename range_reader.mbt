@@ -1,11 +1,11 @@
 ///|
 pub(all) struct ReadDiagnostics {
-  read_calls : Int
+  read_calls : Int32
   bytes_read : UInt64
-  decoded_chunks : Int
-  cache_hits : Int
-  cache_bytes : Int
-  peak_cache_bytes : Int
+  decoded_chunks : Int32
+  cache_hits : Int32
+  cache_bytes : Int32
+  peak_cache_bytes : Int32
   indexed : Bool
   full_validation : Bool
 } derive(Eq, @debug.Debug)
@@ -13,7 +13,7 @@ pub(all) struct ReadDiagnostics {
 ///|
 struct CachedChunk {
   offset : UInt64
-  size : Int
+  size : Int32
   chunk : Chunk
 }
 
@@ -25,23 +25,23 @@ pub struct RangeReader {
   declarations : Log
   indexes : Array[ChunkIndex]
   cache : Array[CachedChunk]
-  cache_budget : Int
-  fallback_budget : Int
+  cache_budget : Int32
+  fallback_budget : Int32
   data_end : UInt64
-  mut cache_bytes : Int
-  mut peak_cache_bytes : Int
-  mut decoded_chunks : Int
-  mut cache_hits : Int
+  mut cache_bytes : Int32
+  mut peak_cache_bytes : Int32
+  mut decoded_chunks : Int32
+  mut cache_hits : Int32
   mut full_validation : Bool
 }
 
 ///|
 pub fn open_reader(
   source : ReadSource,
-  limits? : Limits = default_limits(),
-  cache_bytes? : Int = 8 * 1024 * 1024,
-  summary_bytes? : Int = 8 * 1024 * 1024,
-  fallback_bytes? : Int = 64 * 1024 * 1024,
+  limits~ : Limits = default_limits(),
+  cache_bytes~ : Int32 = 8 * 1024 * 1024,
+  summary_bytes~ : Int32 = 8 * 1024 * 1024,
+  fallback_bytes~ : Int32 = 64 * 1024 * 1024,
 ) -> RangeReader raise McapError {
   validate_log(empty_log(), limits~)
   if cache_bytes < 0 ||
@@ -230,7 +230,7 @@ pub fn open_reader(
 fn RangeReader::load_chunk(
   self : RangeReader,
   index : ChunkIndex,
-  provided? : Bytes? = None,
+  provided~ : Bytes? = None,
   expanded? : Bytes,
 ) -> Chunk raise McapError {
   for i = 0; i < self.cache.length(); i = i + 1 {
@@ -300,7 +300,7 @@ fn RangeReader::load_chunk(
   if chunk.start_time != index.start_time || chunk.end_time != index.end_time {
     raise Invalid("ChunkIndex time range mismatch")
   }
-  let seen : Map[Int, Bool] = Map([])
+  let seen : Map[Int32, Bool] = Map([])
   let mut index_length = 0UL
   for (id, pointer) in index.message_index_offsets {
     let record = source.record(
@@ -387,8 +387,8 @@ pub fn RangeReader::query(
     self.full_validation = true
     return build_query_index(log).query(query)
   }
-  let selected : Array[(Message, UInt64, Int)] = []
-  let allowed : Map[Int, Bool] = Map([])
+  let selected : Array[(Message, UInt64, Int32)] = []
+  let allowed : Map[Int32, Bool] = Map([])
   for channel in self.declarations.channels {
     if query.topics.is_empty() || query.topics.contains(channel.topic) {
       allowed[channel.id] = true

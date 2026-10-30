@@ -1,5 +1,5 @@
 ///|
-extern "js" fn argument(index : Int) -> String =
+extern "js" fn argument(index : Int32) -> String =
   #| i => process.argv.slice(2)[i] ?? ''
 
 ///|
@@ -7,7 +7,7 @@ extern "js" fn probe_start() -> Unit =
   #| () => { globalThis.__moonmcapTicks=0; globalThis.__moonmcapTimer=setInterval(()=>globalThis.__moonmcapTicks++,1); globalThis.__moonmcapTimer.unref(); }
 
 ///|
-extern "js" fn probe_stop() -> Int =
+extern "js" fn probe_stop() -> Int32 =
   #| () => { clearInterval(globalThis.__moonmcapTimer); return globalThis.__moonmcapTicks; }
 
 ///|

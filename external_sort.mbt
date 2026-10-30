@@ -1,29 +1,29 @@
 ///|
 pub struct SortStorage {
-  create : (Int) -> WriteSink raise McapError
-  open : (Int) -> ReadSource raise McapError
-  remove : (Int) -> Unit raise McapError
+  create : (Int32) -> WriteSink raise McapError
+  open : (Int32) -> ReadSource raise McapError
+  remove : (Int32) -> Unit raise McapError
   finish : () -> Unit raise McapError
 }
 
 ///|
 pub fn sort_storage(
-  create : (Int) -> WriteSink raise McapError,
-  open : (Int) -> ReadSource raise McapError,
-  remove : (Int) -> Unit raise McapError,
-  finish? : () -> Unit raise McapError = fn() { () },
+  create : (Int32) -> WriteSink raise McapError,
+  open : (Int32) -> ReadSource raise McapError,
+  remove : (Int32) -> Unit raise McapError,
+  finish~ : () -> Unit raise McapError = fn() { () },
 ) -> SortStorage {
   { create, open, remove, finish, }
 }
 
 ///|
 pub(all) struct ExternalOptions {
-  run_bytes : Int
-  merge_bytes : Int
-  fan_in : Int
+  run_bytes : Int32
+  merge_bytes : Int32
+  fan_in : Int32
   spool_bytes : UInt64
-  run_limit : Int
-  declaration_bytes : Int
+  run_limit : Int32
+  declaration_bytes : Int32
   limits : Limits
   output : StreamOptions
 }
@@ -44,12 +44,12 @@ pub fn external_options() -> ExternalOptions {
 
 ///|
 pub(all) struct ExternalReport {
-  input_files : Int
+  input_files : Int32
   messages : UInt64
-  runs_created : Int
-  merge_passes : Int
-  peak_run_bytes : Int
-  peak_merge_bytes : Int
+  runs_created : Int32
+  merge_passes : Int32
+  peak_run_bytes : Int32
+  peak_merge_bytes : Int32
   peak_spool_bytes : UInt64
   output_bytes : UInt64
 }
@@ -61,7 +61,7 @@ struct SortRow {
 }
 
 ///|
-fn compare_rows(a : SortRow, b : SortRow) -> Int {
+fn compare_rows(a : SortRow, b : SortRow) -> Int32 {
   if a.message.log_time != b.message.log_time {
     a.message.log_time.compare(b.message.log_time)
   } else {
@@ -76,18 +76,18 @@ struct SortSession {
   preserve_ids : Bool
   storage : SortStorage
   options : ExternalOptions
-  live : Map[Int, UInt64]
+  live : Map[Int32, UInt64]
   cancelled : () -> Bool
   buffer : Array[SortRow]
-  mut buffered : Int
+  mut buffered : Int32
   mut ordinal : UInt64
-  mut next_id : Int
+  mut next_id : Int32
   mut spool : UInt64
   mut peak_spool : UInt64
-  mut peak_run : Int
-  mut peak_merge : Int
-  mut passes : Int
-  mut declared : Int
+  mut peak_run : Int32
+  mut peak_merge : Int32
+  mut passes : Int32
+  mut declared : Int32
 }
 
 ///|
@@ -111,7 +111,7 @@ fn SortSession::check_cancel(self : SortSession) -> Unit raise McapError {
 fn SortSession::create(
   self : SortSession,
   count : UInt64,
-) -> (Int, WriteSink) raise McapError {
+) -> (Int32, WriteSink) raise McapError {
   self.check_cancel()
   if self.next_id >= self.options.run_limit {
     raise Invalid("temporary run count budget exceeded")
@@ -147,7 +147,7 @@ fn write_sort_row(sink : WriteSink, row : SortRow) -> Unit raise McapError {
 }
 
 ///|
-fn SortSession::flush_run(self : SortSession) -> Int? raise McapError {
+fn SortSession::flush_run(self : SortSession) -> Int32? raise McapError {
   if self.buffer.is_empty() {
     return None
   }
@@ -165,7 +165,7 @@ fn SortSession::flush_run(self : SortSession) -> Int? raise McapError {
 fn SortSession::add(
   self : SortSession,
   message : Message,
-  runs : Array[Int],
+  runs : Array[Int32],
 ) -> Unit raise McapError {
   self.check_cancel()
   if message.data.length() > self.options.run_bytes - 43 {
@@ -196,7 +196,7 @@ struct RunInput {
 ///|
 fn SortSession::open_run(
   self : SortSession,
-  id : Int,
+  id : Int32,
 ) -> RunInput raise McapError {
   let source = (self.storage.open)(id)
   if source.size != self.live[id] || source.size < 16UL {
@@ -258,7 +258,7 @@ fn RunInput::next(self : RunInput) -> SortRow? raise McapError {
 ///|
 struct RunHead {
   row : SortRow
-  input : Int
+  input : Int32
 }
 
 ///|
@@ -308,7 +308,7 @@ fn pop_run_head(heap : Array[RunHead]) -> RunHead {
 ///|
 fn SortSession::merge_group(
   self : SortSession,
-  ids : Array[Int],
+  ids : Array[Int32],
   emit : (SortRow) -> Unit raise McapError,
 ) -> Unit raise McapError {
   let inputs = []
@@ -345,7 +345,7 @@ fn SortSession::merge_group(
 }
 
 ///|
-fn SortSession::remove(self : SortSession, id : Int) -> Unit raise McapError {
+fn SortSession::remove(self : SortSession, id : Int32) -> Unit raise McapError {
   (self.storage.remove)(id)
   self.spool -= self.live[id]
   self.live.remove(id)
@@ -354,7 +354,7 @@ fn SortSession::remove(self : SortSession, id : Int) -> Unit raise McapError {
 ///|
 fn SortSession::sort_to(
   self : SortSession,
-  runs : Array[Int],
+  runs : Array[Int32],
   writer : StreamWriter,
 ) -> Unit raise McapError {
   let mut current = runs.copy()

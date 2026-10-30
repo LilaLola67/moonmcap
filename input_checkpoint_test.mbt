@@ -21,7 +21,7 @@ test "input checkpoint resumes without reparsing completed source chunks" {
     bytes[offset.to_int():offset.to_int() + length].to_owned()
   })
   let sources = [first, @moonmcap.memory_source(bytes)]
-  let files : Map[Int, @buffer.Buffer] = Map([])
+  let files : Map[Int32, @buffer.Buffer] = Map([])
   let storage = memory_sort_storage(files, [false])
   let saved = [b""]
   let options = { ..@moonmcap.external_options(), run_bytes: 1024, fan_in: 2, }
@@ -73,7 +73,7 @@ test "input checkpoint resumes without reparsing completed source chunks" {
 test "version one merge checkpoints remain resumable and upgrade to version two" {
   let bytes = @moonmcap.write_indexed(cursor_fixture())
   let sources = [@moonmcap.memory_source(bytes)]
-  let files : Map[Int, @buffer.Buffer] = Map([])
+  let files : Map[Int32, @buffer.Buffer] = Map([])
   let storage = memory_sort_storage(files, [false])
   let saved = [b""]
   let options = { ..@moonmcap.external_options(), run_bytes: 1024, fan_in: 2, }

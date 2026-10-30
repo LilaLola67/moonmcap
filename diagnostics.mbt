@@ -26,8 +26,8 @@ pub(all) struct FileDiagnosis {
   valid : Bool
   data_valid : Bool
   data_crc_verified : Bool
-  messages : Int
-  chunks : Int
+  messages : Int32
+  chunks : Int32
   data_end : UInt64?
   issues : Array[Diagnostic]
 } derive(Eq, @debug.Debug)
@@ -35,8 +35,8 @@ pub(all) struct FileDiagnosis {
 ///|
 struct DataInspection {
   log : Log
-  chunks : Int
-  end : Int?
+  chunks : Int32
+  end : Int32?
   issue : Diagnostic?
 }
 
@@ -44,10 +44,10 @@ struct DataInspection {
 fn diagnostic(
   code : DiagnosticCode,
   message : String,
-  offset? : UInt64? = None,
-  opcode? : Byte? = None,
-  expected? : UInt64? = None,
-  actual? : UInt64? = None,
+  offset~ : UInt64? = None,
+  opcode~ : Byte? = None,
+  expected~ : UInt64? = None,
+  actual~ : UInt64? = None,
 ) -> Diagnostic {
   { code, offset, opcode, message, expected, actual, }
 }
@@ -277,7 +277,7 @@ fn inspect_data(bytes : Bytes, limits : Limits) -> DataInspection {
 /// Full validation; precise offsets are supplied only when directly known.
 pub fn diagnose_file(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> FileDiagnosis {
   let data = inspect_data(bytes, limits)
   let issues = []
@@ -357,9 +357,9 @@ pub(all) struct IndexRepair {
 /// Rebuild only from a complete, checked data section. Never salvage across damage.
 pub fn rebuild_indexes(
   bytes : Bytes,
-  compression? : Compression = Uncompressed,
-  messages_per_chunk? : Int = 256,
-  limits? : Limits = default_limits(),
+  compression~ : Compression = Uncompressed,
+  messages_per_chunk~ : Int32 = 256,
+  limits~ : Limits = default_limits(),
 ) -> IndexRepair raise McapError {
   let data = inspect_data(bytes, limits)
   if data.end is None || data.issue is Some(_) {

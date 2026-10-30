@@ -1,10 +1,10 @@
 ///|
 pub(all) struct ProtobufOptions {
-  descriptor_bytes : Int
-  message_bytes : Int
-  depth : Int
-  items : Int
-  fields : Int
+  descriptor_bytes : Int32
+  message_bytes : Int32
+  depth : Int32
+  items : Int32
+  fields : Int32
   int64_as_string : Bool
   protojson : Bool
   emit_defaults : Bool
@@ -27,7 +27,7 @@ pub fn protobuf_options() -> ProtobufOptions {
 ///|
 enum ProtoValue {
   PVarint(UInt64)
-  PFixed32(UInt)
+  PFixed32(UInt32)
   PFixed64(UInt64)
   PBytes(Bytes)
   PStart
@@ -36,24 +36,24 @@ enum ProtoValue {
 
 ///|
 struct ProtoItem {
-  number : Int
+  number : Int32
   value : ProtoValue
 }
 
 ///|
 struct ProtoWire {
   data : Bytes
-  budget : Array[Int]
-  mut position : Int
+  budget : Array[Int32]
+  mut position : Int32
 }
 
 ///|
-fn proto_wire(bytes : Bytes, budget : Array[Int]) -> ProtoWire {
+fn proto_wire(bytes : Bytes, budget : Array[Int32]) -> ProtoWire {
   { data: bytes, budget, position: 0, }
 }
 
 ///|
-fn ProtoWire::take(self : ProtoWire, length : Int) -> Bytes raise McapError {
+fn ProtoWire::take(self : ProtoWire, length : Int32) -> Bytes raise McapError {
   if length < 0 || length > self.data.length() - self.position {
     raise Invalid("truncated protobuf value")
   }
@@ -116,7 +116,7 @@ fn ProtoWire::next(self : ProtoWire) -> ProtoItem? raise McapError {
 fn ProtoWire::skip(
   self : ProtoWire,
   item : ProtoItem,
-  depth : Int,
+  depth : Int32,
 ) -> Unit raise McapError {
   match item.value {
     PEnd => raise Invalid("unexpected protobuf end group")
@@ -155,7 +155,7 @@ fn ProtoItem::text(self : ProtoItem) -> String raise McapError {
 }
 
 ///|
-fn ProtoItem::number(self : ProtoItem) -> Int raise McapError {
+fn ProtoItem::number(self : ProtoItem) -> Int32 raise McapError {
   match self.value {
     PVarint(value) => value.to_uint().to_int()
     _ => raise Invalid("protobuf descriptor number mismatch")

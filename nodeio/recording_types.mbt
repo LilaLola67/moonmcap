@@ -1,6 +1,6 @@
 ///|
 pub struct RecordingDirectory {
-  operate : (String, Int, Bytes) -> String
+  operate : (String, Int32, Bytes) -> String
   mut closed : Bool
 }
 
@@ -8,8 +8,8 @@ pub struct RecordingDirectory {
 fn RecordingDirectory::operation(
   self : RecordingDirectory,
   op : String,
-  id? : Int = 0,
-  bytes? : Bytes = b"",
+  id~ : Int32 = 0,
+  bytes~ : Bytes = b"",
 ) -> String raise @mcap.McapError {
   if self.closed {
     raise @mcap.io_error("recording directory is closed")

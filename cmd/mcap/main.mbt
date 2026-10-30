@@ -3,11 +3,11 @@ extern "js" fn arguments() -> Array[String] =
   #| () => process.argv.slice(2)
 
 ///|
-extern "js" fn error_exit(message : String, code : Int) -> Unit =
+extern "js" fn error_exit(message : String, code : Int32) -> Unit =
   #| (message,code) => { process.stderr.write(message+'\n'); process.exitCode=code; }
 
 ///|
-extern "js" fn set_exit_code(code : Int) -> Unit =
+extern "js" fn set_exit_code(code : Int32) -> Unit =
   #| code => { process.exitCode=code; }
 
 ///|

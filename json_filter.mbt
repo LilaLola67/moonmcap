@@ -18,8 +18,8 @@ pub struct JsonFilter {
   condition : JsonCondition
   projections : Array[(String, Array[String])]
   policy : JsonInvalidPolicy
-  maximum : Int
-  depth : Int
+  maximum : Int32
+  depth : Int32
 }
 
 ///|
@@ -79,8 +79,8 @@ fn pointer_value(document : Json, path : Array[String]) -> Json? {
 ///|
 fn compile_condition(
   value : Json,
-  depth : Int,
-  nodes : Array[Int],
+  depth : Int32,
+  nodes : Array[Int32],
 ) -> JsonCondition raise McapError {
   nodes[0] += 1
   if depth > 16 || nodes[0] > 128 {
@@ -221,10 +221,10 @@ fn JsonCondition::matches(
 ///|
 pub fn json_filter(
   expression : String,
-  select? : Array[String] = [],
-  invalid? : JsonInvalidPolicy = JsonError,
-  max_bytes? : Int = 1024 * 1024,
-  max_depth? : Int = 64,
+  select~ : Array[String] = [],
+  invalid~ : JsonInvalidPolicy = JsonError,
+  max_bytes~ : Int32 = 1024 * 1024,
+  max_depth~ : Int32 = 64,
 ) -> JsonFilter raise McapError {
   if max_bytes < 1 || max_depth < 1 || max_depth > 128 || select.length() > 64 {
     raise Invalid("invalid JSON filter budgets")

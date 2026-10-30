@@ -44,10 +44,10 @@ struct TfEdge {
 ///|
 pub struct TfTree {
   edges : Map[String, TfEdge]
-  sample_limit : Int
-  byte_limit : Int
-  mut count : Int
-  mut bytes : Int
+  sample_limit : Int32
+  byte_limit : Int32
+  mut count : Int32
+  mut bytes : Int32
 }
 
 ///|
@@ -175,8 +175,8 @@ pub fn tf_apply(t : TfTransform, p : TfVector) -> TfVector raise McapError {
 
 ///|
 pub fn tf_tree(
-  sample_limit? : Int = 1000000,
-  byte_limit? : Int = 128 * 1024 * 1024,
+  sample_limit~ : Int32 = 1000000,
+  byte_limit~ : Int32 = 128 * 1024 * 1024,
 ) -> TfTree raise McapError {
   if sample_limit < 1 || byte_limit < 1 {
     raise Invalid("invalid TF history budgets")
@@ -364,8 +364,8 @@ pub fn TfTree::lookup(
   target : String,
   source : String,
   time : UInt64,
-  interpolate? : Bool = true,
-  max_gap? : UInt64 = 18446744073709551615UL,
+  interpolate~ : Bool = true,
+  max_gap~ : UInt64 = 18446744073709551615UL,
 ) -> TfLookup raise McapError {
   let ancestors : Map[String, Bool] = {}
   let mut frame = target

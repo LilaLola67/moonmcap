@@ -6,18 +6,18 @@
 /// All internal access is bounds-check free.
 struct Buffer {
   mut buf : FixedArray[Byte]
-  mut pos : Int
+  mut pos : Int32
 }
 
 ///|
 /// Create a new buffer with the given initial capacity.
-pub fn Buffer::new(size_hint? : Int = 256) -> Buffer {
+pub fn Buffer::new(size_hint~ : Int32 = 256) -> Buffer {
   { buf: make_uninit(size_hint), pos: 0, }
 }
 
 ///|
 /// Ensure space for at least `additional` more bytes. Grows with doubling strategy.
-pub fn Buffer::ensure_capacity(self : Buffer, additional : Int) -> Unit {
+pub fn Buffer::ensure_capacity(self : Buffer, additional : Int32) -> Unit {
   let required = self.pos + additional
   if required > self.buf.length() {
     let mut new_cap = self.buf.length() * 2
@@ -68,8 +68,8 @@ pub fn Buffer::write_bytesview(self : Buffer, src : BytesView) -> Unit {
 pub fn Buffer::write_fixed(
   self : Buffer,
   src : FixedArray[Byte],
-  offset : Int,
-  len : Int,
+  offset : Int32,
+  len : Int32,
 ) -> Unit {
   self.ensure_capacity(len)
   blit_fixed_array(self.buf, self.pos, src, offset, len)
@@ -78,14 +78,18 @@ pub fn Buffer::write_fixed(
 
 ///|
 /// Read byte at absolute position. Bounds-check free.
-pub fn Buffer::get_byte(self : Buffer, pos : Int) -> Byte {
+pub fn Buffer::get_byte(self : Buffer, pos : Int32) -> Byte {
   self.buf.unsafe_get(pos)
 }
 
 ///|
 /// Copy `len` bytes from `src_pos` in the buffer to the current write position.
 /// Handles overlapping regions correctly.
-pub fn Buffer::copy_from_self(self : Buffer, src_pos : Int, len : Int) -> Unit {
+pub fn Buffer::copy_from_self(
+  self : Buffer,
+  src_pos : Int32,
+  len : Int32,
+) -> Unit {
   self.ensure_capacity(len)
   let distance = self.pos - src_pos
   if distance >= len {
@@ -106,7 +110,7 @@ pub fn Buffer::copy_from_self(self : Buffer, src_pos : Int, len : Int) -> Unit {
 
 ///|
 /// Current number of bytes written.
-pub fn Buffer::length(self : Buffer) -> Int {
+pub fn Buffer::length(self : Buffer) -> Int32 {
   self.pos
 }
 
@@ -126,7 +130,7 @@ pub fn Buffer::to_bytes(self : Buffer) -> Bytes {
 
 ///|
 /// Advance write position by `n`. Caller must have written directly to `data()`.
-pub fn Buffer::unsafe_advance(self : Buffer, n : Int) -> Unit {
+pub fn Buffer::unsafe_advance(self : Buffer, n : Int32) -> Unit {
   self.pos += n
 }
 

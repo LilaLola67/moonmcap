@@ -12,7 +12,7 @@ pub fn encode_hex(bytes : Bytes) -> String {
 }
 
 ///|
-fn hex_digit(value : Char) -> Int raise McapError {
+fn hex_digit(value : Char) -> Int32 raise McapError {
   if value >= '0' && value <= '9' {
     value.to_int() - '0'.to_int()
   } else if value >= 'a' && value <= 'f' {
@@ -27,7 +27,7 @@ fn hex_digit(value : Char) -> Int raise McapError {
 ///|
 pub fn decode_hex(
   value : String,
-  max_bytes? : Int = 16 * 1024 * 1024,
+  max_bytes~ : Int32 = 16 * 1024 * 1024,
 ) -> Bytes raise McapError {
   if value.length() % 2 != 0 {
     raise Invalid("hexadecimal string must have even length")

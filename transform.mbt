@@ -2,12 +2,12 @@
 /// Select messages while pruning unreachable declarations and retaining metadata.
 pub fn slice_log(log : Log, query : Query) -> Log raise McapError {
   let messages = build_query_index(log).query(query)
-  let needed_channels : Map[Int, Bool] = {}
+  let needed_channels : Map[Int32, Bool] = {}
   for message in messages {
     needed_channels[message.channel_id] = true
   }
   let channels = log.channels.filter(fn(c) { needed_channels.contains(c.id) })
-  let needed_schemas : Map[Int, Bool] = {}
+  let needed_schemas : Map[Int32, Bool] = {}
   for channel in channels {
     if channel.schema_id != 0 {
       needed_schemas[channel.schema_id] = true
@@ -18,7 +18,7 @@ pub fn slice_log(log : Log, query : Query) -> Log raise McapError {
 }
 
 ///|
-fn next_id(current : Int) -> Int raise McapError {
+fn next_id(current : Int32) -> Int32 raise McapError {
   if current >= 65535 {
     raise Invalid("identifier space exhausted during merge")
   }
@@ -29,7 +29,7 @@ fn next_id(current : Int) -> Int raise McapError {
 /// Deduplicate declarations by content, not source-local identifiers.
 pub fn merge_logs(
   logs : Array[Log],
-  chronological? : Bool = true,
+  chronological~ : Bool = true,
 ) -> Log raise McapError {
   if logs.is_empty() {
     return empty_log()
@@ -53,7 +53,7 @@ pub fn merge_logs(
     if log.header.profile != header.profile {
       raise Invalid("cannot merge incompatible profiles")
     }
-    let schema_remap : Map[Int, Int] = { 0: 0 }
+    let schema_remap : Map[Int32, Int32] = { 0: 0 }
     for schema in log.schemas {
       match
         merged.schemas
@@ -75,7 +75,7 @@ pub fn merge_logs(
         }
       }
     }
-    let channel_remap : Map[Int, Int] = {}
+    let channel_remap : Map[Int32, Int32] = {}
     for channel in log.channels {
       let remapped_schema = schema_remap[channel.schema_id]
       match
@@ -135,7 +135,7 @@ pub fn merge_logs(
 pub fn shift_time(
   log : Log,
   magnitude : UInt64,
-  backwards? : Bool = false,
+  backwards~ : Bool = false,
 ) -> Log raise McapError {
   validate_log(log)
   let result = copy_log(log)

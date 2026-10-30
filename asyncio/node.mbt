@@ -51,7 +51,7 @@ extern "js" fn file_range(
   path : String,
   expected : String,
   offset : String,
-  length : Int,
+  length : Int32,
 ) -> @js_async.Promise[FileRead] =
   #| async (path,expected,offset,length) => {
   #|   let file; try { file=await process.getBuiltinModule('node:fs/promises').open(path,'r');

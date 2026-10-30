@@ -21,7 +21,7 @@ fn proto_integer(value : Json) -> Int64 raise McapError {
 }
 
 ///|
-fn proto_pad(value : Int, width : Int) -> String {
+fn proto_pad(value : Int32, width : Int32) -> String {
   let text = value.to_string()
   let out = StringBuilder::new()
   for i = text.length(); i < width; i = i + 1 {
@@ -32,7 +32,7 @@ fn proto_pad(value : Int, width : Int) -> String {
 }
 
 ///|
-fn proto_fraction(nanos : Int) -> String {
+fn proto_fraction(nanos : Int32) -> String {
   if nanos == 0 {
     return ""
   }
@@ -48,7 +48,7 @@ fn proto_fraction(nanos : Int) -> String {
 }
 
 ///|
-fn proto_year_days(year : Int) -> Int {
+fn proto_year_days(year : Int32) -> Int32 {
   let previous = year - 1
   365 * previous + previous / 4 - previous / 100 + previous / 400
 }
@@ -120,14 +120,14 @@ fn ProtobufDecoder::well_known(
   self : ProtobufDecoder,
   name : String,
   fields : Map[String, Json],
-  budget : Array[Int],
-  depth : Int,
+  budget : Array[Int32],
+  depth : Int32,
 ) -> Json raise McapError {
   let model = self.messages[name]
   fn require(
-    number : Int,
-    kind : Int,
-    label : Int,
+    number : Int32,
+    kind : Int32,
+    label : Int32,
     json_name : String,
   ) -> Unit raise McapError {
     guard model.fields.get(number) is Some(field) &&

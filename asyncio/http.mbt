@@ -2,11 +2,11 @@
 extern "js" fn http_range(
   url : String,
   offset : String,
-  length : Int,
+  length : Int32,
   expected_size : String,
   expected_etag : String,
-  timeout_ms : Int,
-  retries : Int,
+  timeout_ms : Int32,
+  retries : Int32,
   task_signal : @js_async.AbortSignal,
   source_signal : @js_async.AbortSignal,
 ) -> @js_async.Promise[String] =
@@ -54,9 +54,9 @@ extern "js" fn http_range(
 ///|
 pub async fn open_http(
   url : String,
-  timeout_ms? : Int = 5000,
-  retries? : Int = 2,
-  max_range_bytes? : Int = 32 * 1024 * 1024,
+  timeout_ms~ : Int32 = 5000,
+  retries~ : Int32 = 2,
+  max_range_bytes~ : Int32 = 32 * 1024 * 1024,
 ) -> AsyncSource {
   if timeout_ms <= 0 || retries < 0 || retries > 10 || max_range_bytes <= 0 {
     raise @mcap.io_error("invalid HTTP timeout, retry or range budget")

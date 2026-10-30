@@ -1,6 +1,6 @@
 ///|
 pub(all) struct SegmentInfo {
-  ordinal : Int
+  ordinal : Int32
   messages : UInt64
   bytes : UInt64
   start_time : UInt64
@@ -10,16 +10,16 @@ pub(all) struct SegmentInfo {
 ///|
 pub struct RotatingWriter {
   template : @mcap.Log
-  create : async (Int) -> AsyncSink
+  create : async (Int32) -> AsyncSink
   options : @mcap.StreamOptions
-  queue_bytes : Int
-  message_limit : Int
+  queue_bytes : Int32
+  message_limit : Int32
   byte_target : UInt64
   time_span : UInt64
-  segment_limit : Int
+  segment_limit : Int32
   reports : Array[SegmentInfo]
   mut current : AsyncWriter?
-  mut ordinal : Int
+  mut ordinal : Int32
   mut start_time : UInt64
   mut end_time : UInt64
   mut state : AsyncWriterState
@@ -29,13 +29,13 @@ pub struct RotatingWriter {
 ///|
 pub fn rotating_writer(
   template : @mcap.Log,
-  create : async (Int) -> AsyncSink,
-  options? : @mcap.StreamOptions = @mcap.stream_options(),
-  queue_bytes? : Int = 32 * 1024 * 1024,
-  segment_messages? : Int = 10000,
-  segment_bytes_target? : UInt64 = 0UL,
-  segment_span? : UInt64 = 0UL,
-  segment_limit? : Int = 10000,
+  create : async (Int32) -> AsyncSink,
+  options~ : @mcap.StreamOptions = @mcap.stream_options(),
+  queue_bytes~ : Int32 = 32 * 1024 * 1024,
+  segment_messages~ : Int32 = 10000,
+  segment_bytes_target~ : UInt64 = 0UL,
+  segment_span~ : UInt64 = 0UL,
+  segment_limit~ : Int32 = 10000,
 ) -> RotatingWriter raise @mcap.McapError {
   @mcap.validate_log(template)
   if !template.messages.is_empty() ||

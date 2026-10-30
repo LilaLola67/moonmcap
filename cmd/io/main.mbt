@@ -7,7 +7,7 @@ extern "js" fn clock_ms() -> Double =
   #| ()=>performance.now()
 
 ///|
-extern "js" fn rss_kib() -> Int =
+extern "js" fn rss_kib() -> Int32 =
   #| ()=>process.resourceUsage().maxRSS
 
 ///|
@@ -19,7 +19,7 @@ extern "js" fn report_error(message : String) -> Unit =
 extern "js" fn legacy_read(
   path : String,
   offset : String,
-  length : Int,
+  length : Int32,
 ) -> String =
   #| (path,offset,length)=>{const fs=process.getBuiltinModule('node:fs');let fd;try{fd=fs.openSync(path,'r');const before=fs.fstatSync(fd,{bigint:true});const sig=s=>`${s.size}|${s.dev}|${s.ino}|${s.mtimeNs}|${s.ctimeNs}`;const data=Buffer.alloc(length),n=fs.readSync(fd,data,0,length,Number(BigInt(offset)));if(sig(before)!==sig(fs.fstatSync(fd,{bigint:true})))throw new Error('source changed');return data.subarray(0,n).toString('hex');}catch(e){return '!'+e.message;}finally{if(fd!==undefined)fs.closeSync(fd);}}
 

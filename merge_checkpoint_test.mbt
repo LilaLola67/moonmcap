@@ -13,7 +13,7 @@ fn checkpoint_test_hash(
 test "resumable merge reuses completed runs after durable-save interruption" {
   let bytes = @moonmcap.write_indexed(cursor_fixture(), messages_per_chunk=7)
   let sources = [@moonmcap.memory_source(bytes), @moonmcap.memory_source(bytes)]
-  let files : Map[Int, @buffer.Buffer] = Map([])
+  let files : Map[Int32, @buffer.Buffer] = Map([])
   let storage = memory_sort_storage(files, [false])
   let saved = [b""]
   let saves = [0]
@@ -69,7 +69,7 @@ test "resumable merge reuses completed runs after durable-save interruption" {
 test "resumable merge rejects changed inputs options checkpoint and run contents" {
   let bytes = @moonmcap.write_indexed(cursor_fixture())
   let sources = [@moonmcap.memory_source(bytes)]
-  let files : Map[Int, @buffer.Buffer] = Map([])
+  let files : Map[Int32, @buffer.Buffer] = Map([])
   let storage = memory_sort_storage(files, [false])
   let saved = [b""]
   let options = { ..@moonmcap.external_options(), run_bytes: 1024, fan_in: 2, }

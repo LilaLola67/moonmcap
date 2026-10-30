@@ -2,11 +2,11 @@
 pub(all) struct TriggerOptions {
   pre : UInt64
   post : UInt64
-  buffer_bytes : Int
-  buffer_messages : Int
-  clip_bytes : Int
-  clip_messages : Int
-  event_limit : Int
+  buffer_bytes : Int32
+  buffer_messages : Int32
+  clip_bytes : Int32
+  clip_messages : Int32
+  event_limit : Int32
 }
 
 ///|
@@ -28,19 +28,19 @@ pub struct TriggerRecorder {
   options : TriggerOptions
   emit : (Log, Json) -> Unit raise McapError
   mut ring : Array[Message?]
-  mut head : Int
-  mut buffered_bytes : Int
+  mut head : Int32
+  mut buffered_bytes : Int32
   mut first : UInt64?
   mut last : UInt64?
   mut capacity_evicted_through : UInt64?
   mut evicted : UInt64
   mut active : Array[Message]?
-  mut active_bytes : Int
+  mut active_bytes : Int32
   mut start : UInt64
   mut deadline : UInt64
   mut pre_complete : Bool
   labels : Array[String]
-  mut completed : Int
+  mut completed : Int32
   mut state : WriterState
   mut delivering : Bool
 }
@@ -51,7 +51,7 @@ pub struct TriggerRecorder {
 pub fn trigger_recorder(
   template : Log,
   emit : (Log, Json) -> Unit raise McapError,
-  options? : TriggerOptions = trigger_options(),
+  options~ : TriggerOptions = trigger_options(),
 ) -> TriggerRecorder raise McapError {
   validate_log(template)
   if !template.messages.is_empty() ||

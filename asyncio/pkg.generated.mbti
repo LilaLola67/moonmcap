@@ -6,9 +6,9 @@ import {
 }
 
 // Values
-pub fn async_message_stream(async () -> @moonmcap.Message?, () -> Unit, pending_bytes? : () -> Int) -> AsyncMessageStream
+pub fn async_message_stream(async () -> @moonmcap.Message?, () -> Unit, pending_bytes? : () -> Int32) -> AsyncMessageStream
 
-pub fn async_query_source(@moonmcap.Log, (@moonmcap.Query, Int) -> AsyncMessageStream raise @moonmcap.McapError, materialized? : Bool) -> AsyncQuerySource raise @moonmcap.McapError
+pub fn async_query_source(@moonmcap.Log, (@moonmcap.Query, Int32) -> AsyncMessageStream raise @moonmcap.McapError, materialized? : Bool) -> AsyncQuerySource raise @moonmcap.McapError
 
 pub async fn create_sink(String) -> AsyncSink
 
@@ -16,35 +16,35 @@ pub fn http_cache_options() -> HttpCacheOptions
 
 pub fn new_sink(async (Bytes) -> Unit, abort? : () -> Unit) -> AsyncSink
 
-pub fn new_source(UInt64, async (UInt64, Int) -> Bytes, abort? : () -> Unit) -> AsyncSource
+pub fn new_source(UInt64, async (UInt64, Int32) -> Bytes, abort? : () -> Unit) -> AsyncSource
 
-pub async fn new_writer(AsyncSink, profile? : String, options? : @moonmcap.StreamOptions, limits? : @moonmcap.Limits, queue_bytes? : Int) -> AsyncWriter
+pub async fn new_writer(AsyncSink, profile? : String, options? : @moonmcap.StreamOptions, limits? : @moonmcap.Limits, queue_bytes? : Int32) -> AsyncWriter
 
 pub async fn open_cached_http(String, String, options? : HttpCacheOptions) -> CachedHttpSource
 
-pub fn open_dataset(Array[AsyncQuerySource], limits? : @moonmcap.Limits, declaration_bytes? : Int, max_sources? : Int) -> AsyncDataset raise @moonmcap.McapError
+pub fn open_dataset(Array[AsyncQuerySource], limits? : @moonmcap.Limits, declaration_bytes? : Int32, max_sources? : Int32) -> AsyncDataset raise @moonmcap.McapError
 
-pub async fn open_disk_sidecar(AsyncSource, AsyncSource, AsyncIndexVerification, limits? : @moonmcap.Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64, pool? : WorkerPool, select_region? : async (UInt64, Int) -> Bool) -> AsyncDiskSidecarReader
+pub async fn open_disk_sidecar(AsyncSource, AsyncSource, AsyncIndexVerification, limits? : @moonmcap.Limits, declaration_bytes? : Int32, cache_pages? : Int32, chunk_cache_bytes? : Int32, index_bytes? : UInt64, pool? : WorkerPool, select_region? : async (UInt64, Int32) -> Bool) -> AsyncDiskSidecarReader
 
 pub async fn open_file(String) -> AsyncSource
 
-pub async fn open_http(String, timeout_ms? : Int, retries? : Int, max_range_bytes? : Int) -> AsyncSource
+pub async fn open_http(String, timeout_ms? : Int32, retries? : Int32, max_range_bytes? : Int32) -> AsyncSource
 
-pub async fn open_paged_fields(AsyncSource, UInt64, String, String, cache_pages? : Int) -> AsyncPagedFields
+pub async fn open_paged_fields(AsyncSource, UInt64, String, String, cache_pages? : Int32) -> AsyncPagedFields
 
-pub async fn open_parallel_reader(AsyncSource, WorkerPool, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int, limits? : @moonmcap.Limits, select_region? : async (UInt64, Int) -> Bool) -> ParallelReader
+pub async fn open_parallel_reader(AsyncSource, WorkerPool, cache_bytes? : Int32, summary_bytes? : Int32, fallback_bytes? : Int32, limits? : @moonmcap.Limits, select_region? : async (UInt64, Int32) -> Bool) -> ParallelReader
 
-pub async fn open_reader(AsyncSource, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int, limits? : @moonmcap.Limits) -> AsyncReader
+pub async fn open_reader(AsyncSource, cache_bytes? : Int32, summary_bytes? : Int32, fallback_bytes? : Int32, limits? : @moonmcap.Limits) -> AsyncReader
 
-pub async fn open_sidecar(AsyncSource, Bytes, AsyncIndexVerification, limits? : @moonmcap.Limits, index_bytes? : Int, cache_bytes? : Int) -> AsyncSidecarReader
+pub async fn open_sidecar(AsyncSource, Bytes, AsyncIndexVerification, limits? : @moonmcap.Limits, index_bytes? : Int32, cache_bytes? : Int32) -> AsyncSidecarReader
 
 pub async fn open_worker_pool(String, options? : WorkerOptions) -> WorkerPool
 
-pub async fn plan_query(AsyncSource, index? : AsyncSource, fields? : AsyncSource, pool? : WorkerPool, filter? : @moonmcap.JsonFilter, decode? : Bool, cache_bytes? : Int, fallback_bytes? : Int, max_decoded_bytes? : Int, selection? : @moonmcap.DecodeSelection) -> AsyncQueryPlan
+pub async fn plan_query(AsyncSource, index? : AsyncSource, fields? : AsyncSource, pool? : WorkerPool, filter? : @moonmcap.JsonFilter, decode? : Bool, cache_bytes? : Int32, fallback_bytes? : Int32, max_decoded_bytes? : Int32, selection? : @moonmcap.DecodeSelection) -> AsyncQueryPlan
 
 pub async fn playback(@moonmcap.Replay, () -> UInt64, async (UInt64) -> Unit, async (@moonmcap.Message) -> Unit, cancelled? : () -> Bool) -> Unit
 
-pub fn rotating_writer(@moonmcap.Log, async (Int) -> AsyncSink, options? : @moonmcap.StreamOptions, queue_bytes? : Int, segment_messages? : Int, segment_bytes_target? : UInt64, segment_span? : UInt64, segment_limit? : Int) -> RotatingWriter raise @moonmcap.McapError
+pub fn rotating_writer(@moonmcap.Log, async (Int32) -> AsyncSink, options? : @moonmcap.StreamOptions, queue_bytes? : Int32, segment_messages? : Int32, segment_bytes_target? : UInt64, segment_span? : UInt64, segment_limit? : Int32) -> RotatingWriter raise @moonmcap.McapError
 
 pub fn run_codec_worker() -> Unit raise @moonmcap.McapError
 
@@ -60,12 +60,12 @@ pub fn worker_options() -> WorkerOptions
 pub struct AsyncCursor {
   source : AsyncSource
   cursor : @moonmcap.FileCursor
-  select_region : async (UInt64, Int) -> Bool
+  select_region : async (UInt64, Int32) -> Bool
   mut busy : Bool
 }
 pub fn AsyncCursor::cancel(Self) -> Unit
 pub async fn AsyncCursor::next(Self) -> @moonmcap.Message?
-pub async fn AsyncCursor::next_page(Self, Int) -> Array[@moonmcap.Message]
+pub async fn AsyncCursor::next_page(Self, Int32) -> Array[@moonmcap.Message]
 pub fn AsyncCursor::progress(Self) -> @moonmcap.FileProgress
 pub fn AsyncCursor::seek(Self, UInt64) -> Unit raise @moonmcap.McapError
 
@@ -75,37 +75,37 @@ pub struct AsyncDataset {
   limits : @moonmcap.Limits
 }
 pub fn AsyncDataset::channels(Self) -> Array[@moonmcap.Channel]
-pub fn AsyncDataset::cursor(Self, @moonmcap.Query, pending_bytes? : Int) -> AsyncDatasetCursor raise @moonmcap.McapError
+pub fn AsyncDataset::cursor(Self, @moonmcap.Query, pending_bytes? : Int32) -> AsyncDatasetCursor raise @moonmcap.McapError
 
 pub struct AsyncDatasetCursor {
   dataset : AsyncDataset
   original : @moonmcap.Query
-  budget : Int
+  budget : Int32
   streams : Array[AsyncMessageStream]
   heap : Array[@moonmcap.DatasetMessage]
   previous : Array[UInt64?]
   mut query : @moonmcap.Query
   mut state : @moonmcap.FileCursorState
   mut initialized : Bool
-  mut advance : Int?
-  mut remaining : Int
-  mut offset : Int
-  mut emitted : Int
-  mut skipped : Int
-  mut peak : Int
+  mut advance : Int32?
+  mut remaining : Int32
+  mut offset : Int32
+  mut emitted : Int32
+  mut skipped : Int32
+  mut peak : Int32
   mut busy : Bool
 }
 pub fn AsyncDatasetCursor::cancel(Self) -> Unit
 pub async fn AsyncDatasetCursor::next(Self) -> @moonmcap.DatasetMessage?
-pub async fn AsyncDatasetCursor::next_page(Self, Int) -> Array[@moonmcap.DatasetMessage]
+pub async fn AsyncDatasetCursor::next_page(Self, Int32) -> Array[@moonmcap.DatasetMessage]
 pub fn AsyncDatasetCursor::progress(Self) -> @moonmcap.DatasetProgress
 pub fn AsyncDatasetCursor::seek(Self, UInt64) -> Unit raise @moonmcap.McapError
-pub async fn AsyncDatasetCursor::write_ndjson(Self, AsyncSink, content? : @moonmcap.JsonFilter) -> Int
+pub async fn AsyncDatasetCursor::write_ndjson(Self, AsyncSink, content? : @moonmcap.JsonFilter) -> Int32
 
 pub struct AsyncDiskSidecarCursor {
   owner : AsyncDiskSidecarReader
   cursor : @moonmcap.DiskSidecarPollCursor
-  budget : Int
+  budget : Int32
   mut busy : Bool
 }
 pub fn AsyncDiskSidecarCursor::cancel(Self) -> Unit
@@ -118,9 +118,9 @@ pub struct AsyncDiskSidecarReader {
   reader : @moonmcap.DiskSidecarReader
   pool : WorkerPool?
   limits : @moonmcap.Limits
-  select_region : async (UInt64, Int) -> Bool
+  select_region : async (UInt64, Int32) -> Bool
 }
-pub fn AsyncDiskSidecarReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int) -> AsyncDiskSidecarCursor raise @moonmcap.McapError
+pub fn AsyncDiskSidecarReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int32) -> AsyncDiskSidecarCursor raise @moonmcap.McapError
 pub fn AsyncDiskSidecarReader::info(Self) -> Json
 pub fn AsyncDiskSidecarReader::query_source(Self, abort_sources_on_cancel? : Bool) -> AsyncQuerySource raise @moonmcap.McapError
 
@@ -132,20 +132,20 @@ pub(all) enum AsyncIndexVerification {
 pub struct AsyncMessageStream {
   next : async () -> @moonmcap.Message?
   stop : () -> Unit
-  pending : () -> Int
+  pending : () -> Int32
 }
 
 pub struct AsyncPagedFields {
   index : AsyncSource
   header : @moonmcap.PagedFieldHeader
-  pages : Array[(Int, @moonmcap.FieldPage)]
-  cache_limit : Int
-  mut reads : Int
-  mut hits : Int
-  mut peak_pages : Int
+  pages : Array[(Int32, @moonmcap.FieldPage)]
+  cache_limit : Int32
+  mut reads : Int32
+  mut hits : Int32
+  mut peak_pages : Int32
 }
 pub fn AsyncPagedFields::info(Self) -> Json
-pub async fn AsyncPagedFields::may_match(Self, UInt64, Int, @moonmcap.JsonFilter) -> Bool
+pub async fn AsyncPagedFields::may_match(Self, UInt64, Int32, @moonmcap.JsonFilter) -> Bool
 
 pub struct AsyncQueryPlan {
   provider : AsyncQuerySource
@@ -166,15 +166,15 @@ pub fn AsyncQueryPlan::query_source(Self) -> AsyncQuerySource
 
 pub struct AsyncQuerySource {
   declarations : @moonmcap.Log
-  open : (@moonmcap.Query, Int) -> AsyncMessageStream raise @moonmcap.McapError
+  open : (@moonmcap.Query, Int32) -> AsyncMessageStream raise @moonmcap.McapError
   materialized : Bool
 }
-pub fn AsyncQuerySource::decode_parallel(Self, WorkerPool, max_bytes? : Int) -> Self raise @moonmcap.McapError
-pub fn AsyncQuerySource::decode_payload(Self, @moonmcap.PayloadDecoder, max_bytes? : Int) -> Self raise @moonmcap.McapError
+pub fn AsyncQuerySource::decode_parallel(Self, WorkerPool, max_bytes? : Int32) -> Self raise @moonmcap.McapError
+pub fn AsyncQuerySource::decode_payload(Self, @moonmcap.PayloadDecoder, max_bytes? : Int32) -> Self raise @moonmcap.McapError
 pub fn AsyncQuerySource::filter_json(Self, @moonmcap.JsonFilter) -> Self raise @moonmcap.McapError
 
 pub(all) struct AsyncReadMetrics {
-  read_calls : Int
+  read_calls : Int32
   bytes_read : UInt64
   cancelled : Bool
 }
@@ -184,13 +184,13 @@ pub struct AsyncReader {
   reader : @moonmcap.RangeReader
 }
 pub fn AsyncReader::channels(Self) -> Array[@moonmcap.Channel]
-pub fn AsyncReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int, span_bytes? : Int, select_region? : async (UInt64, Int) -> Bool) -> AsyncCursor raise @moonmcap.McapError
-pub fn AsyncReader::query_source(Self, abort_source_on_cancel? : Bool, select_region? : async (UInt64, Int) -> Bool) -> AsyncQuerySource raise @moonmcap.McapError
+pub fn AsyncReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int32, span_bytes? : Int32, select_region? : async (UInt64, Int32) -> Bool) -> AsyncCursor raise @moonmcap.McapError
+pub fn AsyncReader::query_source(Self, abort_source_on_cancel? : Bool, select_region? : async (UInt64, Int32) -> Bool) -> AsyncQuerySource raise @moonmcap.McapError
 
 pub struct AsyncSidecarCursor {
   source : AsyncSource
   cursor : @moonmcap.SidecarCursor
-  budget : Int
+  budget : Int32
   mut busy : Bool
 }
 pub fn AsyncSidecarCursor::cancel(Self) -> Unit
@@ -201,7 +201,7 @@ pub struct AsyncSidecarReader {
   source : AsyncSource
   reader : @moonmcap.SidecarReader
 }
-pub fn AsyncSidecarReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int) -> AsyncSidecarCursor raise @moonmcap.McapError
+pub fn AsyncSidecarReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int32) -> AsyncSidecarCursor raise @moonmcap.McapError
 pub fn AsyncSidecarReader::info(Self) -> Json
 pub fn AsyncSidecarReader::query_source(Self, abort_source_on_cancel? : Bool) -> AsyncQuerySource raise @moonmcap.McapError
 
@@ -217,15 +217,15 @@ pub async fn AsyncSink::write(Self, Bytes) -> Unit
 
 pub struct AsyncSource {
   size : UInt64
-  read_at : async (UInt64, Int) -> Bytes
+  read_at : async (UInt64, Int32) -> Bytes
   abort : () -> Unit
   mut cancelled : Bool
-  mut read_calls : Int
+  mut read_calls : Int32
   mut bytes_read : UInt64
 }
 pub fn AsyncSource::cancel(Self) -> Unit
 pub fn AsyncSource::metrics(Self) -> AsyncReadMetrics
-pub async fn AsyncSource::read_exact(Self, UInt64, Int) -> Bytes
+pub async fn AsyncSource::read_exact(Self, UInt64, Int32) -> Bytes
 pub fn AsyncSource::size(Self) -> UInt64
 
 pub struct AsyncTemporalJoin {
@@ -242,8 +242,8 @@ pub async fn AsyncTemporalJoin::next(Self) -> @moonmcap.TemporalMatch?
 pub(all) struct AsyncWriteProgress {
   state : AsyncWriterState
   bytes_written : UInt64
-  queued_bytes : Int
-  peak_queued_bytes : Int
+  queued_bytes : Int32
+  peak_queued_bytes : Int32
   encoded : @moonmcap.WriteProgress
 }
 
@@ -281,12 +281,12 @@ pub fn CachedHttpSource::metrics(Self) -> Json raise @moonmcap.McapError
 pub fn CachedHttpSource::source(Self) -> AsyncSource
 
 pub(all) struct HttpCacheOptions {
-  page_bytes : Int
-  cache_bytes : Int
-  concurrency : Int
-  prefetch_pages : Int
-  timeout_ms : Int
-  retries : Int
+  page_bytes : Int32
+  cache_bytes : Int32
+  concurrency : Int32
+  prefetch_pages : Int32
+  timeout_ms : Int32
+  retries : Int32
 }
 
 type OutputQueue
@@ -308,10 +308,10 @@ pub struct ParallelReader {
   base : AsyncReader
   pool : WorkerPool
   limits : @moonmcap.Limits
-  select_region : async (UInt64, Int) -> Bool
-  mut batch_peak : Int
+  select_region : async (UInt64, Int32) -> Bool
+  mut batch_peak : Int32
 }
-pub fn ParallelReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int, span_bytes? : Int) -> ParallelCursor raise @moonmcap.McapError
+pub fn ParallelReader::cursor(Self, @moonmcap.Query, pending_bytes? : Int32, span_bytes? : Int32) -> ParallelCursor raise @moonmcap.McapError
 pub fn ParallelReader::info(Self) -> Json
 pub fn ParallelReader::query_source(Self) -> AsyncQuerySource raise @moonmcap.McapError
 
@@ -319,16 +319,16 @@ type PreparedChunk
 
 pub struct RotatingWriter {
   template : @moonmcap.Log
-  create : async (Int) -> AsyncSink
+  create : async (Int32) -> AsyncSink
   options : @moonmcap.StreamOptions
-  queue_bytes : Int
-  message_limit : Int
+  queue_bytes : Int32
+  message_limit : Int32
   byte_target : UInt64
   time_span : UInt64
-  segment_limit : Int
+  segment_limit : Int32
   reports : Array[SegmentInfo]
   mut current : AsyncWriter?
-  mut ordinal : Int
+  mut ordinal : Int32
   mut start_time : UInt64
   mut end_time : UInt64
   mut state : AsyncWriterState
@@ -340,7 +340,7 @@ pub async fn RotatingWriter::finish(Self) -> Array[SegmentInfo]
 pub fn RotatingWriter::segments(Self) -> Array[SegmentInfo]
 
 pub(all) struct SegmentInfo {
-  ordinal : Int
+  ordinal : Int32
   messages : UInt64
   bytes : UInt64
   start_time : UInt64
@@ -348,27 +348,27 @@ pub(all) struct SegmentInfo {
 }
 
 pub(all) struct WorkerOptions {
-  workers : Int
-  max_jobs : Int
-  input_bytes : Int
-  output_bytes : Int
-  context_bytes : Int
-  buffer_bytes : Int
-  prefetch : Int
-  min_chunk_bytes : Int
-  min_payload_bytes : Int
-  timeout_ms : Int
+  workers : Int32
+  max_jobs : Int32
+  input_bytes : Int32
+  output_bytes : Int32
+  context_bytes : Int32
+  buffer_bytes : Int32
+  prefetch : Int32
+  min_chunk_bytes : Int32
+  min_payload_bytes : Int32
+  timeout_ms : Int32
 }
 
 pub struct WorkerPool {
   options : WorkerOptions
-  submit : async (String, Int) -> String
+  submit : async (String, Int32) -> String
   snapshot : () -> String
   shutdown : async () -> Unit
 }
 pub async fn WorkerPool::close(Self) -> Unit
-pub async fn WorkerPool::decode_message(Self, @moonmcap.Message, @moonmcap.Log, max_bytes? : Int) -> @moonmcap.Message
-pub async fn WorkerPool::expand_chunk(Self, Bytes, Int, limits? : @moonmcap.Limits) -> Bytes
+pub async fn WorkerPool::decode_message(Self, @moonmcap.Message, @moonmcap.Log, max_bytes? : Int32) -> @moonmcap.Message
+pub async fn WorkerPool::expand_chunk(Self, Bytes, Int32, limits? : @moonmcap.Limits) -> Bytes
 pub fn WorkerPool::metrics(Self) -> Json raise @moonmcap.McapError
 
 // Type aliases

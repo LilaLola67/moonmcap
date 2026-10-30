@@ -1,7 +1,7 @@
 ///|
 pub async fn open_worker_pool(
   _path : String,
-  options? : WorkerOptions = worker_options(),
+  options~ : WorkerOptions = worker_options(),
 ) -> WorkerPool {
   ignore(options)
   raise @mcap.io_error("codec worker pool requires Node.js")
@@ -16,7 +16,7 @@ pub fn run_codec_worker() -> Unit raise @mcap.McapError {
 pub async fn open_cached_http(
   _url : String,
   _directory : String,
-  options? : HttpCacheOptions = http_cache_options(),
+  options~ : HttpCacheOptions = http_cache_options(),
 ) -> CachedHttpSource {
   ignore(options)
   raise @mcap.io_error("persistent HTTP cache requires Node.js")
@@ -40,9 +40,9 @@ pub async fn create_sink(_path : String) -> AsyncSink {
 ///|
 pub async fn open_http(
   _url : String,
-  timeout_ms? : Int = 5000,
-  retries? : Int = 2,
-  max_range_bytes? : Int = 32 * 1024 * 1024,
+  timeout_ms~ : Int32 = 5000,
+  retries~ : Int32 = 2,
+  max_range_bytes~ : Int32 = 32 * 1024 * 1024,
 ) -> AsyncSource {
   ignore(timeout_ms)
   ignore(retries)

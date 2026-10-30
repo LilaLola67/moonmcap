@@ -10,7 +10,7 @@ pub struct AsyncSink {
 ///|
 pub fn new_sink(
   write_all : async (Bytes) -> Unit,
-  abort? : () -> Unit = fn() { () },
+  abort~ : () -> Unit = fn() { () },
 ) -> AsyncSink {
   { write_all, abort, cancelled: false, bytes_written: 0UL, claimed: false, }
 }
@@ -47,17 +47,17 @@ pub(all) enum AsyncWriterState {
 pub(all) struct AsyncWriteProgress {
   state : AsyncWriterState
   bytes_written : UInt64
-  queued_bytes : Int
-  peak_queued_bytes : Int
+  queued_bytes : Int32
+  peak_queued_bytes : Int32
   encoded : @mcap.WriteProgress
 }
 
 ///|
 struct OutputQueue {
   chunks : Array[Bytes]
-  budget : Int
-  mut bytes : Int
-  mut peak : Int
+  budget : Int32
+  mut bytes : Int32
+  mut peak : Int32
 }
 
 ///|
@@ -72,10 +72,10 @@ pub struct AsyncWriter {
 ///|
 pub async fn new_writer(
   sink : AsyncSink,
-  profile? : String = "",
-  options? : @mcap.StreamOptions = @mcap.stream_options(),
-  limits? : @mcap.Limits = @mcap.default_limits(),
-  queue_bytes? : Int = 32 * 1024 * 1024,
+  profile~ : String = "",
+  options~ : @mcap.StreamOptions = @mcap.stream_options(),
+  limits~ : @mcap.Limits = @mcap.default_limits(),
+  queue_bytes~ : Int32 = 32 * 1024 * 1024,
 ) -> AsyncWriter {
   if sink.claimed || sink.cancelled || sink.bytes_written != 0UL {
     raise @mcap.io_error("async sink already owned or closed")

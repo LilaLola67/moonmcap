@@ -1,9 +1,9 @@
 ///|
 /// Bounded pure MoonBit handler for a trusted host worker entry.
 pub fn codec_worker_handler(
-  input_bytes? : Int = 32 * 1024 * 1024,
-  output_bytes? : Int = 128 * 1024 * 1024,
-  context_bytes? : Int = 1024 * 1024,
+  input_bytes~ : Int32 = 32 * 1024 * 1024,
+  output_bytes~ : Int32 = 128 * 1024 * 1024,
+  context_bytes~ : Int32 = 1024 * 1024,
 ) -> ((String) -> String) raise McapError {
   if input_bytes < 1 ||
     input_bytes > 128 * 1024 * 1024 ||
@@ -37,7 +37,7 @@ pub fn codec_worker_handler(
       let op = field_text(field_get(job, "op"))
       let output = if op == "expand" {
         let limits_object = field_object(field_get(job, "limits"))
-        fn option(key : String, cap : Int) -> Int raise McapError {
+        fn option(key : String, cap : Int32) -> Int32 raise McapError {
           bounded_length(
             parse_decimal(field_get(limits_object, key).stringify()),
             cap,

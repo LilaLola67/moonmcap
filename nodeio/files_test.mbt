@@ -19,7 +19,7 @@ extern "js" fn remove_empty_parent(path : String) -> Unit =
   #| path=>process.getBuiltinModule('node:fs').rmdirSync(process.getBuiltinModule('node:path').dirname(path))
 
 ///|
-extern "js" fn rename_fault(path : String, count : Int) -> (Bool) -> Int =
+extern "js" fn rename_fault(path : String, count : Int32) -> (Bool) -> Int32 =
   #| (path,count)=>{const fs=process.getBuiltinModule('node:fs'),p=process.getBuiltinModule('node:path'),original=fs.renameSync;let attempts=0;fs.renameSync=function(from,to){if(p.resolve(from)===p.resolve(path,'checkpoint.tmp')){attempts++;if(attempts<=count){const error=new Error('injected temporary reader lock');error.code='EPERM';throw error;}}return original.apply(this,arguments);};return restore=>{if(restore)fs.renameSync=original;return attempts;};}
 
 ///|

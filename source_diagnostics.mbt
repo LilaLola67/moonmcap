@@ -38,10 +38,10 @@ fn source_issue_code(reason : String) -> DiagnosticCode {
 /// is not a proof of whole-file integrity. Metadata is validated before data.
 pub fn diagnose_source(
   source : ReadSource,
-  limits? : Limits = default_limits(),
-  summary_bytes? : Int = 8 * 1024 * 1024,
-  read_bytes? : Int = 1024 * 1024,
-  cancelled? : () -> Bool = fn() { false },
+  limits~ : Limits = default_limits(),
+  summary_bytes~ : Int32 = 8 * 1024 * 1024,
+  read_bytes~ : Int32 = 1024 * 1024,
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Json raise McapError {
   if read_bytes <= 0 ||
     summary_bytes < 0 ||
@@ -66,7 +66,7 @@ pub fn diagnose_source(
   })
   let mut phase = "metadata"
   let mut current : UInt64? = None
-  let mut span : Int? = None
+  let mut span : Int32? = None
   let mut opcode : Byte? = None
   let mut parsed = 0UL
   let mut messages = 0UL

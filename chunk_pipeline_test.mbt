@@ -8,8 +8,8 @@ test "combined chunk checkpoints resume committed final merge groups" {
       messages_per_chunk=17,
     ),
   )
-  let files : Map[Int, @buffer.Buffer] = Map([])
-  let created : Map[Int, Int] = Map([])
+  let files : Map[Int32, @buffer.Buffer] = Map([])
+  let created : Map[Int32, Int32] = Map([])
   let storage = @moonmcap.sort_storage(
     fn(id) {
       if files.contains(id) {

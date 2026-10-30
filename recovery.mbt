@@ -1,8 +1,8 @@
 ///|
 pub(all) struct RecoveryReport {
   log : Log
-  recovered_records : Int
-  stop_offset : Int
+  recovered_records : Int32
+  stop_offset : Int32
   complete : Bool
   reason : String
 }
@@ -11,7 +11,7 @@ pub(all) struct RecoveryReport {
 /// Recover only a verified contiguous prefix. Never resynchronize through corrupt bytes.
 pub fn recover_prefix(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> RecoveryReport raise McapError {
   if bytes.length() < 8 || bytes[0:8].to_owned() != magic() {
     raise Invalid("recovery requires leading MCAP magic")
@@ -160,7 +160,7 @@ pub fn recover_prefix(
 /// Rewrites a recoverable prefix as a fresh valid sequential MCAP file.
 pub fn repair_prefix(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> (Bytes, RecoveryReport) raise McapError {
   let report = recover_prefix(bytes, limits~)
   (write_log(report.log, limits~), report)

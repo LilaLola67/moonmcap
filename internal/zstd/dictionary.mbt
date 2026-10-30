@@ -3,14 +3,14 @@
 ///|
 priv struct ZstdDictionary {
   content : Bytes
-  dict_id : UInt
-  rep : Array[Int]
+  dict_id : UInt32
+  rep : Array[Int32]
   lit_table : ZstdHuffmanTable?
   seq_tables : SeqTables?
 }
 
 ///|
-fn default_rep_offsets() -> Array[Int] {
+fn default_rep_offsets() -> Array[Int32] {
   [1, 4, 8]
 }
 
@@ -26,7 +26,7 @@ fn empty_dictionary() -> ZstdDictionary {
 }
 
 ///|
-fn copy_rep_offsets(rep : Array[Int]) -> Array[Int] {
+fn copy_rep_offsets(rep : Array[Int32]) -> Array[Int32] {
   [rep.unsafe_get(0), rep.unsafe_get(1), rep.unsafe_get(2)]
 }
 

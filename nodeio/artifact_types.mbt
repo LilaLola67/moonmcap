@@ -1,6 +1,6 @@
 ///|
 pub struct ArtifactDirectory {
-  operate : (String, Int, Bytes) -> String
+  operate : (String, Int32, Bytes) -> String
   mut closed : Bool
 }
 
@@ -8,8 +8,8 @@ pub struct ArtifactDirectory {
 fn ArtifactDirectory::operation(
   self : ArtifactDirectory,
   op : String,
-  id? : Int = 0,
-  bytes? : Bytes = b"",
+  id~ : Int32 = 0,
+  bytes~ : Bytes = b"",
 ) -> String raise @mcap.McapError {
   if self.closed {
     raise @mcap.io_error("artifact directory is closed")

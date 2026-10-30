@@ -15,8 +15,8 @@ pub(all) struct JoinOptions {
   mode : JoinMode
   tolerance : UInt64
   missing : MissingMatch
-  buffer_bytes : Int
-  buffer_messages : Int
+  buffer_bytes : Int32
+  buffer_messages : Int32
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -54,7 +54,7 @@ pub struct TemporalJoinCursor {
   mut after : Message?
   mut left_done : Bool
   mut right_done : Bool
-  mut waiting : Int
+  mut waiting : Int32
   mut last_left : UInt64?
   mut last_right : UInt64?
   mut state : FileCursorState
@@ -62,12 +62,12 @@ pub struct TemporalJoinCursor {
   mut right_read : UInt64
   mut matched : UInt64
   mut unmatched : UInt64
-  mut peak_bytes : Int
+  mut peak_bytes : Int32
 }
 
 ///|
 pub fn temporal_join_cursor(
-  options? : JoinOptions = join_options(),
+  options~ : JoinOptions = join_options(),
 ) -> TemporalJoinCursor raise McapError {
   if options.buffer_bytes < 31 ||
     options.buffer_messages < 1 ||
@@ -302,7 +302,7 @@ pub struct TemporalJoinStream {
 pub fn temporal_join(
   left : MessageStream,
   right : MessageStream,
-  options? : JoinOptions = join_options(),
+  options~ : JoinOptions = join_options(),
 ) -> TemporalJoinStream raise McapError {
   { cursor: temporal_join_cursor(options~), left, right, closed: false, }
 }

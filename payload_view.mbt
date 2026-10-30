@@ -1,8 +1,8 @@
 ///|
 pub(all) struct DecodeSelection {
   paths : Array[String]
-  inline_array_items : Int
-  scan_items : Int
+  inline_array_items : Int32
+  scan_items : Int32
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -13,11 +13,11 @@ pub fn decode_selection() -> DecodeSelection {
 ///|
 pub(all) struct BinaryField {
   path : String
-  offset : Int
-  byte_length : Int
-  elements : Int
+  offset : Int32
+  byte_length : Int32
+  elements : Int32
   element_type : String
-  stride : Int
+  stride : Int32
   little_endian : Bool
   aligned : Bool
 } derive(Eq, @debug.Debug)
@@ -27,7 +27,7 @@ pub struct PayloadView {
   source : Bytes
   value : Json
   binary : Map[String, BinaryField]
-  visited : Int
+  visited : Int32
 }
 
 ///|
@@ -56,9 +56,9 @@ pub fn PayloadView::info(self : PayloadView) -> Json {
 pub fn PayloadView::read_binary(
   self : PayloadView,
   path : String,
-  offset : Int,
-  length : Int,
-  max_bytes? : Int = 65536,
+  offset : Int32,
+  length : Int32,
+  max_bytes~ : Int32 = 65536,
 ) -> Bytes raise McapError {
   guard self.binary.get(path) is Some(field) else {
     raise Invalid("binary view field not found")
@@ -79,8 +79,8 @@ pub fn PayloadView::write_binary(
   self : PayloadView,
   path : String,
   sink : WriteSink,
-  block_bytes? : Int = 65536,
-  cancelled? : () -> Bool = fn() { false },
+  block_bytes~ : Int32 = 65536,
+  cancelled~ : () -> Bool = fn() { false },
 ) -> UInt64 raise McapError {
   if block_bytes < 1 || block_bytes > 1024 * 1024 {
     raise Invalid("invalid binary export block size")
@@ -104,9 +104,9 @@ pub fn PayloadView::write_binary(
 pub fn PayloadView::read_elements(
   self : PayloadView,
   path : String,
-  start : Int,
-  count : Int,
-  max_elements? : Int = 1024,
+  start : Int32,
+  count : Int32,
+  max_elements~ : Int32 = 1024,
 ) -> Json raise McapError {
   guard self.binary.get(path) is Some(field) && field.stride > 0 else {
     raise Invalid("element windows require a fixed-width primitive array")
@@ -296,7 +296,7 @@ fn BinaryField::json(self : BinaryField) -> Json {
 }
 
 ///|
-fn cdr_width(base : String) -> Int {
+fn cdr_width(base : String) -> Int32 {
   match base {
     "bool" | "byte" | "char" | "uint8" | "int8" => 1
     "uint16" | "int16" => 2
@@ -307,7 +307,7 @@ fn cdr_width(base : String) -> Int {
 }
 
 ///|
-fn CdrWire::skip(self : CdrWire, length : Int) -> Unit raise McapError {
+fn CdrWire::skip(self : CdrWire, length : Int32) -> Unit raise McapError {
   if length < 0 || length > self.bytes.length() - self.position {
     raise Invalid("truncated projected payload")
   }
@@ -328,7 +328,7 @@ fn CdrProjection::message(
   wire : CdrWire,
   name : String,
   path : Array[String],
-  depth : Int,
+  depth : Int32,
   emit : Bool,
 ) -> Json raise McapError {
   if depth > self.decoder.options.depth {
@@ -460,7 +460,7 @@ fn CdrProjection::message(
 pub fn CdrDecoder::view(
   self : CdrDecoder,
   bytes : Bytes,
-  selection? : DecodeSelection = decode_selection(),
+  selection~ : DecodeSelection = decode_selection(),
 ) -> PayloadView raise McapError {
   let paths = selection_paths(selection)
   if bytes.length() > self.options.message_bytes {

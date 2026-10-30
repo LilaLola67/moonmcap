@@ -2,14 +2,14 @@
 pub struct MessageStream {
   next_message : () -> Message? raise McapError
   stop : () -> Unit
-  pending : () -> Int
+  pending : () -> Int32
 }
 
 ///|
 pub fn message_stream(
   next : () -> Message? raise McapError,
   cancel : () -> Unit,
-  pending_bytes? : () -> Int = fn() { 0 },
+  pending_bytes~ : () -> Int32 = fn() { 0 },
 ) -> MessageStream {
   { next_message: next, stop: cancel, pending: pending_bytes, }
 }
@@ -17,7 +17,7 @@ pub fn message_stream(
 ///|
 pub struct QuerySource {
   declarations : Log
-  open : (Query, Int) -> MessageStream raise McapError
+  open : (Query, Int32) -> MessageStream raise McapError
   materialized : Bool
 }
 
@@ -26,8 +26,8 @@ pub struct QuerySource {
 /// and truthful nonnegative pending payload accounting.
 pub fn query_source(
   declarations : Log,
-  open : (Query, Int) -> MessageStream raise McapError,
-  materialized? : Bool = false,
+  open : (Query, Int32) -> MessageStream raise McapError,
+  materialized~ : Bool = false,
 ) -> QuerySource raise McapError {
   if !declarations.messages.is_empty() ||
     !declarations.attachments.is_empty() ||
@@ -48,8 +48,8 @@ pub fn QuerySource::declaration_log(self : QuerySource) -> Log {
 /// must cancel on early termination. Source ordering and limits follow Query.
 pub fn QuerySource::stream(
   self : QuerySource,
-  query? : Query = all_query(),
-  pending_bytes? : Int = 64 * 1024 * 1024,
+  query~ : Query = all_query(),
+  pending_bytes~ : Int32 = 64 * 1024 * 1024,
 ) -> MessageStream raise McapError {
   if query.start_time > query.end_time ||
     query.offset < 0 ||
@@ -104,16 +104,16 @@ pub fn RangeReader::query_source(
 pub struct Dataset {
   sources : Array[QuerySource]
   declarations : Log
-  remaps : Array[Map[Int, Int]]
+  remaps : Array[Map[Int32, Int32]]
   limits : Limits
 }
 
 ///|
 pub fn open_dataset(
   sources : Array[QuerySource],
-  limits? : Limits = default_limits(),
-  declaration_bytes? : Int = 8 * 1024 * 1024,
-  max_sources? : Int = 64,
+  limits~ : Limits = default_limits(),
+  declaration_bytes~ : Int32 = 8 * 1024 * 1024,
+  max_sources~ : Int32 = 64,
 ) -> Dataset raise McapError {
   validate_log(empty_log(), limits~)
   if sources.is_empty() ||
@@ -141,7 +141,7 @@ pub fn open_dataset(
   let declarations = merge_logs(sources.map(fn(source) { source.declarations }))
   validate_log(declarations, limits~)
   let remaps = sources.map(fn(source) {
-    let schema_ids : Map[Int, Int] = Map([(0, 0)])
+    let schema_ids : Map[Int32, Int32] = Map([(0, 0)])
     for schema in source.declarations.schemas {
       let mapped = declarations.schemas
         .iter()
@@ -153,7 +153,7 @@ pub fn open_dataset(
         .unwrap()
       schema_ids[schema.id] = mapped.id
     }
-    let ids : Map[Int, Int] = Map([])
+    let ids : Map[Int32, Int32] = Map([])
     for channel in source.declarations.channels {
       let mapped = declarations.channels
         .iter()
@@ -174,7 +174,7 @@ pub fn open_dataset(
 ///|
 pub fn Dataset::remap_message(
   self : Dataset,
-  source_index : Int,
+  source_index : Int32,
   message : Message,
 ) -> Message raise McapError {
   if source_index < 0 || source_index >= self.remaps.length() {
@@ -198,39 +198,39 @@ pub fn Dataset::schemas(self : Dataset) -> Array[Schema] {
 
 ///|
 pub(all) struct DatasetMessage {
-  source_index : Int
+  source_index : Int32
   message : Message
 } derive(Eq, @debug.Debug)
 
 ///|
 pub(all) struct DatasetProgress {
   state : FileCursorState
-  sources : Int
-  materialized_sources : Int
-  loaded_sources : Int
-  emitted_messages : Int
-  skipped_messages : Int
-  pending_bytes : Int
-  peak_pending_bytes : Int
+  sources : Int32
+  materialized_sources : Int32
+  loaded_sources : Int32
+  emitted_messages : Int32
+  skipped_messages : Int32
+  pending_bytes : Int32
+  peak_pending_bytes : Int32
 } derive(Eq, @debug.Debug)
 
 ///|
 pub struct DatasetCursor {
   dataset : Dataset
   original : Query
-  budget : Int
+  budget : Int32
   streams : Array[MessageStream]
   heap : Array[DatasetMessage]
   mut query : Query
   mut state : FileCursorState
   mut initialized : Bool
-  mut loaded : Int
-  mut advance : Int?
-  mut remaining : Int
-  mut offset_left : Int
-  mut emitted : Int
-  mut skipped : Int
-  mut peak : Int
+  mut loaded : Int32
+  mut advance : Int32?
+  mut remaining : Int32
+  mut offset_left : Int32
+  mut emitted : Int32
+  mut skipped : Int32
+  mut peak : Int32
 }
 
 ///|
@@ -244,7 +244,7 @@ fn DatasetCursor::close(self : DatasetCursor, state : FileCursorState) -> Unit {
 }
 
 ///|
-fn DatasetCursor::pending_bytes(self : DatasetCursor) -> Int raise McapError {
+fn DatasetCursor::pending_bytes(self : DatasetCursor) -> Int32 raise McapError {
   let mut sum = 0
   for head in self.heap {
     let bytes = head.message.data.length() + 31
@@ -366,7 +366,7 @@ fn DatasetCursor::reset(
 pub fn Dataset::cursor(
   self : Dataset,
   query : Query,
-  pending_bytes? : Int = 64 * 1024 * 1024,
+  pending_bytes~ : Int32 = 64 * 1024 * 1024,
 ) -> DatasetCursor raise McapError {
   if query.start_time > query.end_time ||
     query.offset < 0 ||
@@ -399,7 +399,7 @@ pub fn Dataset::cursor(
 ///|
 fn DatasetCursor::read_head(
   self : DatasetCursor,
-  source : Int,
+  source : Int32,
 ) -> Unit raise McapError {
   if (self.streams[source].next_message)() is Some(message) {
     if message.log_time < self.query.start_time ||
@@ -479,7 +479,7 @@ pub fn DatasetCursor::next(self : DatasetCursor) -> Message? raise McapError {
 ///|
 pub fn DatasetCursor::next_page(
   self : DatasetCursor,
-  size : Int,
+  size : Int32,
 ) -> Array[DatasetMessage] raise McapError {
   if size <= 0 {
     raise Invalid("dataset page size must be positive")
@@ -569,7 +569,7 @@ pub fn dataset_message_json(
 pub fn DatasetCursor::write_ndjson(
   self : DatasetCursor,
   sink : WriteSink,
-) -> Int raise McapError {
+) -> Int32 raise McapError {
   let mut count = 0
   while self.next_record() is Some(record) {
     sink.write(

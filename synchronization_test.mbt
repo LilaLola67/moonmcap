@@ -1,8 +1,8 @@
 ///|
 fn sync_test_stream(
   times : Array[UInt64],
-  stopped : Array[Int],
-  values? : Array[Bytes] = [],
+  stopped : Array[Int32],
+  values~ : Array[Bytes] = [],
 ) -> @moonmcap.MessageStream {
   let next = [0]
   @moonmcap.message_stream(

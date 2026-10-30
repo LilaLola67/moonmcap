@@ -2,15 +2,15 @@
 /// The callback may short-read, but must return bytes from a stable source.
 pub struct ReadSource {
   size : UInt64
-  read_at : (UInt64, Int) -> Bytes raise McapError
-  mut calls : Int
+  read_at : (UInt64, Int32) -> Bytes raise McapError
+  mut calls : Int32
   mut bytes_read : UInt64
 }
 
 ///|
 pub fn new_read_source(
   size : UInt64,
-  read_at : (UInt64, Int) -> Bytes raise McapError,
+  read_at : (UInt64, Int32) -> Bytes raise McapError,
 ) -> ReadSource {
   { size, read_at, calls: 0, bytes_read: 0UL, }
 }
@@ -42,7 +42,7 @@ pub fn ReadSource::size(self : ReadSource) -> UInt64 {
 pub fn ReadSource::read_exact(
   self : ReadSource,
   offset : UInt64,
-  length : Int,
+  length : Int32,
 ) -> Bytes raise McapError {
   if length < 0 || offset > self.size || length.to_uint64() > self.size - offset {
     raise Invalid("read span outside source at \{offset}")

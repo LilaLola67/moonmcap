@@ -7,7 +7,7 @@ pub(all) enum IndexVerification {
 ///|
 struct SidecarEntry {
   time : UInt64
-  channel : Int
+  channel : Int32
   location : MessageLocation
 }
 
@@ -16,16 +16,16 @@ pub struct SidecarReader {
   source : ReadSource
   declarations : Log
   entries : Array[SidecarEntry]
-  positions : Array[Int]
+  positions : Array[Int32]
   limits : Limits
   digest : String
   content_verified : Bool
-  index_bytes : Int
-  cache_budget : Int
+  index_bytes : Int32
+  cache_budget : Int32
   mut cached_offset : UInt64?
-  mut cached_span : Int
+  mut cached_span : Int32
   mut cached : Chunk?
-  mut cached_bytes : Int
+  mut cached_bytes : Int32
 }
 
 ///|
@@ -40,11 +40,11 @@ fn checked_digest(text : String) -> String raise McapError {
 pub fn build_sidecar(
   source : ReadSource,
   fingerprint : (ReadSource) -> String raise McapError,
-  identity? : String = "",
-  limits? : Limits = default_limits(),
-  index_bytes? : Int = 32 * 1024 * 1024,
-  declaration_bytes? : Int = 8 * 1024 * 1024,
-  cancelled? : () -> Bool = fn() { false },
+  identity~ : String = "",
+  limits~ : Limits = default_limits(),
+  index_bytes~ : Int32 = 32 * 1024 * 1024,
+  declaration_bytes~ : Int32 = 8 * 1024 * 1024,
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Bytes raise McapError {
   if index_bytes < 128 || identity.length() > 256 {
     raise Invalid("invalid sidecar budget or identity token")
@@ -61,7 +61,7 @@ pub fn build_sidecar(
   let retained = [
     128 + identity.length() + encode_header(declarations.header).length(),
   ]
-  let reserve = fn(size : Int) -> Unit raise McapError {
+  let reserve = fn(size : Int32) -> Unit raise McapError {
     if size > index_bytes - retained[0] {
       raise Invalid("sidecar index byte budget exceeded")
     }
@@ -125,9 +125,9 @@ pub fn open_sidecar(
   source : ReadSource,
   bytes : Bytes,
   verification : IndexVerification,
-  limits? : Limits = default_limits(),
-  index_bytes? : Int = 32 * 1024 * 1024,
-  cache_bytes? : Int = 8 * 1024 * 1024,
+  limits~ : Limits = default_limits(),
+  index_bytes~ : Int32 = 32 * 1024 * 1024,
+  cache_bytes~ : Int32 = 8 * 1024 * 1024,
 ) -> SidecarReader raise McapError {
   validate_log(empty_log(), limits~)
   if source.size < 50UL ||
@@ -175,7 +175,7 @@ pub fn open_sidecar(
     raise Invalid("truncated sidecar entries")
   }
   let entries : Array[SidecarEntry] = []
-  let channels : Map[Int, Bool] = Map([])
+  let channels : Map[Int32, Bool] = Map([])
   for channel in declarations.channels {
     channels[channel.id] = true
   }
@@ -382,14 +382,14 @@ pub fn SidecarReader::info(self : SidecarReader) -> Json {
 pub struct SidecarCursor {
   reader : SidecarReader
   original : Query
-  allowed : Map[Int, Bool]
+  allowed : Map[Int32, Bool]
   mut query : Query
   mut state : FileCursorState
-  mut position : Int
-  mut remaining : Int
-  mut offset_left : Int
-  mut emitted : Int
-  mut skipped : Int
+  mut position : Int32
+  mut remaining : Int32
+  mut offset_left : Int32
+  mut emitted : Int32
+  mut skipped : Int32
   mut waiting : ReadSpan?
   mut ready : Message?
 }
@@ -428,7 +428,7 @@ pub fn SidecarReader::cursor(
     raise Invalid("invalid sidecar query")
   }
   let query = { ..query, topics: query.topics.copy(), }
-  let allowed : Map[Int, Bool] = Map([])
+  let allowed : Map[Int32, Bool] = Map([])
   for channel in self.declarations.channels {
     if query.topics.is_empty() || query.topics.contains(channel.topic) {
       allowed[channel.id] = true
@@ -575,7 +575,7 @@ pub fn SidecarCursor::next(self : SidecarCursor) -> Message? raise McapError {
 }
 
 ///|
-pub fn SidecarCursor::pending_bytes(self : SidecarCursor) -> Int {
+pub fn SidecarCursor::pending_bytes(self : SidecarCursor) -> Int32 {
   self.ready.map(fn(m) { m.data.length() + 31 }).unwrap_or(0)
 }
 
@@ -587,7 +587,7 @@ pub fn SidecarReader::declaration_log(self : SidecarReader) -> Log {
 ///|
 pub fn SidecarCursor::next_page(
   self : SidecarCursor,
-  size : Int,
+  size : Int32,
 ) -> Array[Message] raise McapError {
   if size <= 0 {
     raise Invalid("sidecar page size must be positive")
@@ -667,7 +667,7 @@ pub fn SidecarReader::query_source(
 pub fn SidecarCursor::write_ndjson(
   self : SidecarCursor,
   sink : WriteSink,
-) -> Int raise McapError {
+) -> Int32 raise McapError {
   let mut count = 0
   while self.next() is Some(message) {
     let text = messages_json([message], self.reader.declarations.channels).stringify()

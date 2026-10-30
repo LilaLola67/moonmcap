@@ -1,8 +1,8 @@
 ///|
 pub(all) enum NormalizedConversion {
   KeepValue
-  SignedValue(Int)
-  UnsignedValue(Int)
+  SignedValue(Int32)
+  UnsignedValue(Int32)
   ScaleValue(Double, Double)
   TextValue
   BooleanValue
@@ -151,7 +151,7 @@ fn normalized_paths(
 fn normalized_insert(
   root : Json,
   path : Array[String],
-  position : Int,
+  position : Int32,
   value : Json,
 ) -> Json raise McapError {
   if position == path.length() {

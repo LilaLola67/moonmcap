@@ -4,26 +4,26 @@
 pub struct ArtifactBatchStorage {
   load : () -> Bytes? raise McapError
   save : (Bytes) -> Unit raise McapError
-  create : (Int) -> WriteSink raise McapError
-  seal : (Int) -> Unit raise McapError
-  digest : (Int) -> String raise McapError
-  publish : (Int) -> Unit raise McapError
-  published : (Int) -> Bool raise McapError
-  discard : (Int) -> Unit raise McapError
-  inventory : () -> Array[Int] raise McapError
+  create : (Int32) -> WriteSink raise McapError
+  seal : (Int32) -> Unit raise McapError
+  digest : (Int32) -> String raise McapError
+  publish : (Int32) -> Unit raise McapError
+  published : (Int32) -> Bool raise McapError
+  discard : (Int32) -> Unit raise McapError
+  inventory : () -> Array[Int32] raise McapError
 }
 
 ///|
 pub fn artifact_batch_storage(
   load : () -> Bytes? raise McapError,
   save : (Bytes) -> Unit raise McapError,
-  create : (Int) -> WriteSink raise McapError,
-  seal : (Int) -> Unit raise McapError,
-  digest : (Int) -> String raise McapError,
-  publish : (Int) -> Unit raise McapError,
-  published : (Int) -> Bool raise McapError,
-  discard : (Int) -> Unit raise McapError,
-  inventory : () -> Array[Int] raise McapError,
+  create : (Int32) -> WriteSink raise McapError,
+  seal : (Int32) -> Unit raise McapError,
+  digest : (Int32) -> String raise McapError,
+  publish : (Int32) -> Unit raise McapError,
+  published : (Int32) -> Bool raise McapError,
+  discard : (Int32) -> Unit raise McapError,
+  inventory : () -> Array[Int32] raise McapError,
 ) -> ArtifactBatchStorage {
   { load, save, create, seal, digest, publish, published, discard, inventory, }
 }
@@ -43,7 +43,7 @@ fn artifact_digest_valid(digest : String) -> Bool {
 ///|
 fn artifact_checkpoint(
   plan : String,
-  total : Int,
+  total : Int32,
   completed : Array[ArtifactReceipt],
   pending : ArtifactReceipt?,
 ) -> Bytes raise McapError {
@@ -75,7 +75,7 @@ fn artifact_checkpoint(
 fn restore_artifacts(
   bytes : Bytes,
   plan : String,
-  total : Int,
+  total : Int32,
 ) -> (Array[ArtifactReceipt], ArtifactReceipt?) raise McapError {
   if bytes.length() < 24 || bytes.length() > 8 * 1024 * 1024 {
     raise Invalid("invalid artifact checkpoint size")
@@ -121,11 +121,11 @@ fn restore_artifacts(
 /// before reuse. The plan must identify input content, processing rules and code.
 pub fn run_artifact_batch(
   plan : String,
-  total : Int,
+  total : Int32,
   storage : ArtifactBatchStorage,
-  execute : (Int, WriteSink) -> Json raise McapError,
-  stop_after? : Int = 4096,
-  cancelled? : () -> Bool = fn() { false },
+  execute : (Int32, WriteSink) -> Json raise McapError,
+  stop_after~ : Int32 = 4096,
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Json raise McapError {
   if plan == "" ||
     @utf8.encode(plan[:]).length() > 1024 * 1024 ||
@@ -142,7 +142,7 @@ pub fn run_artifact_batch(
     None => ([], None)
   }
   let ids = (storage.inventory)()
-  let seen : Map[Int, Bool] = Map([])
+  let seen : Map[Int32, Bool] = Map([])
   for id in ids {
     if id < 0 || id >= total || id > completed.length() || seen.contains(id) {
       raise Invalid("unexpected artifact inventory")

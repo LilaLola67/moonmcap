@@ -5,8 +5,8 @@ pub(all) struct AggregateOptions {
   by_topic : Bool
   window : UInt64
   origin : UInt64
-  max_groups : Int
-  group_bytes : Int
+  max_groups : Int32
+  group_bytes : Int32
   invalid : JsonInvalidPolicy
 }
 
@@ -54,18 +54,18 @@ fn canonical_value(value : Json) -> String raise McapError {
 struct AggregateState {
   group : Json
   window : UInt64?
-  mut count : Int
-  mut numeric : Int
-  mut missing : Int
-  mut non_numeric : Int
+  mut count : Int32
+  mut numeric : Int32
+  mut missing : Int32
+  mut non_numeric : Int32
   mut coefficient : @bigint.BigInt
-  mut exponent : Int
+  mut exponent : Int32
   mut minimum : String?
   mut maximum : String?
 }
 
 ///|
-fn decimal_power(exponent : Int) -> @bigint.BigInt raise McapError {
+fn decimal_power(exponent : Int32) -> @bigint.BigInt raise McapError {
   if exponent < 0 || exponent > 4096 {
     raise Invalid("aggregate decimal alignment exceeds 4096 digits")
   }
@@ -183,7 +183,7 @@ fn AggregateState::report(self : AggregateState) -> Json raise McapError {
 pub fn aggregate_json(
   cursor : DatasetCursor,
   channels : Array[Channel],
-  options? : AggregateOptions = aggregate_options(),
+  options~ : AggregateOptions = aggregate_options(),
 ) -> Json raise McapError {
   try {
     if options.max_groups < 1 ||
@@ -194,7 +194,7 @@ pub fn aggregate_json(
     let value_path = json_pointer(options.value_path)
     let paths = options.group_paths.map(json_pointer)
     let groups : Map[String, AggregateState] = Map([])
-    let charges : Map[String, Int] = Map([])
+    let charges : Map[String, Int32] = Map([])
     let mut retained = 0
     let mut peak = 0
     let mut skipped = 0

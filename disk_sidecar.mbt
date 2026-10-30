@@ -1,9 +1,9 @@
 ///|
 /// One shared write buffer for all live runs; opening a run flushes it first.
-fn buffered_sort_storage(inner : SortStorage, maximum : Int) -> SortStorage {
-  let sinks : Map[Int, WriteSink] = Map([])
+fn buffered_sort_storage(inner : SortStorage, maximum : Int32) -> SortStorage {
+  let sinks : Map[Int32, WriteSink] = Map([])
   let buffer = @buffer.Buffer::Buffer()
-  let active : Array[Int?] = [None]
+  let active : Array[Int32?] = [None]
   let flush = fn() -> Unit raise McapError {
     if active[0] is Some(id) {
       if buffer.length() > 0 {
@@ -122,12 +122,12 @@ pub fn build_disk_sidecar(
   storage : SortStorage,
   output : WriteSink,
   fingerprint : (ReadSource) -> String raise McapError,
-  identity? : String = "",
-  page_entries? : Int = 128,
-  options? : ExternalOptions = external_options(),
-  cancelled? : () -> Bool = fn() { false },
+  identity~ : String = "",
+  page_entries~ : Int32 = 128,
+  options~ : ExternalOptions = external_options(),
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Json raise McapError {
-  let sizes : Map[Int, UInt64] = Map([])
+  let sizes : Map[Int32, UInt64] = Map([])
   let mut spool = 0UL
   let mut peak_spool = 0UL
   let backing = buffered_sort_storage(storage, 65536)
@@ -321,20 +321,20 @@ pub fn build_disk_sidecar(
 pub struct DiskSidecarReader {
   index : ReadSource
   base : SidecarReader
-  count : Int
-  width : Int
+  count : Int32
+  width : Int32
   start : UInt64
-  cache_limit : Int
-  pages : Array[(Int, Array[DiskIndexEntry])]
-  mut page_reads : Int
-  mut cache_hits : Int
-  mut peak_pages : Int
+  cache_limit : Int32
+  pages : Array[(Int32, Array[DiskIndexEntry])]
+  mut page_reads : Int32
+  mut cache_hits : Int32
+  mut peak_pages : Int32
 }
 
 ///|
 fn DiskSidecarReader::page(
   self : DiskSidecarReader,
-  number : Int,
+  number : Int32,
 ) -> Array[DiskIndexEntry] raise McapError {
   for i = 0; i < self.pages.length(); i = i + 1 {
     if self.pages[i].0 == number {
@@ -355,7 +355,7 @@ fn DiskSidecarReader::page(
 ///|
 fn DiskSidecarReader::accept_page(
   self : DiskSidecarReader,
-  number : Int,
+  number : Int32,
   bytes : Bytes,
 ) -> Array[DiskIndexEntry] raise McapError {
   let span = self.width * 36 + 4
@@ -409,7 +409,7 @@ fn DiskSidecarReader::accept_page(
 ///|
 fn DiskSidecarReader::entry(
   self : DiskSidecarReader,
-  position : Int,
+  position : Int32,
 ) -> DiskIndexEntry raise McapError {
   if position < 0 || position >= self.count {
     raise Invalid("disk index position outside bounds")
@@ -424,12 +424,12 @@ fn open_disk_sidecar_internal(
   source : ReadSource,
   index : ReadSource,
   verification : IndexVerification,
-  limits? : Limits = default_limits(),
-  declaration_bytes? : Int = 8 * 1024 * 1024,
-  cache_pages? : Int = 4,
-  chunk_cache_bytes? : Int = 8 * 1024 * 1024,
-  index_bytes? : UInt64 = 1099511627776UL,
-  audit? : Bool = true,
+  limits~ : Limits = default_limits(),
+  declaration_bytes~ : Int32 = 8 * 1024 * 1024,
+  cache_pages~ : Int32 = 4,
+  chunk_cache_bytes~ : Int32 = 8 * 1024 * 1024,
+  index_bytes~ : UInt64 = 1099511627776UL,
+  audit~ : Bool = true,
 ) -> DiskSidecarReader raise McapError {
   validate_log(empty_log(), limits~)
   if index.size() < 16UL ||
@@ -590,11 +590,11 @@ pub fn DiskSidecarReader::validate_entries(
 pub struct DiskSidecarCursor {
   reader : DiskSidecarReader
   original : Query
-  allowed : Map[Int, Bool]
+  allowed : Map[Int32, Bool]
   mut query : Query
-  mut position : Int
-  mut offset : Int
-  mut remaining : Int
+  mut position : Int32
+  mut offset : Int32
+  mut remaining : Int32
   mut state : FileCursorState
 }
 
@@ -631,7 +631,7 @@ pub fn DiskSidecarReader::cursor(
     raise Invalid("invalid disk index query")
   }
   let query = { ..query, topics: query.topics.copy(), }
-  let allowed : Map[Int, Bool] = Map([])
+  let allowed : Map[Int32, Bool] = Map([])
   for channel in self.base.declarations.channels {
     if query.topics.is_empty() || query.topics.contains(channel.topic) {
       allowed[channel.id] = true
@@ -698,7 +698,7 @@ pub fn DiskSidecarCursor::next(
 ///|
 pub fn DiskSidecarCursor::next_page(
   self : DiskSidecarCursor,
-  size : Int,
+  size : Int32,
 ) -> Array[Message] raise McapError {
   if size <= 0 || size > self.reader.base.limits.max_records {
     raise Invalid("invalid disk index page request")

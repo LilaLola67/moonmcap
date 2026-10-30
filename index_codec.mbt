@@ -1,6 +1,6 @@
 ///|
 pub(all) struct MessageIndex {
-  channel_id : Int
+  channel_id : Int32
   entries : Array[(UInt64, UInt64)]
 }
 
@@ -10,7 +10,7 @@ pub(all) struct ChunkIndex {
   end_time : UInt64
   chunk_start : UInt64
   chunk_length : UInt64
-  message_index_offsets : Array[(Int, UInt64)]
+  message_index_offsets : Array[(Int32, UInt64)]
   message_index_length : UInt64
   compression : String
   compressed_size : UInt64
@@ -40,7 +40,7 @@ pub fn encode_message_index(value : MessageIndex) -> Bytes raise McapError {
 ///|
 pub fn decode_message_index(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> MessageIndex raise McapError {
   let input = cursor(bytes, limits)
   let channel_id = input.u16()
@@ -69,7 +69,7 @@ pub fn encode_chunk_index(value : ChunkIndex) -> Bytes raise McapError {
   out.write_uint64_le(value.chunk_start)
   out.write_uint64_le(value.chunk_length)
   let entries = @buffer.Buffer::Buffer()
-  let seen : Map[Int, Bool] = {}
+  let seen : Map[Int32, Bool] = {}
   for entry in value.message_index_offsets {
     if seen.contains(entry.0) {
       raise Invalid("duplicate ChunkIndex channel")
@@ -89,7 +89,7 @@ pub fn encode_chunk_index(value : ChunkIndex) -> Bytes raise McapError {
 ///|
 pub fn decode_chunk_index(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> ChunkIndex raise McapError {
   let input = cursor(bytes, limits)
   let start_time = input.u64()
@@ -101,7 +101,7 @@ pub fn decode_chunk_index(
     raise Invalid("misaligned ChunkIndex map")
   }
   let message_index_offsets = []
-  let seen : Map[Int, Bool] = {}
+  let seen : Map[Int32, Bool] = {}
   while map_input.pos < map_input.data.length() {
     let id = map_input.u16()
     let offset = map_input.u64()

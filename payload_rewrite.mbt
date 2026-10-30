@@ -56,10 +56,10 @@ fn SchemaDecoder::rewrite(
 /// Typed edits retain the channel's original encoding and declarations. Cache
 /// budgets account for retained schema state, not total process memory.
 pub fn standard_payload_rewriter(
-  options? : ProtobufOptions = protobuf_options(),
-  cdr? : CdrOptions = cdr_options(),
-  cache_bytes? : Int = 8 * 1024 * 1024,
-  max_schemas? : Int = 64,
+  options~ : ProtobufOptions = protobuf_options(),
+  cdr~ : CdrOptions = cdr_options(),
+  cache_bytes~ : Int32 = 8 * 1024 * 1024,
+  max_schemas~ : Int32 = 64,
 ) -> PayloadRewriter raise McapError {
   if options.protojson || cache_bytes < 1 || max_schemas < 1 {
     raise Invalid("invalid payload rewriter options")
@@ -164,12 +164,12 @@ pub fn stream_rewrite_payload(
   source : ReadSource,
   sink : WriteSink,
   edits : Array[PayloadEdit],
-  topics? : Array[String] = [],
+  topics~ : Array[String] = [],
   rewriter? : PayloadRewriter,
-  copy_auxiliary? : Bool = true,
-  options? : StreamOptions = stream_options(),
-  limits? : Limits = default_limits(),
-  cancelled? : () -> Bool = fn() { false },
+  copy_auxiliary~ : Bool = true,
+  options~ : StreamOptions = stream_options(),
+  limits~ : Limits = default_limits(),
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Json raise McapError {
   ignore(payload_edit_paths(edits))
   let rewriter = match rewriter {

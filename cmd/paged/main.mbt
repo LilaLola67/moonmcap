@@ -7,7 +7,7 @@ extern "js" fn report_error(message : String) -> Unit =
   #| text=>{process.stderr.write(text+'\n');process.exitCode=2;}
 
 ///|
-fn small(value : String) -> Int raise @mcap.McapError {
+fn small(value : String) -> Int32 raise @mcap.McapError {
   let number = @mcap.parse_decimal(value)
   if number > 2147483647UL {
     raise @mcap.io_error("integer option exceeds Int")

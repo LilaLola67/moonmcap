@@ -17,7 +17,7 @@ test "stream transform matches sampled paginated aligned memory semantics" {
         align_start: Some(100UL),
       }
       let expected = @moonmcap.transform_log(original, options)
-      let files : Map[Int, @buffer.Buffer] = Map([])
+      let files : Map[Int32, @buffer.Buffer] = Map([])
       let closed = [false]
       let out = @buffer.Buffer::Buffer()
       let report = @moonmcap.stream_transform(
@@ -62,7 +62,7 @@ test "stream transform sequential input preserves filtered attachments and metad
     data: b"blob",
   })
   original.metadata.push({ name: "keep", entries: [("key", "yes")], })
-  let files : Map[Int, @buffer.Buffer] = Map([])
+  let files : Map[Int32, @buffer.Buffer] = Map([])
   let closed = [false]
   let output = @buffer.Buffer::Buffer()
   let options = {
@@ -87,7 +87,7 @@ test "stream transform sequential input preserves filtered attachments and metad
 ///|
 test "stream transform cleanup on disk budget cancellation and empty alignment" {
   for mode in [0, 1, 2] {
-    let files : Map[Int, @buffer.Buffer] = Map([])
+    let files : Map[Int32, @buffer.Buffer] = Map([])
     let closed = [false]
     let options = {
       ..@moonmcap.transform_options(),

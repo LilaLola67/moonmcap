@@ -2,14 +2,14 @@
 pub struct AsyncMessageStream {
   next : async () -> @mcap.Message?
   stop : () -> Unit
-  pending : () -> Int
+  pending : () -> Int32
 }
 
 ///|
 pub fn async_message_stream(
   next : async () -> @mcap.Message?,
   cancel : () -> Unit,
-  pending_bytes? : () -> Int = fn() { 0 },
+  pending_bytes~ : () -> Int32 = fn() { 0 },
 ) -> AsyncMessageStream {
   { next, stop: cancel, pending: pending_bytes, }
 }
@@ -17,15 +17,15 @@ pub fn async_message_stream(
 ///|
 pub struct AsyncQuerySource {
   declarations : @mcap.Log
-  open : (@mcap.Query, Int) -> AsyncMessageStream raise @mcap.McapError
+  open : (@mcap.Query, Int32) -> AsyncMessageStream raise @mcap.McapError
   materialized : Bool
 }
 
 ///|
 pub fn async_query_source(
   declarations : @mcap.Log,
-  open : (@mcap.Query, Int) -> AsyncMessageStream raise @mcap.McapError,
-  materialized? : Bool = false,
+  open : (@mcap.Query, Int32) -> AsyncMessageStream raise @mcap.McapError,
+  materialized~ : Bool = false,
 ) -> AsyncQuerySource raise @mcap.McapError {
   let checked = @mcap.query_source(declarations, fn(_, _) {
     @mcap.message_stream(fn() { None }, fn() { () })
@@ -36,8 +36,8 @@ pub fn async_query_source(
 ///|
 pub fn AsyncReader::query_source(
   self : AsyncReader,
-  abort_source_on_cancel? : Bool = false,
-  select_region? : async (UInt64, Int) -> Bool = async fn(_, _) { true },
+  abort_source_on_cancel~ : Bool = false,
+  select_region~ : async (UInt64, Int32) -> Bool = async fn(_, _) { true },
 ) -> AsyncQuerySource raise @mcap.McapError {
   let declarations = self.reader.query_source().declaration_log()
   async_query_source(
@@ -67,7 +67,7 @@ pub fn AsyncReader::query_source(
 ///|
 pub fn AsyncSidecarReader::query_source(
   self : AsyncSidecarReader,
-  abort_source_on_cancel? : Bool = false,
+  abort_source_on_cancel~ : Bool = false,
 ) -> AsyncQuerySource raise @mcap.McapError {
   async_query_source(self.reader.declaration_log(), fn(query, budget) {
     let cursor = self.cursor(query, pending_bytes=budget)
@@ -160,9 +160,9 @@ pub struct AsyncDataset {
 ///|
 pub fn open_dataset(
   providers : Array[AsyncQuerySource],
-  limits? : @mcap.Limits = @mcap.default_limits(),
-  declaration_bytes? : Int = 8 * 1024 * 1024,
-  max_sources? : Int = 64,
+  limits~ : @mcap.Limits = @mcap.default_limits(),
+  declaration_bytes~ : Int32 = 8 * 1024 * 1024,
+  max_sources~ : Int32 = 64,
 ) -> AsyncDataset raise @mcap.McapError {
   let sources = providers.map(fn(provider) {
     @mcap.query_source(
@@ -192,19 +192,19 @@ pub fn AsyncDataset::channels(self : AsyncDataset) -> Array[@mcap.Channel] {
 pub struct AsyncDatasetCursor {
   dataset : AsyncDataset
   original : @mcap.Query
-  budget : Int
+  budget : Int32
   streams : Array[AsyncMessageStream]
   heap : Array[@mcap.DatasetMessage]
   previous : Array[UInt64?]
   mut query : @mcap.Query
   mut state : @mcap.FileCursorState
   mut initialized : Bool
-  mut advance : Int?
-  mut remaining : Int
-  mut offset : Int
-  mut emitted : Int
-  mut skipped : Int
-  mut peak : Int
+  mut advance : Int32?
+  mut remaining : Int32
+  mut offset : Int32
+  mut emitted : Int32
+  mut skipped : Int32
+  mut peak : Int32
   mut busy : Bool
 }
 
@@ -267,7 +267,7 @@ fn AsyncDatasetCursor::reset(
 pub fn AsyncDataset::cursor(
   self : AsyncDataset,
   query : @mcap.Query,
-  pending_bytes? : Int = 64 * 1024 * 1024,
+  pending_bytes~ : Int32 = 64 * 1024 * 1024,
 ) -> AsyncDatasetCursor raise @mcap.McapError {
   if query.start_time > query.end_time ||
     query.offset < 0 ||
@@ -366,7 +366,7 @@ fn AsyncDatasetCursor::pop(self : AsyncDatasetCursor) -> @mcap.DatasetMessage {
 ///|
 fn AsyncDatasetCursor::account(
   self : AsyncDatasetCursor,
-) -> Int raise @mcap.McapError {
+) -> Int32 raise @mcap.McapError {
   let mut sum = 0
   for head in self.heap {
     let bytes = head.message.data.length() + 31
@@ -389,7 +389,7 @@ fn AsyncDatasetCursor::account(
 ///|
 async fn AsyncDatasetCursor::load(
   self : AsyncDatasetCursor,
-  index : Int,
+  index : Int32,
 ) -> Unit {
   let value = (self.streams[index].next)()
   if self.state != @mcap.FileActive {
@@ -501,7 +501,7 @@ pub async fn AsyncDatasetCursor::next(
 ///|
 pub async fn AsyncDatasetCursor::next_page(
   self : AsyncDatasetCursor,
-  size : Int,
+  size : Int32,
 ) -> Array[@mcap.DatasetMessage] {
   if size < 1 || self.busy {
     raise @mcap.io_error("invalid page size or concurrent dataset operation")
@@ -583,7 +583,7 @@ pub async fn AsyncDatasetCursor::write_ndjson(
   self : AsyncDatasetCursor,
   sink : AsyncSink,
   content? : @mcap.JsonFilter,
-) -> Int {
+) -> Int32 {
   if self.busy {
     raise @mcap.io_error("concurrent async dataset export")
   }

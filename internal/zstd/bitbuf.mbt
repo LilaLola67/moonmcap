@@ -14,13 +14,13 @@ priv enum BitReloadStatus {
 /// Huffman, FSE, and sequence decoding.
 priv struct BackwardBitReader {
   data : BytesView
-  mut ptr : Int
+  mut ptr : Int32
   mut bits : UInt64
-  mut bits_consumed : Int
+  mut bits_consumed : Int32
 }
 
 ///|
-fn read_le64_padded(src : BytesView, pos : Int) -> UInt64 {
+fn read_le64_padded(src : BytesView, pos : Int32) -> UInt64 {
   let b0 = if pos < src.length() { src.unsafe_get(pos).to_uint() } else { 0U }
   let b1 = if pos + 1 < src.length() {
     src.unsafe_get(pos + 1).to_uint()
@@ -85,7 +85,7 @@ fn BackwardBitReader::new(
 }
 
 ///|
-fn BackwardBitReader::available_bits(self : BackwardBitReader) -> Int {
+fn BackwardBitReader::available_bits(self : BackwardBitReader) -> Int32 {
   if self.bits_consumed > 64 {
     0
   } else {
@@ -94,7 +94,7 @@ fn BackwardBitReader::available_bits(self : BackwardBitReader) -> Int {
 }
 
 ///|
-fn BackwardBitReader::remaining_bits(self : BackwardBitReader) -> Int {
+fn BackwardBitReader::remaining_bits(self : BackwardBitReader) -> Int32 {
   self.available_bits() + self.ptr * 8
 }
 
@@ -128,7 +128,7 @@ fn BackwardBitReader::reload(self : BackwardBitReader) -> BitReloadStatus {
 }
 
 ///|
-fn BackwardBitReader::ensure_bits(self : BackwardBitReader, n : Int) -> Bool {
+fn BackwardBitReader::ensure_bits(self : BackwardBitReader, n : Int32) -> Bool {
   guard n >= 0 else { return false }
   while self.available_bits() < n {
     match self.reload() {
@@ -142,12 +142,12 @@ fn BackwardBitReader::ensure_bits(self : BackwardBitReader, n : Int) -> Bool {
 }
 
 ///|
-fn BackwardBitReader::can_read(self : BackwardBitReader, n : Int) -> Bool {
+fn BackwardBitReader::can_read(self : BackwardBitReader, n : Int32) -> Bool {
   self.remaining_bits() >= n
 }
 
 ///|
-fn BackwardBitReader::look_bits(self : BackwardBitReader, n : Int) -> UInt {
+fn BackwardBitReader::look_bits(self : BackwardBitReader, n : Int32) -> UInt32 {
   guard n > 0 else { return 0U }
   let start = self.available_bits() - n
   let mask = if n >= 32 { 0xFFFFFFFF_U.to_uint64() } else { (1UL << n) - 1UL }
@@ -155,7 +155,7 @@ fn BackwardBitReader::look_bits(self : BackwardBitReader, n : Int) -> UInt {
 }
 
 ///|
-fn BackwardBitReader::peek_bits(self : BackwardBitReader, n : Int) -> UInt {
+fn BackwardBitReader::peek_bits(self : BackwardBitReader, n : Int32) -> UInt32 {
   if self.ensure_bits(n) {
     return self.look_bits(n)
   }
@@ -167,12 +167,12 @@ fn BackwardBitReader::peek_bits(self : BackwardBitReader, n : Int) -> UInt {
 }
 
 ///|
-fn BackwardBitReader::skip_bits(self : BackwardBitReader, n : Int) -> Unit {
+fn BackwardBitReader::skip_bits(self : BackwardBitReader, n : Int32) -> Unit {
   self.bits_consumed += n
 }
 
 ///|
-fn BackwardBitReader::read_bits(self : BackwardBitReader, n : Int) -> UInt {
+fn BackwardBitReader::read_bits(self : BackwardBitReader, n : Int32) -> UInt32 {
   let value = self.look_bits(n)
   self.skip_bits(n)
   value
@@ -181,8 +181,8 @@ fn BackwardBitReader::read_bits(self : BackwardBitReader, n : Int) -> UInt {
 ///|
 fn BackwardBitReader::read_bits_checked(
   self : BackwardBitReader,
-  n : Int,
-) -> UInt raise ZstdError {
+  n : Int32,
+) -> UInt32 raise ZstdError {
   guard self.ensure_bits(n) else { raise ZstdError::UnexpectedEOF }
   self.read_bits(n)
 }
@@ -190,8 +190,8 @@ fn BackwardBitReader::read_bits_checked(
 ///|
 fn BackwardBitReader::read_bits_padded(
   self : BackwardBitReader,
-  n : Int,
-) -> UInt {
+  n : Int32,
+) -> UInt32 {
   if self.ensure_bits(n) {
     return self.read_bits(n)
   }

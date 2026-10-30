@@ -1,11 +1,11 @@
 ///|
 pub(all) struct CdrOptions {
-  schema_bytes : Int
-  message_bytes : Int
-  string_bytes : Int
-  items : Int
-  fields : Int
-  depth : Int
+  schema_bytes : Int32
+  message_bytes : Int32
+  string_bytes : Int32
+  items : Int32
+  fields : Int32
+  depth : Int32
   int64_as_string : Bool
 }
 
@@ -26,9 +26,9 @@ pub fn cdr_options() -> CdrOptions {
 struct CdrField {
   name : String
   base : String
-  array : Int?
-  bound : Int?
-  string_bound : Int?
+  array : Int32?
+  bound : Int32?
+  string_bound : Int32?
 }
 
 ///|
@@ -36,7 +36,7 @@ pub struct CdrDecoder {
   name : String
   definitions : Map[String, Array[CdrField]]
   options : CdrOptions
-  field_count : Int
+  field_count : Int32
   ros1 : Bool
 }
 
@@ -67,7 +67,7 @@ fn cdr_primitive(name : String) -> Bool {
 }
 
 ///|
-fn cdr_bound(text : String, maximum : Int) -> Int raise McapError {
+fn cdr_bound(text : String, maximum : Int32) -> Int32 raise McapError {
   let value = parse_decimal(text)
   if value > maximum.to_uint64() {
     raise Invalid("CDR declared bound exceeds configured budget")
@@ -87,9 +87,9 @@ fn cdr_field(
     raise Invalid("invalid CDR field name")
   }
   let mut base = token
-  let mut array : Int? = None
-  let mut bound : Int? = None
-  let mut string_bound : Int? = None
+  let mut array : Int32? = None
+  let mut bound : Int32? = None
+  let mut string_bound : Int32? = None
   if token.split_once("[") is Some((left, right)) {
     if !right.has_suffix("]") {
       raise Invalid("malformed CDR array type")
@@ -132,10 +132,10 @@ fn cdr_check_graph(
   name : String,
   definitions : Map[String, Array[CdrField]],
   active : Map[String, Bool],
-  done : Map[String, Int],
-  depth : Int,
-  maximum : Int,
-) -> Int raise McapError {
+  done : Map[String, Int32],
+  depth : Int32,
+  maximum : Int32,
+) -> Int32 raise McapError {
   if depth > maximum {
     raise Invalid("CDR schema nesting exceeds depth budget")
   }
@@ -178,7 +178,7 @@ fn cdr_decoder_internal(
   name : String,
   definition : Bytes,
   ros1 : Bool,
-  options? : CdrOptions = cdr_options(),
+  options~ : CdrOptions = cdr_options(),
 ) -> CdrDecoder raise McapError {
   if options.schema_bytes < 1 ||
     definition.length() > options.schema_bytes ||
@@ -263,7 +263,7 @@ fn cdr_decoder_internal(
   if definitions.length() > options.fields {
     raise Invalid("CDR schema type budget exceeded")
   }
-  let done : Map[String, Int] = Map([])
+  let done : Map[String, Int32] = Map([])
   for key in definitions.keys() {
     ignore(cdr_check_graph(key, definitions, Map([]), done, 1, options.depth))
   }
@@ -274,7 +274,7 @@ fn cdr_decoder_internal(
 pub fn cdr_decoder(
   name : String,
   definition : Bytes,
-  options? : CdrOptions = cdr_options(),
+  options~ : CdrOptions = cdr_options(),
 ) -> CdrDecoder raise McapError {
   cdr_decoder_internal(name, definition, false, options~)
 }

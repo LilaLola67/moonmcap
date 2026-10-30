@@ -2,7 +2,7 @@
 /// Decode the complete file envelope. Unknown records are available to callers.
 pub fn scan_file(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Array[Record] raise McapError {
   if bytes.length() < 16 ||
     bytes[0:8].to_owned() != magic() ||
@@ -139,7 +139,7 @@ fn add_message(
 ///|
 pub fn read_log(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Log raise McapError {
   let records = scan_file(bytes, limits~)
   let header = decode_header(records[0].body, limits~)
@@ -154,7 +154,7 @@ pub fn read_log(
   let mut in_summary = false
   let mut statistics : FileStatistics? = None
   let mut chunk_count = 0U
-  let summary_channels : Map[Int, Bool] = Map([])
+  let summary_channels : Map[Int32, Bool] = Map([])
   let mut logical_records = records.length()
   for record in records {
     match record.opcode {

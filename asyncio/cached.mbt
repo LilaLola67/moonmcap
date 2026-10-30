@@ -1,11 +1,11 @@
 ///|
 pub(all) struct HttpCacheOptions {
-  page_bytes : Int
-  cache_bytes : Int
-  concurrency : Int
-  prefetch_pages : Int
-  timeout_ms : Int
-  retries : Int
+  page_bytes : Int32
+  cache_bytes : Int32
+  concurrency : Int32
+  prefetch_pages : Int32
+  timeout_ms : Int32
+  retries : Int32
 }
 
 ///|

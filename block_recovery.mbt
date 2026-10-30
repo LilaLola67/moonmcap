@@ -3,7 +3,7 @@ pub(all) struct BlockRecoveryEvidence {
   start : UInt64
   end : UInt64
   recovered : Bool
-  messages : Int
+  messages : Int32
   actual_start : UInt64?
   actual_end : UInt64?
   advertised_start : UInt64
@@ -15,7 +15,7 @@ pub(all) struct BlockRecoveryEvidence {
 pub(all) struct RecoveredBlock {
   start : UInt64
   end : UInt64
-  messages : Int
+  messages : Int32
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -29,7 +29,7 @@ pub(all) struct SkippedBlock {
 pub(all) struct BlockRecoveryReport {
   recovered : Array[RecoveredBlock]
   skipped : Array[SkippedBlock]
-  messages : Int
+  messages : Int32
   output_bytes : UInt64
   source_complete : Bool
 }
@@ -40,10 +40,10 @@ pub(all) struct BlockRecoveryReport {
 pub fn recover_blocks(
   source : ReadSource,
   sink : WriteSink,
-  limits? : Limits = default_limits(),
-  options? : StreamOptions = stream_options(),
-  summary_bytes? : Int = 8 * 1024 * 1024,
-  on_block? : (BlockRecoveryEvidence) -> Unit raise McapError = fn(_) { () },
+  limits~ : Limits = default_limits(),
+  options~ : StreamOptions = stream_options(),
+  summary_bytes~ : Int32 = 8 * 1024 * 1024,
+  on_block~ : (BlockRecoveryEvidence) -> Unit raise McapError = fn(_) { () },
 ) -> BlockRecoveryReport raise McapError {
   let reader = open_reader(
     source,
@@ -176,10 +176,10 @@ pub fn recover_blocks(
 pub fn recover_blocks_detailed(
   source : ReadSource,
   sink : WriteSink,
-  limits? : Limits = default_limits(),
-  options? : StreamOptions = stream_options(),
-  summary_bytes? : Int = 8 * 1024 * 1024,
-  max_ranges? : Int = 10000,
+  limits~ : Limits = default_limits(),
+  options~ : StreamOptions = stream_options(),
+  summary_bytes~ : Int32 = 8 * 1024 * 1024,
+  max_ranges~ : Int32 = 10000,
 ) -> Json raise McapError {
   if max_ranges <= 0 || limits.max_record_bytes > 2147483638 {
     raise Invalid("invalid recovery range or record budget")

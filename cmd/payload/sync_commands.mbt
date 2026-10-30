@@ -29,7 +29,7 @@ fn sync_file(
     "topics", "mode", "reuse", "tolerance", "keep_missing", "paths", "grid", "buffer_bytes",
     "json_bytes", "rows", "input_messages",
   ])
-  fn integer(key : String, fallback : Int) -> Int raise @mcap.McapError {
+  fn integer(key : String, fallback : Int32) -> Int32 raise @mcap.McapError {
     match config.get(key) {
       None => fallback
       Some(Number(_, ..) as value) => {

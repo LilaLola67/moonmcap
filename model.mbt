@@ -1,9 +1,9 @@
 ///|
 pub(all) struct Limits {
-  max_record_bytes : Int
-  max_string_bytes : Int
-  max_records : Int
-  max_decompressed_bytes : Int
+  max_record_bytes : Int32
+  max_string_bytes : Int32
+  max_records : Int32
+  max_decompressed_bytes : Int32
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -29,7 +29,7 @@ pub(all) struct Header {
 
 ///|
 pub(all) struct Schema {
-  id : Int
+  id : Int32
   name : String
   encoding : String
   data : Bytes
@@ -37,8 +37,8 @@ pub(all) struct Schema {
 
 ///|
 pub(all) struct Channel {
-  id : Int
-  schema_id : Int
+  id : Int32
+  schema_id : Int32
   topic : String
   message_encoding : String
   metadata : Array[(String, String)]
@@ -46,8 +46,8 @@ pub(all) struct Channel {
 
 ///|
 pub(all) struct Message {
-  channel_id : Int
-  sequence : UInt
+  channel_id : Int32
+  sequence : UInt32
   log_time : UInt64
   publish_time : UInt64
   data : Bytes
@@ -57,7 +57,7 @@ pub(all) struct Message {
 pub(all) struct Footer {
   summary_start : UInt64
   summary_offset_start : UInt64
-  summary_crc : UInt
+  summary_crc : UInt32
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -69,7 +69,7 @@ pub(all) struct Metadata {
 ///|
 pub(all) struct Record {
   opcode : Byte
-  offset : Int
+  offset : Int32
   body : Bytes
 } derive(Eq, @debug.Debug)
 
@@ -84,9 +84,9 @@ pub(all) struct Log {
 } derive(Eq, @debug.Debug)
 
 ///|
-pub fn empty_log(profile? : String = "") -> Log {
+pub fn empty_log(profile~ : String = "") -> Log {
   {
-    header: { profile, library: "moonmcap/0.16.9", },
+    header: { profile, library: "moonmcap/0.16.10", },
     schemas: [],
     channels: [],
     messages: [],

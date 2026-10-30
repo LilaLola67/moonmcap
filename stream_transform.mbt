@@ -1,8 +1,8 @@
 ///|
 pub(all) struct TransformReport {
   input_messages : UInt64
-  sampled_messages : Int
-  output_messages : Int
+  sampled_messages : Int32
+  output_messages : Int32
   output_bytes : UInt64
   peak_temporary_bytes : UInt64
 }
@@ -32,7 +32,7 @@ fn transform_clock(
 fn sampled_message(
   message : Message,
   options : TransformOptions,
-  buckets : Map[Int, UInt64],
+  buckets : Map[Int32, UInt64],
 ) -> Bool {
   if options.sample_period == 0UL {
     return true
@@ -57,9 +57,9 @@ pub fn stream_transform(
   storage : SortStorage,
   output : WriteSink,
   options : TransformOptions,
-  external? : ExternalOptions = external_options(),
+  external~ : ExternalOptions = external_options(),
   content? : JsonFilter,
-  cancelled? : () -> Bool = fn() { false },
+  cancelled~ : () -> Bool = fn() { false },
 ) -> TransformReport raise McapError {
   let work : TemporaryWorkspace = {
     storage,
@@ -106,7 +106,7 @@ pub fn stream_transform(
       offset: 0,
       limit: external.limits.max_records,
     }
-    let buckets : Map[Int, UInt64] = Map([])
+    let buckets : Map[Int32, UInt64] = Map([])
     let count = [0]
     if !reader.indexes.is_empty() {
       let cursor = reader.cursor(query)
@@ -141,7 +141,7 @@ pub fn stream_transform(
       profile=declarations.header.profile,
       limits=external.limits,
     )
-    let used : Map[Int, Bool] = Map([])
+    let used : Map[Int32, Bool] = Map([])
     let origin = [0UL]
     buckets.clear()
     let ordinal = [0]
@@ -333,7 +333,7 @@ pub fn transform_report_json(report : TransformReport) -> Json {
 pub fn FileCursor::write_ndjson(
   self : FileCursor,
   sink : WriteSink,
-) -> Int raise McapError {
+) -> Int32 raise McapError {
   let mut count = 0
   while self.next() is Some(message) {
     let text = messages_json([message], self.reader.declarations.channels).stringify()

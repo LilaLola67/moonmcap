@@ -2,21 +2,21 @@
 
 ///|
 priv struct ZstdFrameHeader {
-  window_size : Int
-  content_size : Int?
-  dict_id : UInt
+  window_size : Int32
+  content_size : Int32?
+  dict_id : UInt32
   has_checksum : Bool
 }
 
 ///|
 priv enum FrameHeaderParse {
   NeedMore
-  Parsed(ZstdFrameHeader, Int)
+  Parsed(ZstdFrameHeader, Int32)
   Error(ZstdError)
 }
 
 ///|
-fn read_u32_le(src : BytesView, pos : Int) -> UInt {
+fn read_u32_le(src : BytesView, pos : Int32) -> UInt32 {
   src.unsafe_get(pos).to_uint() |
   (src.unsafe_get(pos + 1).to_uint() << 8) |
   (src.unsafe_get(pos + 2).to_uint() << 16) |
@@ -24,12 +24,12 @@ fn read_u32_le(src : BytesView, pos : Int) -> UInt {
 }
 
 ///|
-fn read_u64_low32_le(src : BytesView, pos : Int) -> Int {
+fn read_u64_low32_le(src : BytesView, pos : Int32) -> Int32 {
   read_u32_le(src, pos).reinterpret_as_int()
 }
 
 ///|
-fn dict_id_field_size(dict_id : UInt) -> Int {
+fn dict_id_field_size(dict_id : UInt32) -> Int32 {
   if dict_id == 0U {
     return 0
   }
@@ -114,7 +114,7 @@ fn try_parse_frame_header(src : BytesView) -> FrameHeaderParse {
       v
     }
   }
-  let content_size : Int? = match fcs_size {
+  let content_size : Int32? = match fcs_size {
     0 => None
     1 => {
       let v = src.unsafe_get(pos).to_int()
@@ -159,10 +159,10 @@ fn try_parse_frame_header(src : BytesView) -> FrameHeaderParse {
 ///|
 fn write_le_value(
   dst : FixedArray[Byte],
-  pos_ : Int,
-  value : UInt,
-  size : Int,
-) -> Int {
+  pos_ : Int32,
+  value : UInt32,
+  size : Int32,
+) -> Int32 {
   let mut pos = pos_
   for i in 0..<size {
     dst.unsafe_set(pos, ((value >> (i * 8)) & 0xFFU).to_byte())
@@ -172,14 +172,18 @@ fn write_le_value(
 }
 
 ///|
-fn write_stream_le_value(dst : @blit.Buffer, value : UInt, size : Int) -> Unit {
+fn write_stream_le_value(
+  dst : @blit.Buffer,
+  value : UInt32,
+  size : Int32,
+) -> Unit {
   for i in 0..<size {
     dst.write_byte(((value >> (i * 8)) & 0xFFU).to_byte())
   }
 }
 
 ///|
-fn encode_window_descriptor(window_size : Int) -> Int {
+fn encode_window_descriptor(window_size : Int32) -> Int32 {
   let clamped = if window_size <= 1024 { 1024 } else { window_size }
   for exponent in 0..<=30 {
     let base = 1 << (exponent + 10)
@@ -196,10 +200,10 @@ fn encode_window_descriptor(window_size : Int) -> Int {
 ///|
 fn write_zstd_frame_header(
   dst : FixedArray[Byte],
-  pos_ : Int,
-  content_size : Int,
-  dict_id : UInt,
-) -> Int {
+  pos_ : Int32,
+  content_size : Int32,
+  dict_id : UInt32,
+) -> Int32 {
   let mut pos = pos_
   let start = pos
   pos = write_le_value(dst, pos, ZSTD_MAGIC, 4)
@@ -244,8 +248,8 @@ fn write_zstd_frame_header(
 ///|
 fn write_zstd_stream_header(
   dst : @blit.Buffer,
-  window_size : Int,
-  dict_id : UInt,
+  window_size : Int32,
+  dict_id : UInt32,
 ) -> Unit {
   write_stream_le_value(dst, ZSTD_MAGIC, 4)
   let dict_id_bytes = dict_id_field_size(dict_id)

@@ -1,12 +1,12 @@
 ///|
 /// IEEE CRC32, reflected polynomial, initial and final XOR 0xffffffff.
-pub fn crc32(bytes : Bytes) -> UInt {
+pub fn crc32(bytes : Bytes) -> UInt32 {
   crc32_extend(0U, bytes)
 }
 
 ///|
 /// Accepts a previously finalized CRC, allowing independent streaming blocks.
-pub fn crc32_extend(previous : UInt, bytes : Bytes) -> UInt {
+pub fn crc32_extend(previous : UInt32, bytes : Bytes) -> UInt32 {
   let mut value = previous ^ 0xffffffffU
   for byte in bytes {
     value = value ^ byte.to_uint()
@@ -24,8 +24,8 @@ pub fn crc32_extend(previous : UInt, bytes : Bytes) -> UInt {
 ///|
 pub fn verify_crc(
   bytes : Bytes,
-  expected : UInt,
-  label? : String = "data",
+  expected : UInt32,
+  label~ : String = "data",
 ) -> Unit raise McapError {
   if expected != 0U && crc32(bytes) != expected {
     raise Invalid("\{label} CRC mismatch")

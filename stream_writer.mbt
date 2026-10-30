@@ -39,10 +39,10 @@ pub(all) enum WriterState {
 ///|
 pub(all) struct StreamOptions {
   compression : Compression
-  chunk_bytes : Int
-  chunk_messages : Int
+  chunk_bytes : Int32
+  chunk_messages : Int32
   chunk_span : UInt64
-  summary_bytes : Int
+  summary_bytes : Int32
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -61,10 +61,10 @@ pub(all) struct WriteProgress {
   state : WriterState
   bytes_written : UInt64
   messages : UInt64
-  chunks : UInt
-  buffered_bytes : Int
-  peak_buffered_bytes : Int
-  retained_summary_bytes : Int
+  chunks : UInt32
+  buffered_bytes : Int32
+  peak_buffered_bytes : Int32
+  retained_summary_bytes : Int32
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -75,17 +75,17 @@ pub struct StreamWriter {
   declarations : Log
   pending : Array[Record]
   summary : Array[(Byte, Bytes)]
-  counts : Map[Int, UInt64]
+  counts : Map[Int32, UInt64]
   mut state : WriterState
-  mut crc : UInt
-  mut records : Int
-  mut buffered : Int
-  mut peak_buffered : Int
-  mut retained : Int
+  mut crc : UInt32
+  mut records : Int32
+  mut buffered : Int32
+  mut peak_buffered : Int32
+  mut retained : Int32
   mut messages : UInt64
-  mut chunks : UInt
-  mut attachments : UInt
-  mut metadata : UInt
+  mut chunks : UInt32
+  mut attachments : UInt32
+  mut metadata : UInt32
   mut start_time : UInt64
   mut end_time : UInt64
   mut chunk_start : UInt64
@@ -95,9 +95,9 @@ pub struct StreamWriter {
 ///|
 pub fn new_stream_writer(
   sink : WriteSink,
-  profile? : String = "",
-  options? : StreamOptions = stream_options(),
-  limits? : Limits = default_limits(),
+  profile~ : String = "",
+  options~ : StreamOptions = stream_options(),
+  limits~ : Limits = default_limits(),
 ) -> StreamWriter raise McapError {
   let declarations = empty_log(profile~)
   validate_log(declarations, limits~)
@@ -184,7 +184,7 @@ fn StreamWriter::emit(
 ///|
 fn StreamWriter::check_summary(
   self : StreamWriter,
-  size : Int,
+  size : Int32,
 ) -> Unit raise McapError {
   if size < 0 || size > self.options.summary_bytes - self.retained {
     raise Invalid("stream summary budget exceeded")
@@ -315,7 +315,7 @@ fn StreamWriter::flush_pending(self : StreamWriter) -> Unit raise McapError {
     self.chunk_end,
     compression=self.options.compression,
   )
-  let entries : Map[Int, Array[(UInt64, UInt64)]] = Map([])
+  let entries : Map[Int32, Array[(UInt64, UInt64)]] = Map([])
   for record in self.pending {
     let message = decode_message(record.body, limits=self.limits)
     let pair = (message.log_time, record.offset.to_uint64())

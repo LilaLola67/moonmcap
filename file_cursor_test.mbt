@@ -1,7 +1,7 @@
 ///|
 fn drain_file(
   cursor : @moonmcap.FileCursor,
-  size : Int,
+  size : Int32,
 ) -> Array[@moonmcap.Message] raise @moonmcap.McapError {
   let result = []
   while true {

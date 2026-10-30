@@ -74,8 +74,8 @@ pub struct FieldQueryPlan {
   filter : JsonFilter
   decoder : PayloadDecoder
   all_skipped : Bool
-  total : Int
-  skipped : Int
+  total : Int32
+  skipped : Int32
   start_bytes : UInt64
 }
 
@@ -85,7 +85,7 @@ pub struct FieldQueryPlan {
 pub fn FieldIndex::location_filter(
   self : FieldIndex,
   filter : JsonFilter,
-) -> ((UInt64, Int) -> Bool raise McapError) raise McapError {
+) -> ((UInt64, Int32) -> Bool raise McapError) raise McapError {
   let pointers = self.paths.map(fn(path) { json_pointer(path) })
   fn(offset, span) {
     match self.zones.get(offset) {

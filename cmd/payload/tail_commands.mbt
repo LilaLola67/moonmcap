@@ -49,7 +49,7 @@ fn tail_file(
       _ => raise @mcap.io_error("invalid tail state")
     }
   }
-  fn integer(key : String, fallback : Int) -> Int raise @mcap.McapError {
+  fn integer(key : String, fallback : Int32) -> Int32 raise @mcap.McapError {
     match config.get(key) {
       None => fallback
       Some(Number(_, ..) as n) => {

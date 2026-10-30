@@ -6,9 +6,9 @@
 /// Returns the number of bytes written.
 fn write_frame_header(
   dst : FixedArray[Byte],
-  pos_ : Int,
-  content_size : Int?,
-) -> Int {
+  pos_ : Int32,
+  content_size : Int32?,
+) -> Int32 {
   let mut pos = pos_
   let start = pos
   // Magic number (little-endian)
@@ -55,9 +55,9 @@ fn write_frame_header(
 /// Returns bytes written.
 fn write_frame_footer(
   dst : FixedArray[Byte],
-  pos_ : Int,
-  content_checksum : UInt?,
-) -> Int {
+  pos_ : Int32,
+  content_checksum : UInt32?,
+) -> Int32 {
   let mut pos = pos_
   let start = pos
   // End mark: 0x00000000
@@ -84,7 +84,7 @@ fn write_frame_footer(
 /// Parses an LZ4 frame header. Returns (data_offset, content_size?, has_content_checksum, block_max_size).
 fn parse_frame_header(
   data : BytesView,
-) -> (Int, Int?, Bool, Int) raise Lz4Error {
+) -> (Int32, Int32?, Bool, Int32) raise Lz4Error {
   guard data.length() >= 7 else {
     raise Lz4Error::InvalidHeader("frame too short")
   }
@@ -122,7 +122,7 @@ fn parse_frame_header(
   }
   let block_max_size = max_block_sizes[block_max_size_id]
   let mut pos = 6
-  let content_size : Int? = if has_content_size {
+  let content_size : Int32? = if has_content_size {
     guard pos + 8 <= data.length() else { raise Lz4Error::UnexpectedEOF }
     let mut size = 0
     for i in 0..<8 {

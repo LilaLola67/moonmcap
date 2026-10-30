@@ -1,15 +1,15 @@
 ///|
 pub(all) struct WorkerOptions {
-  workers : Int
-  max_jobs : Int
-  input_bytes : Int
-  output_bytes : Int
-  context_bytes : Int
-  buffer_bytes : Int
-  prefetch : Int
-  min_chunk_bytes : Int
-  min_payload_bytes : Int
-  timeout_ms : Int
+  workers : Int32
+  max_jobs : Int32
+  input_bytes : Int32
+  output_bytes : Int32
+  context_bytes : Int32
+  buffer_bytes : Int32
+  prefetch : Int32
+  min_chunk_bytes : Int32
+  min_payload_bytes : Int32
+  timeout_ms : Int32
 }
 
 ///|
@@ -31,7 +31,7 @@ pub fn worker_options() -> WorkerOptions {
 ///|
 pub struct WorkerPool {
   options : WorkerOptions
-  submit : async (String, Int) -> String
+  submit : async (String, Int32) -> String
   snapshot : () -> String
   shutdown : async () -> Unit
 }
@@ -52,7 +52,7 @@ pub async fn WorkerPool::close(self : WorkerPool) -> Unit {
 async fn WorkerPool::call(
   self : WorkerPool,
   job : Json,
-  maximum : Int,
+  maximum : Int32,
 ) -> Bytes {
   let text = (self.submit)(job.stringify(), maximum)
   if text.has_prefix("!") {
@@ -65,8 +65,8 @@ async fn WorkerPool::call(
 pub async fn WorkerPool::expand_chunk(
   self : WorkerPool,
   body : Bytes,
-  maximum : Int,
-  limits? : @mcap.Limits = @mcap.default_limits(),
+  maximum : Int32,
+  limits~ : @mcap.Limits = @mcap.default_limits(),
 ) -> Bytes {
   if maximum < 40 || maximum > self.options.output_bytes {
     raise @mcap.io_error("invalid parallel Chunk output bound")
@@ -90,7 +90,7 @@ pub async fn WorkerPool::decode_message(
   self : WorkerPool,
   message : @mcap.Message,
   declarations : @mcap.Log,
-  max_bytes? : Int = 1024 * 1024,
+  max_bytes~ : Int32 = 1024 * 1024,
 ) -> @mcap.Message {
   if max_bytes < 1 || max_bytes > self.options.output_bytes {
     raise @mcap.io_error("invalid parallel decoded JSON bound")

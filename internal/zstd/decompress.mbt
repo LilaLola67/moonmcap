@@ -3,7 +3,7 @@
 ///|
 priv enum SeqDecoder {
   Fse(FseTable)
-  Rle(Int)
+  Rle(Int32)
 }
 
 ///|
@@ -17,7 +17,7 @@ priv struct SeqTables {
 /// Decompresses Zstandard-encoded data.
 pub fn decompress(
   data : Bytes,
-  dict? : Bytes = Bytes::default(),
+  dict~ : Bytes = Bytes::default(),
 ) -> Bytes raise ZstdError {
   let inf = Inflater::new(dict~)
   inf.enable_direct_output((data.length() * 4).max(65536))
@@ -33,12 +33,12 @@ pub fn decompress(
 ///|
 fn decompress_block(
   src : BytesView,
-  block_start : Int,
-  block_size : Int,
-  window_size : Int,
+  block_start : Int32,
+  block_size : Int32,
+  window_size : Int32,
   prev_output : @blit.Buffer,
   dict_content : BytesView,
-  rep : Array[Int],
+  rep : Array[Int32],
   prev_lit_table : ZstdHuffmanTable?,
   prev_seq_tables : SeqTables?,
 ) -> (Bytes, ZstdHuffmanTable?, SeqTables?) raise ZstdError {
@@ -82,10 +82,10 @@ fn decompress_block(
 ///|
 fn decode_literals_section(
   src : BytesView,
-  pos_ : Int,
-  block_end : Int,
+  pos_ : Int32,
+  block_end : Int32,
   prev_lit_table : ZstdHuffmanTable?,
-) -> (Bytes, Int, ZstdHuffmanTable?) raise ZstdError {
+) -> (Bytes, Int32, ZstdHuffmanTable?) raise ZstdError {
   let mut pos = pos_
   guard pos < block_end else {
     raise ZstdError::CorruptData("empty compressed block")
@@ -162,9 +162,9 @@ fn decode_literals_section(
 ///|
 fn decode_raw_literal_header(
   src : BytesView,
-  pos : Int,
-  block_end : Int,
-) -> (Int, Int) raise ZstdError {
+  pos : Int32,
+  block_end : Int32,
+) -> (Int32, Int32) raise ZstdError {
   let lit_header = src.unsafe_get(pos).to_int()
   let size_format = (lit_header >> 2) & 0x03
   if size_format == 0 || size_format == 2 {
@@ -185,9 +185,9 @@ fn decode_raw_literal_header(
 ///|
 fn decode_huffman_literals_header(
   src : BytesView,
-  pos : Int,
-  block_end : Int,
-) -> (Int, Int, Int, Int) raise ZstdError {
+  pos : Int32,
+  block_end : Int32,
+) -> (Int32, Int32, Int32, Int32) raise ZstdError {
   guard pos < block_end else { raise ZstdError::UnexpectedEOF }
   let lit_header = src.unsafe_get(pos).to_int()
   let size_format = (lit_header >> 2) & 0x03
@@ -230,9 +230,9 @@ fn decode_huffman_literals_header(
 ///|
 fn decode_num_sequences(
   src : BytesView,
-  pos : Int,
-  block_end : Int,
-) -> Int raise ZstdError {
+  pos : Int32,
+  block_end : Int32,
+) -> Int32 raise ZstdError {
   guard pos < block_end else { raise ZstdError::UnexpectedEOF }
   let byte0 = src.unsafe_get(pos).to_int()
   if byte0 == 0 {
@@ -254,9 +254,9 @@ fn decode_num_sequences(
 ///|
 fn num_sequence_header_bytes(
   src : BytesView,
-  pos : Int,
-  block_end : Int,
-) -> Int raise ZstdError {
+  pos : Int32,
+  block_end : Int32,
+) -> Int32 raise ZstdError {
   guard pos < block_end else { raise ZstdError::UnexpectedEOF }
   let byte0 = src.unsafe_get(pos).to_int()
   if byte0 == 0 || byte0 < 128 {
@@ -273,11 +273,11 @@ fn num_sequence_header_bytes(
 ///|
 fn decode_sequence_tables(
   src : BytesView,
-  pos_ : Int,
-  block_end : Int,
-  modes : Int,
+  pos_ : Int32,
+  block_end : Int32,
+  modes : Int32,
   prev_seq_tables : SeqTables?,
-) -> (SeqTables, Int) raise ZstdError {
+) -> (SeqTables, Int32) raise ZstdError {
   guard (modes & 0x03) == 0 else {
     raise ZstdError::CorruptData("reserved sequence mode bits are set")
   }
@@ -335,15 +335,15 @@ fn decode_sequence_tables(
 ///|
 fn decode_sequence_table(
   src : BytesView,
-  pos : Int,
-  block_end : Int,
-  mode : Int,
-  max_symbol : Int,
-  max_accuracy_log : Int,
+  pos : Int32,
+  block_end : Int32,
+  mode : Int32,
+  max_symbol : Int32,
+  max_accuracy_log : Int32,
   default_table : SeqDecoder,
   previous : SeqDecoder?,
   kind : String,
-) -> (SeqDecoder, Int) raise ZstdError {
+) -> (SeqDecoder, Int32) raise ZstdError {
   if mode == 0 {
     return (default_table, pos)
   }
@@ -375,13 +375,13 @@ fn decode_sequence_table(
 ///|
 fn execute_sequences(
   lit_data : Bytes,
-  num_sequences : Int,
+  num_sequences : Int32,
   seq_data : BytesView,
   seq_tables : SeqTables,
   prev_output : @blit.Buffer,
   dict_content : BytesView,
-  rep : Array[Int],
-  window_size : Int,
+  rep : Array[Int32],
+  window_size : Int32,
 ) -> Bytes raise ZstdError {
   let br = BackwardBitReader::new(seq_data)
   let mut ll_state = init_sequence_state(br, seq_tables.ll)
@@ -480,7 +480,7 @@ fn execute_sequences(
 fn init_sequence_state(
   br : BackwardBitReader,
   decoder : SeqDecoder,
-) -> Int raise ZstdError {
+) -> Int32 raise ZstdError {
   match decoder {
     SeqDecoder::Fse(table) => {
       let state = br.read_bits_checked(table._accuracy_log).reinterpret_as_int()
@@ -492,7 +492,10 @@ fn init_sequence_state(
 }
 
 ///|
-fn decode_sequence_symbol(decoder : SeqDecoder, state : Int) -> (Int, Int, Int) {
+fn decode_sequence_symbol(
+  decoder : SeqDecoder,
+  state : Int32,
+) -> (Int32, Int32, Int32) {
   match decoder {
     SeqDecoder::Fse(table) => {
       let (sym, n_bits, base) = fse_decode_symbol(table, state)
@@ -506,9 +509,9 @@ fn decode_sequence_symbol(decoder : SeqDecoder, state : Int) -> (Int, Int, Int) 
 fn update_sequence_state(
   br : BackwardBitReader,
   decoder : SeqDecoder,
-  n_bits : Int,
-  base : Int,
-) -> Int raise ZstdError {
+  n_bits : Int32,
+  base : Int32,
+) -> Int32 raise ZstdError {
   match decoder {
     SeqDecoder::Fse(_) =>
       base + br.read_bits_checked(n_bits).reinterpret_as_int()
@@ -519,8 +522,8 @@ fn update_sequence_state(
 ///|
 fn decode_literal_length(
   br : BackwardBitReader,
-  code : Int,
-) -> Int raise ZstdError {
+  code : Int32,
+) -> Int32 raise ZstdError {
   if code < 16 {
     return code
   }
@@ -538,8 +541,8 @@ fn decode_literal_length(
 ///|
 fn decode_match_length(
   br : BackwardBitReader,
-  code : Int,
-) -> Int raise ZstdError {
+  code : Int32,
+) -> Int32 raise ZstdError {
   if code < 32 {
     return code + 3
   }
@@ -555,7 +558,11 @@ fn decode_match_length(
 }
 
 ///|
-fn resolve_offset(rep : Array[Int], offset_value : Int, lit_len : Int) -> Int {
+fn resolve_offset(
+  rep : Array[Int32],
+  offset_value : Int32,
+  lit_len : Int32,
+) -> Int32 {
   if offset_value > 3 {
     let actual = offset_value - 3
     rep.unsafe_set(2, rep.unsafe_get(1))

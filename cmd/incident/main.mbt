@@ -3,7 +3,7 @@ extern "js" fn args() -> Array[String] =
   #| ()=>process.argv.slice(2)
 
 ///|
-extern "js" fn exit_status(code : Int) -> Unit =
+extern "js" fn exit_status(code : Int32) -> Unit =
   #| code=>{process.exitCode=code;}
 
 ///|
@@ -53,8 +53,8 @@ fn nanoseconds(
 fn count(
   fields : Map[String, Json],
   key : String,
-  fallback : Int,
-) -> Int raise @mcap.McapError {
+  fallback : Int32,
+) -> Int32 raise @mcap.McapError {
   match fields.get(key) {
     None => fallback
     Some(Number(_, ..) as value) => {
@@ -152,7 +152,7 @@ fn load_config(path : String) -> Json raise @mcap.McapError {
 ///|
 fn emit_clip(
   prefix : String,
-  ordinal : Int,
+  ordinal : Int32,
   log : @mcap.Log,
   manifest : Json,
 ) -> Json raise @mcap.McapError {

@@ -1,25 +1,25 @@
 ///|
 pub(all) struct TopicStats {
-  channel_id : Int
+  channel_id : Int32
   topic : String
-  message_count : Int
+  message_count : Int32
   payload_bytes : UInt64
   first_time : UInt64?
   last_time : UInt64?
   maximum_gap : UInt64
   median_gap : UInt64
   p95_gap : UInt64
-  arrival_regressions : Int
-  sequence_discontinuities : Int
-  publish_after_log : Int
+  arrival_regressions : Int32
+  sequence_discontinuities : Int32
+  publish_after_log : Int32
   frequency_hz : Double
 }
 
 ///|
 pub(all) struct LogStats {
-  schema_count : Int
-  channel_count : Int
-  message_count : Int
+  schema_count : Int32
+  channel_count : Int32
+  message_count : Int32
   payload_bytes : UInt64
   topics : Array[TopicStats]
 }
@@ -39,7 +39,7 @@ pub fn summarize(log : Log) -> LogStats raise McapError {
     let mut sequence_discontinuities = 0
     let mut publish_after_log = 0
     let mut previous_time : UInt64? = None
-    let mut previous_sequence : UInt? = None
+    let mut previous_sequence : UInt32? = None
     for message in messages {
       times.push(message.log_time)
       bytes += message.data.length().to_uint64()

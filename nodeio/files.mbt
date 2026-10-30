@@ -19,7 +19,7 @@ extern "js" fn range_bytes(
   path : String,
   expected : String,
   offset : String,
-  length : Int,
+  length : Int32,
 ) -> FileRead =
   #| (path, expected, offset, length) => {
   #|   const fs = process.getBuiltinModule('node:fs'); let fd;
@@ -114,7 +114,7 @@ pub fn write_new_file(
 ///|
 pub fn read_file(
   path : String,
-  maximum? : Int = 64 * 1024 * 1024,
+  maximum~ : Int32 = 64 * 1024 * 1024,
 ) -> Bytes raise @mcap.McapError {
   let source = open_file(path)
   if maximum < 0 || source.size() > maximum.to_uint64() {

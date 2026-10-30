@@ -9,19 +9,19 @@ pub(all) enum QueryCursorState {
 /// Counts refer to the current traversal, reset by seek. Remaining respects limit.
 pub(all) struct QueryProgress {
   state : QueryCursorState
-  matching_messages : Int
-  skipped_messages : Int
-  emitted_messages : Int
-  remaining_messages : Int
-  buffered_heads : Int
+  matching_messages : Int32
+  skipped_messages : Int32
+  emitted_messages : Int32
+  remaining_messages : Int32
+  buffered_heads : Int32
 } derive(Eq, @debug.Debug)
 
 ///|
 struct CursorRun {
-  positions : Array[Int]
-  current : Int
-  start : Int
-  end : Int
+  positions : Array[Int32]
+  current : Int32
+  start : Int32
+  end : Int32
 }
 
 ///|
@@ -32,10 +32,10 @@ pub struct QueryCursor {
   query : Query
   heap : Array[CursorRun]
   mut state : QueryCursorState
-  mut matching : Int
-  mut skipped : Int
-  mut emitted : Int
-  mut remaining : Int
+  mut matching : Int32
+  mut skipped : Int32
+  mut emitted : Int32
+  mut remaining : Int32
 }
 
 ///|
@@ -100,7 +100,7 @@ fn QueryCursor::sift_head(self : QueryCursor) -> Unit {
 }
 
 ///|
-fn QueryCursor::take_position(self : QueryCursor) -> Int {
+fn QueryCursor::take_position(self : QueryCursor) -> Int32 {
   let head = self.heap[0]
   let position = head.positions[head.current]
   let next = if self.query.descending {
@@ -123,7 +123,7 @@ fn QueryCursor::take_position(self : QueryCursor) -> Int {
 ///|
 fn QueryCursor::add_run(
   self : QueryCursor,
-  positions : Array[Int],
+  positions : Array[Int32],
   start_time : UInt64,
   end_time : UInt64,
 ) -> Unit {
@@ -149,7 +149,7 @@ fn QueryCursor::reset(
   self : QueryCursor,
   start_time : UInt64,
   end_time : UInt64,
-  offset : Int,
+  offset : Int32,
 ) -> Unit {
   self.heap.clear()
   self.matching = 0
@@ -227,7 +227,7 @@ pub fn QueryCursor::next(self : QueryCursor) -> Message? {
 /// Page size must be positive. An invalid size leaves cursor position unchanged.
 pub fn QueryCursor::next_page(
   self : QueryCursor,
-  size : Int,
+  size : Int32,
 ) -> Array[Message] raise McapError {
   if size <= 0 {
     raise Invalid("cursor page size must be positive")

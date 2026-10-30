@@ -3,8 +3,8 @@ struct SchemaComparison {
   mut old_reads_new : Bool
   mut new_reads_old : Bool
   mut old_queries_new : Bool
-  mut total : Int
-  maximum : Int
+  mut total : Int32
+  maximum : Int32
   issues : Array[Json]
   visited : Map[String, Bool]
 }
@@ -14,9 +14,9 @@ fn SchemaComparison::issue(
   self : SchemaComparison,
   path : String,
   reason : String,
-  old_reads_new? : Bool = true,
-  new_reads_old? : Bool = true,
-  queries? : Bool = true,
+  old_reads_new~ : Bool = true,
+  new_reads_old~ : Bool = true,
+  queries~ : Bool = true,
 ) -> Unit {
   self.old_reads_new = self.old_reads_new && old_reads_new
   self.new_reads_old = self.new_reads_old && new_reads_old
@@ -38,7 +38,7 @@ fn SchemaComparison::visit(
   self : SchemaComparison,
   a : String,
   b : String,
-  depth : Int,
+  depth : Int32,
 ) -> Bool raise McapError {
   if depth > 64 || self.visited.length() > 4096 {
     raise Invalid("schema comparison traversal budget exceeded")
@@ -52,7 +52,10 @@ fn SchemaComparison::visit(
 }
 
 ///|
-fn proto_oneof_members(model : ProtoMessage, field : ProtoField) -> Array[Int] {
+fn proto_oneof_members(
+  model : ProtoMessage,
+  field : ProtoField,
+) -> Array[Int32] {
   let members = match field.oneof {
     None => []
     Some(id) =>
@@ -74,7 +77,7 @@ fn compare_proto_model(
   a : String,
   b : String,
   path : String,
-  depth : Int,
+  depth : Int32,
 ) -> Unit raise McapError {
   if !report.visit(a, b, depth) {
     return
@@ -212,7 +215,7 @@ fn compare_ros_model(
   a : String,
   b : String,
   path : String,
-  depth : Int,
+  depth : Int32,
 ) -> Unit raise McapError {
   if !report.visit(a, b, depth) {
     return
@@ -275,7 +278,7 @@ fn compare_ros_model(
 pub fn compare_payload_schemas(
   old : Schema,
   new : Schema,
-  issue_limit? : Int = 256,
+  issue_limit~ : Int32 = 256,
 ) -> Json raise McapError {
   if issue_limit < 0 || issue_limit > 10000 {
     raise Invalid("invalid schema issue limit")

@@ -1,14 +1,14 @@
 ///|
 struct SourceTables {
   log : Log
-  schemas : Map[Int, Int]
-  channels : Map[Int, Int]
-  counts : Map[Int, UInt64]
+  schemas : Map[Int32, Int32]
+  channels : Map[Int32, Int32]
+  counts : Map[Int32, UInt64]
   attachments : Map[UInt64, Bytes]
   metadata : Map[UInt64, Bytes]
-  mut retained : Int
+  mut retained : Int32
   mut messages : UInt64
-  mut chunks : UInt
+  mut chunks : UInt32
   mut first : UInt64
   mut last : UInt64
 }
@@ -16,7 +16,7 @@ struct SourceTables {
 ///|
 fn SortSession::reserve_declaration(
   self : SortSession,
-  size : Int,
+  size : Int32,
 ) -> Unit raise McapError {
   if size < 0 || size > self.options.declaration_bytes - self.declared {
     raise Invalid("global declaration budget exceeded")
@@ -27,8 +27,8 @@ fn SortSession::reserve_declaration(
 ///|
 fn SourceTables::reserve(
   self : SourceTables,
-  size : Int,
-  maximum : Int,
+  size : Int32,
+  maximum : Int32,
 ) -> Unit raise McapError {
   if size < 0 || size > maximum - self.retained {
     raise Invalid("source declaration/index metadata budget exceeded")
@@ -134,7 +134,7 @@ fn SortSession::ingest_message(
   self : SortSession,
   tables : SourceTables,
   body : Bytes,
-  runs : Array[Int],
+  runs : Array[Int32],
   location : MessageLocation,
 ) -> Unit raise McapError {
   let message = decode_message(body, limits=self.options.limits)
@@ -172,7 +172,7 @@ fn SortSession::check_input_summary(
   source : ReadSource,
   reader : RangeReader,
   tables : SourceTables,
-  records_before_summary : Int,
+  records_before_summary : Int32,
 ) -> Unit raise McapError {
   let start = reader.data_end + 13UL
   let size = bounded_length(
@@ -190,7 +190,7 @@ fn SortSession::check_input_summary(
   }
   let attached : Map[UInt64, Bool] = Map([])
   let metadata : Map[UInt64, Bool] = Map([])
-  let channels : Map[Int, Bool] = Map([])
+  let channels : Map[Int32, Bool] = Map([])
   for record in records {
     match record.opcode {
       0x03 =>
@@ -282,7 +282,7 @@ fn SortSession::ingest(
   source : ReadSource,
   global : Log,
   writer : StreamWriter,
-  runs : Array[Int],
+  runs : Array[Int32],
 ) -> Unit raise McapError {
   let limits = self.options.limits
   let reader = open_reader(
@@ -474,9 +474,9 @@ pub fn external_merge(
   sources : Array[ReadSource],
   storage : SortStorage,
   output : WriteSink,
-  options? : ExternalOptions = external_options(),
-  cancelled? : () -> Bool = fn() { false },
-  preserve_ids? : Bool = false,
+  options~ : ExternalOptions = external_options(),
+  cancelled~ : () -> Bool = fn() { false },
+  preserve_ids~ : Bool = false,
 ) -> ExternalReport raise McapError {
   let session : SortSession = {
     observer: None,

@@ -1,6 +1,6 @@
 ///|
 /// Bounded MCAP LZ4 adapter. Decode into the declared, prechecked chunk size.
-fn decode_lz4_frame(bytes : Bytes, expected : Int) -> Bytes raise McapError {
+fn decode_lz4_frame(bytes : Bytes, expected : Int32) -> Bytes raise McapError {
   let input = cursor(bytes, default_limits())
   if input.u32() != 0x184d2204U {
     raise Invalid("invalid LZ4 standard frame magic")
@@ -74,9 +74,9 @@ fn decode_lz4_frame(bytes : Bytes, expected : Int) -> Bytes raise McapError {
 ///|
 fn lz4_length(
   input : Cursor,
-  nibble : Int,
-  maximum : Int,
-) -> Int raise McapError {
+  nibble : Int32,
+  maximum : Int32,
+) -> Int32 raise McapError {
   let mut length = nibble
   if length > maximum {
     raise Invalid("LZ4 sequence exceeds output bound")
@@ -100,10 +100,10 @@ fn lz4_length(
 fn decode_lz4_block(
   bytes : Bytes,
   out : FixedArray[Byte],
-  start : Int,
-  block_max : Int,
+  start : Int32,
+  block_max : Int32,
   independent : Bool,
-) -> Int raise McapError {
+) -> Int32 raise McapError {
   let input = cursor(bytes, default_limits())
   let mut written = start
   let end = start + block_max.min(out.length() - start)

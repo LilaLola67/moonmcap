@@ -32,7 +32,7 @@ jobs:
           python-version: '3.12'
       - name: Install tested MoonBit toolchain
         run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.14+7d59c7ec9'
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.17+d971670cd'
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
       - run: moon version --all
       - run: moon update
@@ -334,7 +334,7 @@ jobs:
           python-version: '3.12'
       - name: Install tested toolchain and reference codecs
         run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.14+7d59c7ec9'
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.17+d971670cd'
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
           python -m pip install mcap==1.3.0 lz4==4.4.5 zstandard==0.25.0
       - run: moon update
@@ -359,7 +359,7 @@ jobs:
           python-version: '3.12'
       - name: Install tested toolchain and reference codecs
         run: |
-          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.14+7d59c7ec9'
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.17+d971670cd'
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
           python -m pip install mcap==1.3.0 lz4==4.4.5 zstandard==0.25.0
       - run: moon update

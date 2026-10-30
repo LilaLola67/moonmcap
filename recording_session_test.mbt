@@ -1,18 +1,18 @@
 ///|
 struct RecordingFixture {
   storage : @moonmcap.RecordingStorage
-  files : Map[Int, @buffer.Buffer]
+  files : Map[Int32, @buffer.Buffer]
   manifests : Array[Bytes]
-  quarantine : Map[Int, Bytes]
+  quarantine : Map[Int32, Bytes]
   fail_save : Array[Bool]
   fail_after_seal : Array[Bool]
 }
 
 ///|
 fn recording_fixture() -> RecordingFixture {
-  let files : Map[Int, @buffer.Buffer] = Map([])
+  let files : Map[Int32, @buffer.Buffer] = Map([])
   let manifests = []
-  let quarantine : Map[Int, Bytes] = Map([])
+  let quarantine : Map[Int32, Bytes] = Map([])
   let fail_save = [false]
   let fail_after_seal = [false]
   let storage = @moonmcap.recording_storage(
@@ -64,7 +64,7 @@ test "recording recovery quarantines unfinished tails and continues per channel 
     segment_messages: 2,
     sequences: @moonmcap.ContinueSequence,
   }
-  fn message(channel : Int, time : Int) -> @moonmcap.Message {
+  fn message(channel : Int32, time : Int32) -> @moonmcap.Message {
     {
       channel_id: channel,
       sequence: 100U,
@@ -97,7 +97,7 @@ test "recording recovery quarantines unfinished tails and continues per channel 
   }
   ignore(session.finish())
   assert_eq(session.committed_messages(), 8UL)
-  let sequences : Map[Int, Array[UInt]] = Map([])
+  let sequences : Map[Int32, Array[UInt32]] = Map([])
   let ids = fixture.files.keys().to_array()
   ids.sort()
   assert_eq(ids, [0, 1, 3, 4])

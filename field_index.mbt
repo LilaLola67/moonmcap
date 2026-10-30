@@ -9,7 +9,7 @@ struct FieldBounds {
 
 ///|
 struct FieldZone {
-  span : Int
+  span : Int32
   fields : Array[FieldBounds]
   mut unknown : Bool
 }
@@ -68,7 +68,7 @@ fn FieldBounds::add(self : FieldBounds, value : Json) -> Unit raise McapError {
 }
 
 ///|
-fn FieldZone::charge(self : FieldZone) -> Int {
+fn FieldZone::charge(self : FieldZone) -> Int32 {
   let mut size = 128
   for field in self.fields {
     size += 128
@@ -93,10 +93,10 @@ pub fn build_field_index(
   fingerprint : (ReadSource) -> String raise McapError,
   decoder_identity : String,
   decoder? : PayloadDecoder,
-  limits? : Limits = default_limits(),
-  max_zones? : Int = 10000,
-  state_bytes? : Int = 8 * 1024 * 1024,
-  cancelled? : () -> Bool = fn() { false },
+  limits~ : Limits = default_limits(),
+  max_zones~ : Int32 = 10000,
+  state_bytes~ : Int32 = 8 * 1024 * 1024,
+  cancelled~ : () -> Bool = fn() { false },
 ) -> FieldIndex raise McapError {
   if paths.is_empty() ||
     paths.length() > 16 ||
@@ -225,7 +225,7 @@ fn FieldBounds::json(self : FieldBounds) -> Json {
 ///|
 pub fn FieldIndex::to_bytes(
   self : FieldIndex,
-  max_bytes? : Int = 16 * 1024 * 1024,
+  max_bytes~ : Int32 = 16 * 1024 * 1024,
 ) -> Bytes raise McapError {
   let offsets = self.zones.keys().to_array()
   offsets.sort()
@@ -305,8 +305,8 @@ pub fn open_field_index(
   bytes : Bytes,
   fingerprint : (ReadSource) -> String raise McapError,
   decoder_identity : String,
-  max_bytes? : Int = 16 * 1024 * 1024,
-  max_zones? : Int = 10000,
+  max_bytes~ : Int32 = 16 * 1024 * 1024,
+  max_zones~ : Int32 = 10000,
 ) -> FieldIndex raise McapError {
   if bytes.length() < 16 ||
     bytes.length() > max_bytes ||

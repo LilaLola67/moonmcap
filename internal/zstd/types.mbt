@@ -5,7 +5,7 @@
 pub(all) suberror ZstdError {
   InvalidHeader(String)
   CorruptData(String)
-  ChecksumMismatch(expected~ : UInt, got~ : UInt)
+  ChecksumMismatch(expected~ : UInt32, got~ : UInt32)
   WindowTooLarge(String)
   UnexpectedEOF
 } derive(Show)
@@ -42,27 +42,27 @@ pub(all) enum CompressionLevel {
   Fast
   Default
   Best
-  Level(Int)
+  Level(Int32)
 } derive(Eq, Show)
 
 ///|
 /// Zstandard frame magic number.
-const ZSTD_MAGIC : UInt = 0xFD2FB528_U
+const ZSTD_MAGIC : UInt32 = 0xFD2FB528_U
 
 ///|
 /// Block types in Zstandard.
-const BLOCK_TYPE_RAW : Int = 0
+const BLOCK_TYPE_RAW : Int32 = 0
 
 ///|
-const BLOCK_TYPE_RLE : Int = 1
+const BLOCK_TYPE_RLE : Int32 = 1
 
 ///|
-const BLOCK_TYPE_COMPRESSED : Int = 2
+const BLOCK_TYPE_COMPRESSED : Int32 = 2
 
 ///|
 /// MCAP adapter limit; checked before decoder allocation.
-const MAX_WINDOW_SIZE : Int = 67108864
+const MAX_WINDOW_SIZE : Int32 = 67108864
 
 ///|
 /// Maximum block size (128 KB).
-const MAX_BLOCK_SIZE : Int = 131072
+const MAX_BLOCK_SIZE : Int32 = 131072

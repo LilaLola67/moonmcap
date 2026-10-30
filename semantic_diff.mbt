@@ -1,11 +1,11 @@
 ///|
 pub(all) struct DiffOptions {
   json_payloads : Bool
-  bucket_bytes : Int
-  auxiliary_bytes : Int
-  max_details : Int
-  detail_bytes : Int
-  fallback_bytes : Int
+  bucket_bytes : Int32
+  auxiliary_bytes : Int32
+  max_details : Int32
+  detail_bytes : Int32
+  fallback_bytes : Int32
   limits : Limits
 }
 
@@ -64,9 +64,9 @@ fn semantic_channel(
 
 ///|
 struct DiffBag {
-  counts : Map[String, Int]
-  maximum : Int
-  mut bytes : Int
+  counts : Map[String, Int32]
+  maximum : Int32
+  mut bytes : Int32
 }
 
 ///|
@@ -143,12 +143,12 @@ fn diff_catalog(
 struct DiffResult {
   details : Array[Json]
   options : DiffOptions
-  mut detail_bytes : Int
-  mut omitted : Int
-  mut left_only : Int
-  mut right_only : Int
-  mut matching : Int
-  mut auxiliary_changes : Int
+  mut detail_bytes : Int32
+  mut omitted : Int32
+  mut left_only : Int32
+  mut right_only : Int32
+  mut matching : Int32
+  mut auxiliary_changes : Int32
 }
 
 ///|
@@ -241,7 +241,7 @@ fn diff_message_signature(
 pub fn diff_sources(
   left : ReadSource,
   right : ReadSource,
-  options? : DiffOptions = diff_options(),
+  options~ : DiffOptions = diff_options(),
 ) -> Json raise McapError {
   if options.bucket_bytes < 1 ||
     options.auxiliary_bytes < 1 ||

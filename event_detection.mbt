@@ -173,7 +173,7 @@ pub fn event_windows(
   events : Array[EventSpan],
   pre : UInt64,
   post : UInt64,
-  merge_gap? : UInt64 = 0UL,
+  merge_gap~ : UInt64 = 0UL,
 ) -> Array[EventWindow] raise McapError {
   let windows : Array[EventWindow] = []
   let mut previous : UInt64? = None
@@ -209,11 +209,11 @@ pub fn event_windows(
 pub fn detect_events(
   source : QuerySource,
   rule : EventRule,
-  start? : UInt64 = 0UL,
-  end? : UInt64 = 18446744073709551615UL,
-  event_limit? : Int = 1024,
-  pending_bytes? : Int = 64 * 1024 * 1024,
-  cancelled? : () -> Bool = fn() { false },
+  start~ : UInt64 = 0UL,
+  end~ : UInt64 = 18446744073709551615UL,
+  event_limit~ : Int32 = 1024,
+  pending_bytes~ : Int32 = 64 * 1024 * 1024,
+  cancelled~ : () -> Bool = fn() { false },
 ) -> Array[EventSpan] raise McapError {
   if start > end || event_limit < 1 || event_limit > 100000 || pending_bytes < 1 {
     raise Invalid("invalid event bounds or budgets")

@@ -3,7 +3,7 @@ extern "js" fn args() -> Array[String] =
   #| ()=>process.argv.slice(2)
 
 ///|
-extern "js" fn pause(milliseconds : Int) -> Unit =
+extern "js" fn pause(milliseconds : Int32) -> Unit =
   #| ms=>{if(ms>0)Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,ms);}
 
 ///|

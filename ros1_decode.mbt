@@ -24,7 +24,7 @@ fn validate_ros1_time(
 pub fn ros1_decoder(
   name : String,
   definition : Bytes,
-  options? : CdrOptions = cdr_options(),
+  options~ : CdrOptions = cdr_options(),
 ) -> Ros1Decoder raise McapError {
   if options.schema_bytes < 1 ||
     options.schema_bytes > 2147482623 ||
@@ -139,7 +139,7 @@ pub fn Ros1Decoder::decode(
 pub fn Ros1Decoder::view(
   self : Ros1Decoder,
   bytes : Bytes,
-  selection? : DecodeSelection = decode_selection(),
+  selection~ : DecodeSelection = decode_selection(),
 ) -> PayloadView raise McapError {
   self.layout.view(bytes, selection~)
 }

@@ -6,16 +6,16 @@ pub(all) struct CommandOptions {
   query : Query
   compression : Compression
   format : String
-  max_file_bytes : Int
-  cache_bytes : Int
-  chunk_messages : Int
+  max_file_bytes : Int32
+  cache_bytes : Int32
+  chunk_messages : Int32
   full : Bool
   transform : TransformOptions
   external : ExternalOptions
   temp_dir : String
   indexes : Array[String]
   fast_index : Bool
-  index_bytes : Int
+  index_bytes : Int32
   content : JsonFilter?
   job_dir : String
   resume_job : Bool
@@ -24,7 +24,7 @@ pub(all) struct CommandOptions {
 }
 
 ///|
-fn decimal_int(text : String) -> Int raise McapError {
+fn decimal_int(text : String) -> Int32 raise McapError {
   bounded_length(parse_decimal(text), 2147483647, "integer argument")
 }
 

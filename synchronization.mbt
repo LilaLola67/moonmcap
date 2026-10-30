@@ -10,7 +10,7 @@ pub(all) enum SyncClock {
 pub fn message_timestamp(
   message : Message,
   clock : SyncClock,
-  max_bytes? : Int = 1024 * 1024,
+  max_bytes~ : Int32 = 1024 * 1024,
 ) -> UInt64 raise McapError {
   match clock {
     SyncLogTime => message.log_time
@@ -60,8 +60,8 @@ pub(all) struct SyncOptions {
   tolerance : UInt64
   keep_missing : Bool
   interpolation_paths : Array[String]
-  buffer_bytes : Int
-  json_bytes : Int
+  buffer_bytes : Int32
+  json_bytes : Int32
   output_rows : UInt64
   input_messages : UInt64
 }
@@ -94,7 +94,7 @@ pub struct SyncInput {
 pub fn sync_input(
   name : String,
   stream : MessageStream,
-  clock? : (Message) -> UInt64 raise McapError = fn(m) { m.log_time },
+  clock~ : (Message) -> UInt64 raise McapError = fn(m) { m.log_time },
   interpolation_paths? : Array[String],
 ) -> SyncInput {
   { name, stream, clock, interpolation_paths, synthetic: false, }
@@ -146,7 +146,7 @@ pub struct SyncStream {
   mut examined : UInt64
   mut emitted : UInt64
   mut missing : UInt64
-  mut peak_bytes : Int
+  mut peak_bytes : Int32
   mut anchor : TimedSyncMessage?
 }
 
@@ -155,8 +155,8 @@ pub struct SyncStream {
 /// anchor rows. Consume is greedy and prevents reuse, not a global assignment.
 pub fn synchronize(
   inputs : Array[SyncInput],
-  options? : SyncOptions = sync_options(),
-  cancelled? : () -> Bool = fn() { false },
+  options~ : SyncOptions = sync_options(),
+  cancelled~ : () -> Bool = fn() { false },
 ) -> SyncStream raise McapError {
   if inputs.length() < 2 ||
     inputs.length() > 33 ||
@@ -295,7 +295,7 @@ fn sync_cell(
   name : String,
   sample : TimedSyncMessage?,
   time : UInt64,
-  synthetic? : Bool = false,
+  synthetic~ : Bool = false,
 ) -> SyncCell {
   {
     name,
@@ -397,7 +397,7 @@ pub fn SyncStream::next(self : SyncStream) -> SyncRow? raise McapError {
           synthetic=self.lanes[0].input.synthetic,
         ),
       ]
-      let chosen : Array[Int] = [0]
+      let chosen : Array[Int32] = [0]
       let mut complete = true
       for i = 1; i < self.lanes.length(); i = i + 1 {
         let lane = self.lanes[i]
@@ -506,8 +506,8 @@ pub fn resample(
   start : UInt64,
   end : UInt64,
   period : UInt64,
-  options? : SyncOptions = sync_options(),
-  cancelled? : () -> Bool = fn() { false },
+  options~ : SyncOptions = sync_options(),
+  cancelled~ : () -> Bool = fn() { false },
 ) -> SyncStream raise McapError {
   if inputs.is_empty() ||
     inputs.length() > 32 ||
@@ -556,7 +556,7 @@ fn sync_envelope(message : Message) -> Json {
 /// supply a strict JSON callback. Interpolation brackets retain source envelopes.
 pub fn sync_row_json(
   row : SyncRow,
-  payload? : (Message) -> Json raise McapError = fn(m) {
+  payload~ : (Message) -> Json raise McapError = fn(m) {
     Json::string(@base64.encode(m.data[:]))
   },
 ) -> Json raise McapError {

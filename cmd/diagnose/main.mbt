@@ -3,7 +3,7 @@ extern "js" fn arguments() -> Array[String] =
   #| ()=>process.argv.slice(2)
 
 ///|
-extern "js" fn exit_code(code : Int) -> Unit =
+extern "js" fn exit_code(code : Int32) -> Unit =
   #| code=>{process.exitCode=code;}
 
 ///|
@@ -11,7 +11,7 @@ extern "js" fn report_error(message : String) -> Unit =
   #| message=>{process.stderr.write(message+'\n');process.exitCode=2;}
 
 ///|
-fn integer(value : String) -> Int raise @mcap.McapError {
+fn integer(value : String) -> Int32 raise @mcap.McapError {
   let number = @mcap.parse_decimal(value)
   if number == 0UL || number > 2147483647UL {
     raise @mcap.io_error("diagnostic budgets must be positive Int values")

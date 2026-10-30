@@ -23,10 +23,10 @@ pub async fn plan_query(
   fields? : AsyncSource,
   pool? : WorkerPool,
   filter? : @mcap.JsonFilter,
-  decode? : Bool = false,
-  cache_bytes? : Int = 8 * 1024 * 1024,
-  fallback_bytes? : Int = 64 * 1024 * 1024,
-  max_decoded_bytes? : Int = 1024 * 1024,
+  decode~ : Bool = false,
+  cache_bytes~ : Int32 = 8 * 1024 * 1024,
+  fallback_bytes~ : Int32 = 64 * 1024 * 1024,
+  max_decoded_bytes~ : Int32 = 1024 * 1024,
   selection? : @mcap.DecodeSelection,
 ) -> AsyncQueryPlan {
   if fields is Some(_) && filter is None {
@@ -74,7 +74,7 @@ pub async fn plan_query(
       }
     }
   }
-  let select_region = async fn(offset : UInt64, length : Int) {
+  let select_region = async fn(offset : UInt64, length : Int32) {
     let keep = raw_select(offset, length)
     // Explain state is bounded; it does not participate in correctness.
     if decisions.length() < 10000 || decisions.contains(offset) {

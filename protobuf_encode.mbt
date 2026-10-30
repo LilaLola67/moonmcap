@@ -14,7 +14,7 @@ fn PayloadOutput::varint(
 ///|
 fn PayloadOutput::proto_bytes(
   self : PayloadOutput,
-  number : Int,
+  number : Int32,
   bytes : Bytes,
 ) -> Unit raise McapError {
   self.varint((number.to_uint64() << 3) | 2UL)
@@ -25,7 +25,7 @@ fn PayloadOutput::proto_bytes(
 ///|
 fn proto_output(
   options : ProtobufOptions,
-  budget : Array[Int],
+  budget : Array[Int32],
 ) -> PayloadOutput {
   {
     buffer: @buffer.Buffer::Buffer(),
@@ -42,7 +42,7 @@ fn ProtobufDecoder::encode_scalar(
   wire : PayloadOutput,
   field : ProtoField,
   value : Json,
-  depth : Int,
+  depth : Int32,
 ) -> Unit raise McapError {
   wire.item()
   let number = field.number.to_uint64() << 3
@@ -114,7 +114,7 @@ fn ProtobufDecoder::encode_scalar(
       let v = match value {
         String(s) => {
           let model = self.enums[field.type_name]
-          let mut found : Int? = None
+          let mut found : Int32? = None
           for (n, name) in model.values {
             if name == s {
               found = Some(n)
@@ -146,7 +146,7 @@ fn ProtobufDecoder::encode_field(
   wire : PayloadOutput,
   field : ProtoField,
   value : Json,
-  depth : Int,
+  depth : Int32,
 ) -> Unit raise McapError {
   if field.kind == 11 &&
     field.label == 3 &&
@@ -194,7 +194,7 @@ fn ProtobufDecoder::encode_message(
   wire : PayloadOutput,
   name : String,
   value : Json,
-  depth : Int,
+  depth : Int32,
 ) -> Unit raise McapError {
   if depth > self.options.depth {
     raise Invalid("protobuf encoding depth exceeded")
@@ -212,7 +212,7 @@ fn ProtobufDecoder::encode_message(
       raise Invalid("unknown protobuf JSON field: " + key)
     }
   }
-  let oneofs : Map[Int, Bool] = Map([])
+  let oneofs : Map[Int32, Bool] = Map([])
   for field in fields {
     match values.get(field.json_name) {
       None =>
@@ -273,7 +273,7 @@ pub fn ProtobufDecoder::encode(
 
 ///|
 struct ProtoSlice {
-  number : Int
+  number : Int32
   value : ProtoValue
   bytes : Bytes
 }
@@ -284,14 +284,14 @@ fn ProtobufDecoder::rewrite_fields(
   name : String,
   bytes : Bytes,
   edits : Array[(Array[String], Json?)],
-  budget : Array[Int],
-  depth : Int,
+  budget : Array[Int32],
+  depth : Int32,
 ) -> Bytes raise McapError {
   if depth > self.options.depth {
     raise Invalid("protobuf edit depth exceeded")
   }
   let model = self.messages[name]
-  let selected : Map[Int, Array[(Array[String], Json?)]] = Map([])
+  let selected : Map[Int32, Array[(Array[String], Json?)]] = Map([])
   for (path, value) in edits {
     if path.is_empty() {
       raise Invalid("protobuf root edits require explicit encode")
@@ -324,8 +324,8 @@ fn ProtobufDecoder::rewrite_fields(
       bytes: bytes[start:wire.position].to_owned(),
     })
   }
-  let replacements : Map[Int, Bytes] = Map([])
-  let selected_oneofs : Map[Int, Int] = Map([])
+  let replacements : Map[Int32, Bytes] = Map([])
+  let selected_oneofs : Map[Int32, Int32] = Map([])
   for (number, changes) in selected {
     let field = model.fields[number]
     let output = proto_output(self.options, budget)

@@ -57,7 +57,7 @@ async fn main {
         "asyncpaged requires one MIDX2 per input and full fingerprint verification",
       )
     }
-    async fn open(path : String, number : Int) -> @aio.AsyncSource {
+    async fn open(path : String, number : Int32) -> @aio.AsyncSource {
       let remote = path.has_prefix("https://") || path.has_prefix("http://")
       let source = if remote && cache_dir != "" {
         let cache = @aio.open_cached_http(path, cache_dir + "/item-\{number}")

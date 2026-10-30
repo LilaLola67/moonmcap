@@ -10,7 +10,7 @@ pub struct GrowingTail {
   identity : String
   fingerprint : (ReadSource) -> String raise McapError
   limits : Limits
-  batch_bytes : Int
+  batch_bytes : Int32
   mut offset : UInt64
   mut digest : String
   mut declarations : Log
@@ -53,8 +53,8 @@ pub fn growing_tail(
   identity : String,
   fingerprint : (ReadSource) -> String raise McapError,
   snapshot? : Bytes,
-  limits? : Limits = default_limits(),
-  batch_bytes? : Int = 64 * 1024 * 1024,
+  limits~ : Limits = default_limits(),
+  batch_bytes~ : Int32 = 64 * 1024 * 1024,
 ) -> GrowingTail raise McapError {
   if identity == "" ||
     identity.length() > 256 ||
@@ -117,7 +117,7 @@ pub fn GrowingTail::snapshot(self : GrowingTail) -> Bytes raise McapError {
 pub fn GrowingTail::poll(
   self : GrowingTail,
   source : ReadSource,
-  units? : Int = 32,
+  units~ : Int32 = 32,
 ) -> LiveBatch raise McapError {
   if units < 1 || units > 4096 {
     raise Invalid("live poll units must be 1..4096")
@@ -323,9 +323,9 @@ pub fn RecordingTail::snapshot(self : RecordingTail) -> Bytes raise McapError {
 pub fn RecordingTail::poll(
   self : RecordingTail,
   manifest : Bytes,
-  open : (Int) -> ReadSource raise McapError,
+  open : (Int32) -> ReadSource raise McapError,
   fingerprint : (ReadSource) -> String raise McapError,
-  batch_bytes? : Int = 64 * 1024 * 1024,
+  batch_bytes~ : Int32 = 64 * 1024 * 1024,
 ) -> LiveBatch? raise McapError {
   if batch_bytes < 1 {
     raise Invalid("invalid recording tail byte limit")

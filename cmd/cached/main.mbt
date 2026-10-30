@@ -32,7 +32,7 @@ async fn main {
     let mut config = @aio.http_cache_options()
     let clean = [values[0]]
     let seen : Map[String, Bool] = Map([])
-    let probes : Array[(UInt64, Int)] = []
+    let probes : Array[(UInt64, Int32)] = []
     let mut i = 2
     while i < values.length() {
       let flag = values[i]

@@ -1,8 +1,8 @@
 ///|
 struct LiveQualityItem {
-  rule : Int
-  channel : Int
-  sequence : UInt
+  rule : Int32
+  channel : Int32
+  sequence : UInt32
   time : UInt64
   matched : Bool
 }
@@ -13,7 +13,7 @@ pub struct LiveQuality {
   settings : Json
   start : UInt64
   lateness : UInt64
-  pending_limit : Int
+  pending_limit : Int32
   pending : Array[LiveQualityItem]
   mut maximum : UInt64?
   mut watermark : UInt64?
@@ -26,8 +26,8 @@ pub struct LiveQuality {
 pub fn live_quality(
   rules : Array[QualityRule],
   start : UInt64,
-  lateness? : UInt64 = 0UL,
-  pending_limit? : Int = 4096,
+  lateness~ : UInt64 = 0UL,
+  pending_limit~ : Int32 = 4096,
   snapshot? : Bytes,
 ) -> LiveQuality raise McapError {
   if rules.is_empty() ||
@@ -278,7 +278,7 @@ pub fn LiveQuality::feed(
     Some(predicate) => predicate.matches(message.data)
   }
   if self.states[index].rule.check_sequence {
-    let channels : Map[Int, Bool] = {}
+    let channels : Map[Int32, Bool] = {}
     for channel in self.states[index].sequences.keys() {
       channels[channel] = true
     }

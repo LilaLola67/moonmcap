@@ -15,9 +15,9 @@ fn evolution_schema(encoding : String, data : Bytes) -> @moonmcap.Schema {
 ///|
 fn evolution_field(
   name : String,
-  number : Int,
-  kind : Int,
-  label : Int,
+  number : Int32,
+  kind : Int32,
+  label : Int32,
 ) -> Bytes {
   b"\x0a" +
   [name.length().to_byte()] +
@@ -31,7 +31,7 @@ fn evolution_field(
 }
 
 ///|
-fn evolution_descriptor(fields : Array[Bytes], proto3? : Bool = true) -> Bytes {
+fn evolution_descriptor(fields : Array[Bytes], proto3~ : Bool = true) -> Bytes {
   let mut message = b"\x0a\x01M"
   for field in fields {
     message += b"\x12" + [field.length().to_byte()] + field

@@ -1,6 +1,6 @@
 ///|
 // Keep the wire primitive independent of removed standard-library methods.
-fn UInt::mcap_le_bytes(self : UInt) -> Bytes {
+fn UInt32::mcap_le_bytes(self : UInt32) -> Bytes {
   [
     self.to_byte(),
     (self >> 8).to_byte(),
@@ -12,7 +12,7 @@ fn UInt::mcap_le_bytes(self : UInt) -> Bytes {
 ///|
 struct Cursor {
   data : Bytes
-  mut pos : Int
+  mut pos : Int32
   limits : Limits
 }
 
@@ -22,7 +22,7 @@ fn cursor(data : Bytes, limits : Limits) -> Cursor {
 }
 
 ///|
-fn Cursor::take(self : Cursor, count : Int) -> Bytes raise McapError {
+fn Cursor::take(self : Cursor, count : Int32) -> Bytes raise McapError {
   if count < 0 || count > self.data.length() - self.pos {
     raise Invalid("truncated field at byte \{self.pos}: requested \{count}")
   }
@@ -32,13 +32,13 @@ fn Cursor::take(self : Cursor, count : Int) -> Bytes raise McapError {
 }
 
 ///|
-fn Cursor::u16(self : Cursor) -> Int raise McapError {
+fn Cursor::u16(self : Cursor) -> Int32 raise McapError {
   let bytes = self.take(2)
   bytes[0].to_int() | (bytes[1].to_int() << 8)
 }
 
 ///|
-fn Cursor::u32(self : Cursor) -> UInt raise McapError {
+fn Cursor::u32(self : Cursor) -> UInt32 raise McapError {
   let bytes = self.take(4)
   let mut result = 0U
   for i = 0; i < 4; i = i + 1 {
@@ -60,9 +60,9 @@ fn Cursor::u64(self : Cursor) -> UInt64 raise McapError {
 ///|
 fn bounded_length(
   value : UInt64,
-  maximum : Int,
+  maximum : Int32,
   label : String,
-) -> Int raise McapError {
+) -> Int32 raise McapError {
   if maximum < 0 || value > maximum.to_uint64() {
     raise Invalid("\{label} length exceeds configured limit")
   }
@@ -122,7 +122,7 @@ fn Cursor::finish(self : Cursor) -> Unit raise McapError {
 }
 
 ///|
-fn put_u16(out : @buffer.Buffer, value : Int) -> Unit raise McapError {
+fn put_u16(out : @buffer.Buffer, value : Int32) -> Unit raise McapError {
   if value < 0 || value > 65535 {
     raise Invalid("identifier outside uint16")
   }
@@ -175,8 +175,8 @@ pub fn frame(opcode : Byte, body : Bytes) -> Bytes raise McapError {
 ///|
 pub fn decode_records(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
-  base? : Int = 0,
+  limits~ : Limits = default_limits(),
+  base~ : Int32 = 0,
 ) -> Array[Record] raise McapError {
   if limits.max_records < 0 || base < 0 || base > 2147483647 - bytes.length() {
     raise Invalid("invalid scan limits or base")

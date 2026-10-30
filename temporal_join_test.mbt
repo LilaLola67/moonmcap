@@ -1,7 +1,7 @@
 ///|
 fn join_test_stream(
   times : Array[UInt64],
-  stopped : Array[Int],
+  stopped : Array[Int32],
 ) -> @moonmcap.MessageStream {
   let position = [0]
   @moonmcap.message_stream(

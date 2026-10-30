@@ -15,19 +15,19 @@ pub fn aggregate_options() -> AggregateOptions
 
 pub fn all_query() -> Query
 
-pub fn artifact_batch_storage(() -> Bytes? raise McapError, (Bytes) -> Unit raise McapError, (Int) -> WriteSink raise McapError, (Int) -> Unit raise McapError, (Int) -> String raise McapError, (Int) -> Unit raise McapError, (Int) -> Bool raise McapError, (Int) -> Unit raise McapError, () -> Array[Int] raise McapError) -> ArtifactBatchStorage
+pub fn artifact_batch_storage(() -> Bytes? raise McapError, (Bytes) -> Unit raise McapError, (Int32) -> WriteSink raise McapError, (Int32) -> Unit raise McapError, (Int32) -> String raise McapError, (Int32) -> Unit raise McapError, (Int32) -> Bool raise McapError, (Int32) -> Unit raise McapError, () -> Array[Int32] raise McapError) -> ArtifactBatchStorage
 
 pub fn block_recovery_json(BlockRecoveryReport) -> Json
 
-pub fn build_disk_sidecar(ReadSource, SortStorage, WriteSink, (ReadSource) -> String raise McapError, identity? : String, page_entries? : Int, options? : ExternalOptions, cancelled? : () -> Bool) -> Json raise McapError
+pub fn build_disk_sidecar(ReadSource, SortStorage, WriteSink, (ReadSource) -> String raise McapError, identity? : String, page_entries? : Int32, options? : ExternalOptions, cancelled? : () -> Bool) -> Json raise McapError
 
-pub fn build_field_index(ReadSource, Array[String], (ReadSource) -> String raise McapError, String, decoder? : PayloadDecoder, limits? : Limits, max_zones? : Int, state_bytes? : Int, cancelled? : () -> Bool) -> FieldIndex raise McapError
+pub fn build_field_index(ReadSource, Array[String], (ReadSource) -> String raise McapError, String, decoder? : PayloadDecoder, limits? : Limits, max_zones? : Int32, state_bytes? : Int32, cancelled? : () -> Bool) -> FieldIndex raise McapError
 
-pub fn build_paged_field_index(ReadSource, WriteSink, Array[String], (ReadSource) -> String raise McapError, String, page_bytes? : Int, page_zones? : Int, bloom? : Bool, limits? : Limits, cancelled? : () -> Bool) -> Json raise McapError
+pub fn build_paged_field_index(ReadSource, WriteSink, Array[String], (ReadSource) -> String raise McapError, String, page_bytes? : Int32, page_zones? : Int32, bloom? : Bool, limits? : Limits, cancelled? : () -> Bool) -> Json raise McapError
 
 pub fn build_query_index(Log) -> QueryIndex raise McapError
 
-pub fn build_sidecar(ReadSource, (ReadSource) -> String raise McapError, identity? : String, limits? : Limits, index_bytes? : Int, declaration_bytes? : Int, cancelled? : () -> Bool) -> Bytes raise McapError
+pub fn build_sidecar(ReadSource, (ReadSource) -> String raise McapError, identity? : String, limits? : Limits, index_bytes? : Int32, declaration_bytes? : Int32, cancelled? : () -> Bool) -> Bytes raise McapError
 
 pub fn calibrate_log(Log, ClockMap, same_publish_clock? : Bool) -> Log raise McapError
 
@@ -35,25 +35,25 @@ pub fn cdr_decoder(String, Bytes, options? : CdrOptions) -> CdrDecoder raise Mca
 
 pub fn cdr_options() -> CdrOptions
 
-pub fn check_match_quality(MessageStream, MessageStream, UInt64, Int) -> Json raise McapError
+pub fn check_match_quality(MessageStream, MessageStream, UInt64, Int32) -> Json raise McapError
 
-pub fn check_quality(QuerySource, Array[QualityRule], UInt64, UInt64, detail_limit? : Int, pending_bytes? : Int, cancelled? : () -> Bool) -> Json raise McapError
+pub fn check_quality(QuerySource, Array[QualityRule], UInt64, UInt64, detail_limit? : Int32, pending_bytes? : Int32, cancelled? : () -> Bool) -> Json raise McapError
 
 pub fn checkpoint_progress(Bytes) -> Json raise McapError
 
-pub fn checkpoint_run_ids(Bytes) -> Array[Int] raise McapError
+pub fn checkpoint_run_ids(Bytes) -> Array[Int32] raise McapError
 
 pub fn clip_stream_options() -> ClipStreamOptions
 
 pub fn clock_map(Array[ClockAnchor], extrapolate? : Bool) -> ClockMap raise McapError
 
-pub fn codec_worker_handler(input_bytes? : Int, output_bytes? : Int, context_bytes? : Int) -> ((String) -> String) raise McapError
+pub fn codec_worker_handler(input_bytes? : Int32, output_bytes? : Int32, context_bytes? : Int32) -> ((String) -> String) raise McapError
 
-pub fn compare_payload_schemas(Schema, Schema, issue_limit? : Int) -> Json raise McapError
+pub fn compare_payload_schemas(Schema, Schema, issue_limit? : Int32) -> Json raise McapError
 
 pub fn compress_payload(Bytes, Compression) -> Bytes
 
-pub fn compute_file_statistics(Log, UInt) -> FileStatistics
+pub fn compute_file_statistics(Log, UInt32) -> FileStatistics
 
 pub fn context_rule(String) -> ContextRule
 
@@ -61,9 +61,9 @@ pub fn copy_clip_auxiliary(ReadSource, StreamWriter, attachment_names? : Array[S
 
 pub fn copy_log(Log) -> Log
 
-pub fn crc32(Bytes) -> UInt
+pub fn crc32(Bytes) -> UInt32
 
-pub fn crc32_extend(UInt, Bytes) -> UInt
+pub fn crc32_extend(UInt32, Bytes) -> UInt32
 
 pub fn dataset_message_json(DatasetMessage, Array[Channel]) -> Json
 
@@ -83,7 +83,7 @@ pub fn decode_footer(Bytes) -> Footer raise McapError
 
 pub fn decode_header(Bytes, limits? : Limits) -> Header raise McapError
 
-pub fn decode_hex(String, max_bytes? : Int) -> Bytes raise McapError
+pub fn decode_hex(String, max_bytes? : Int32) -> Bytes raise McapError
 
 pub fn decode_message(Bytes, limits? : Limits) -> Message raise McapError
 
@@ -93,7 +93,7 @@ pub fn decode_metadata(Bytes, limits? : Limits) -> Metadata raise McapError
 
 pub fn decode_metadata_index(Bytes, limits? : Limits) -> MetadataIndex raise McapError
 
-pub fn decode_records(Bytes, limits? : Limits, base? : Int) -> Array[Record] raise McapError
+pub fn decode_records(Bytes, limits? : Limits, base? : Int32) -> Array[Record] raise McapError
 
 pub fn decode_schema(Bytes, limits? : Limits) -> Schema raise McapError
 
@@ -105,11 +105,11 @@ pub fn decompress_payload(Bytes, String, UInt64, limits? : Limits) -> Bytes rais
 
 pub fn default_limits() -> Limits
 
-pub fn detect_events(QuerySource, EventRule, start? : UInt64, end? : UInt64, event_limit? : Int, pending_bytes? : Int, cancelled? : () -> Bool) -> Array[EventSpan] raise McapError
+pub fn detect_events(QuerySource, EventRule, start? : UInt64, end? : UInt64, event_limit? : Int32, pending_bytes? : Int32, cancelled? : () -> Bool) -> Array[EventSpan] raise McapError
 
 pub fn diagnose_file(Bytes, limits? : Limits) -> FileDiagnosis
 
-pub fn diagnose_source(ReadSource, limits? : Limits, summary_bytes? : Int, read_bytes? : Int, cancelled? : () -> Bool) -> Json raise McapError
+pub fn diagnose_source(ReadSource, limits? : Limits, summary_bytes? : Int32, read_bytes? : Int32, cancelled? : () -> Bool) -> Json raise McapError
 
 pub fn diagnosis_json(FileDiagnosis) -> Json
 
@@ -167,13 +167,13 @@ pub fn external_options() -> ExternalOptions
 
 pub fn external_report_json(ExternalReport) -> Json
 
-pub fn extract_context_clip(QuerySource, UInt64, UInt64, topics? : Array[String], context? : Array[ContextRule], message_limit? : Int, byte_limit? : Int, pending_bytes? : Int, cancelled? : () -> Bool) -> ContextClip raise McapError
+pub fn extract_context_clip(QuerySource, UInt64, UInt64, topics? : Array[String], context? : Array[ContextRule], message_limit? : Int32, byte_limit? : Int32, pending_bytes? : Int32, cancelled? : () -> Bool) -> ContextClip raise McapError
 
 pub fn find_attachments(Log, name? : String, media_type? : String) -> Array[Attachment]
 
 pub fn frame(Byte, Bytes) -> Bytes raise McapError
 
-pub fn growing_tail(String, (ReadSource) -> String raise McapError, snapshot? : Bytes, limits? : Limits, batch_bytes? : Int) -> GrowingTail raise McapError
+pub fn growing_tail(String, (ReadSource) -> String raise McapError, snapshot? : Bytes, limits? : Limits, batch_bytes? : Int32) -> GrowingTail raise McapError
 
 pub fn inspect_json(Log) -> Json raise McapError
 
@@ -183,11 +183,11 @@ pub fn io_error(String) -> McapError
 
 pub fn join_options() -> JoinOptions
 
-pub fn json_filter(String, select? : Array[String], invalid? : JsonInvalidPolicy, max_bytes? : Int, max_depth? : Int) -> JsonFilter raise McapError
+pub fn json_filter(String, select? : Array[String], invalid? : JsonInvalidPolicy, max_bytes? : Int32, max_depth? : Int32) -> JsonFilter raise McapError
 
 pub fn json_query_record(DatasetMessage, Array[Channel], JsonFilter) -> Json raise McapError
 
-pub fn live_quality(Array[QualityRule], UInt64, lateness? : UInt64, pending_limit? : Int, snapshot? : Bytes) -> LiveQuality raise McapError
+pub fn live_quality(Array[QualityRule], UInt64, lateness? : UInt64, pending_limit? : Int32, snapshot? : Bytes) -> LiveQuality raise McapError
 
 pub fn magic() -> Bytes
 
@@ -195,9 +195,9 @@ pub fn memory_source(Bytes) -> ReadSource
 
 pub fn merge_logs(Array[Log], chronological? : Bool) -> Log raise McapError
 
-pub fn message_stream(() -> Message? raise McapError, () -> Unit, pending_bytes? : () -> Int) -> MessageStream
+pub fn message_stream(() -> Message? raise McapError, () -> Unit, pending_bytes? : () -> Int32) -> MessageStream
 
-pub fn message_timestamp(Message, SyncClock, max_bytes? : Int) -> UInt64 raise McapError
+pub fn message_timestamp(Message, SyncClock, max_bytes? : Int32) -> UInt64 raise McapError
 
 pub fn messages_csv(Array[Message], Array[Channel]) -> String
 
@@ -205,7 +205,7 @@ pub fn messages_json(Array[Message], Array[Channel]) -> Json
 
 pub fn new_builder(profile? : String, limits? : Limits) -> LogBuilder raise McapError
 
-pub fn new_read_source(UInt64, (UInt64, Int) -> Bytes raise McapError) -> ReadSource
+pub fn new_read_source(UInt64, (UInt64, Int32) -> Bytes raise McapError) -> ReadSource
 
 pub fn new_stream_writer(WriteSink, profile? : String, options? : StreamOptions, limits? : Limits) -> StreamWriter raise McapError
 
@@ -217,19 +217,19 @@ pub fn normalized_field(String, String) -> NormalizedField
 
 pub fn normalizing_decoder(PayloadDecoder, Array[NormalizedField]) -> PayloadDecoder raise McapError
 
-pub fn open_dataset(Array[QuerySource], limits? : Limits, declaration_bytes? : Int, max_sources? : Int) -> Dataset raise McapError
+pub fn open_dataset(Array[QuerySource], limits? : Limits, declaration_bytes? : Int32, max_sources? : Int32) -> Dataset raise McapError
 
-pub fn open_disk_sidecar(ReadSource, ReadSource, IndexVerification, limits? : Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64) -> DiskSidecarReader raise McapError
+pub fn open_disk_sidecar(ReadSource, ReadSource, IndexVerification, limits? : Limits, declaration_bytes? : Int32, cache_pages? : Int32, chunk_cache_bytes? : Int32, index_bytes? : UInt64) -> DiskSidecarReader raise McapError
 
-pub fn open_field_index(ReadSource, Bytes, (ReadSource) -> String raise McapError, String, max_bytes? : Int, max_zones? : Int) -> FieldIndex raise McapError
+pub fn open_field_index(ReadSource, Bytes, (ReadSource) -> String raise McapError, String, max_bytes? : Int32, max_zones? : Int32) -> FieldIndex raise McapError
 
 pub fn open_paged_field_header(UInt64, UInt64, Bytes, String, String) -> PagedFieldHeader raise McapError
 
-pub fn open_reader(ReadSource, limits? : Limits, cache_bytes? : Int, summary_bytes? : Int, fallback_bytes? : Int) -> RangeReader raise McapError
+pub fn open_reader(ReadSource, limits? : Limits, cache_bytes? : Int32, summary_bytes? : Int32, fallback_bytes? : Int32) -> RangeReader raise McapError
 
 pub fn open_recording_session(Log, RecordingStorage, manifest? : Bytes, options? : RecordingOptions) -> RecordingSession raise McapError
 
-pub fn open_sidecar(ReadSource, Bytes, IndexVerification, limits? : Limits, index_bytes? : Int, cache_bytes? : Int) -> SidecarReader raise McapError
+pub fn open_sidecar(ReadSource, Bytes, IndexVerification, limits? : Limits, index_bytes? : Int32, cache_bytes? : Int32) -> SidecarReader raise McapError
 
 pub fn parse_command(Array[String]) -> CommandOptions raise McapError
 
@@ -253,59 +253,59 @@ pub fn quality_rule(String) -> QualityRule
 
 pub fn query_file(Bytes, Query, limits? : Limits) -> QueryResult raise McapError
 
-pub fn query_source(Log, (Query, Int) -> MessageStream raise McapError, materialized? : Bool) -> QuerySource raise McapError
+pub fn query_source(Log, (Query, Int32) -> MessageStream raise McapError, materialized? : Bool) -> QuerySource raise McapError
 
 pub fn read_diagnostics_json(ReadDiagnostics) -> Json
 
 pub fn read_log(Bytes, limits? : Limits) -> Log raise McapError
 
-pub fn rebuild_indexes(Bytes, compression? : Compression, messages_per_chunk? : Int, limits? : Limits) -> IndexRepair raise McapError
+pub fn rebuild_indexes(Bytes, compression? : Compression, messages_per_chunk? : Int32, limits? : Limits) -> IndexRepair raise McapError
 
 pub fn recording_options() -> RecordingOptions
 
-pub fn recording_storage((Int) -> WriteSink raise McapError, (Int) -> ReadSource raise McapError, (Int) -> Bool raise McapError, (Int) -> Unit raise McapError, (Bytes) -> Unit raise McapError, (Int) -> Unit raise McapError, () -> Array[Int] raise McapError, (ReadSource) -> String raise McapError) -> RecordingStorage
+pub fn recording_storage((Int32) -> WriteSink raise McapError, (Int32) -> ReadSource raise McapError, (Int32) -> Bool raise McapError, (Int32) -> Unit raise McapError, (Bytes) -> Unit raise McapError, (Int32) -> Unit raise McapError, () -> Array[Int32] raise McapError, (ReadSource) -> String raise McapError) -> RecordingStorage
 
 pub fn recording_tail(String, snapshot? : Bytes) -> RecordingTail raise McapError
 
-pub fn recover_blocks(ReadSource, WriteSink, limits? : Limits, options? : StreamOptions, summary_bytes? : Int, on_block? : (BlockRecoveryEvidence) -> Unit raise McapError) -> BlockRecoveryReport raise McapError
+pub fn recover_blocks(ReadSource, WriteSink, limits? : Limits, options? : StreamOptions, summary_bytes? : Int32, on_block? : (BlockRecoveryEvidence) -> Unit raise McapError) -> BlockRecoveryReport raise McapError
 
-pub fn recover_blocks_detailed(ReadSource, WriteSink, limits? : Limits, options? : StreamOptions, summary_bytes? : Int, max_ranges? : Int) -> Json raise McapError
+pub fn recover_blocks_detailed(ReadSource, WriteSink, limits? : Limits, options? : StreamOptions, summary_bytes? : Int32, max_ranges? : Int32) -> Json raise McapError
 
 pub fn recover_prefix(Bytes, limits? : Limits) -> RecoveryReport raise McapError
 
 pub fn repair_prefix(Bytes, limits? : Limits) -> (Bytes, RecoveryReport) raise McapError
 
-pub fn replay(QuerySource, query? : Query, rate_numerator? : Int, rate_denominator? : Int, pending_bytes? : Int) -> Replay raise McapError
+pub fn replay(QuerySource, query? : Query, rate_numerator? : Int32, rate_denominator? : Int32, pending_bytes? : Int32) -> Replay raise McapError
 
 pub fn resample(Array[SyncInput], UInt64, UInt64, UInt64, options? : SyncOptions, cancelled? : () -> Bool) -> SyncStream raise McapError
 
-pub fn resumable_chunk_merge(Array[ReadSource], SortStorage, SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, max_parts? : Int, cancelled? : () -> Bool) -> Json raise McapError
+pub fn resumable_chunk_merge(Array[ReadSource], SortStorage, SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, max_parts? : Int32, cancelled? : () -> Bool) -> Json raise McapError
 
-pub fn resumable_chunk_pipeline(Array[ReadSource], SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, max_parts? : Int, cancelled? : () -> Bool) -> Json raise McapError
+pub fn resumable_chunk_pipeline(Array[ReadSource], SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, max_parts? : Int32, cancelled? : () -> Bool) -> Json raise McapError
 
 pub fn resumable_merge(Array[ReadSource], SortStorage, WriteSink, (ReadSource) -> String raise McapError, (Bytes) -> Unit raise McapError, checkpoint? : Bytes, options? : ExternalOptions, cancelled? : () -> Bool) -> ExternalReport raise McapError
 
 pub fn ros1_decoder(String, Bytes, options? : CdrOptions) -> Ros1Decoder raise McapError
 
-pub fn run_artifact_batch(String, Int, ArtifactBatchStorage, (Int, WriteSink) -> Json raise McapError, stop_after? : Int, cancelled? : () -> Bool) -> Json raise McapError
+pub fn run_artifact_batch(String, Int32, ArtifactBatchStorage, (Int32, WriteSink) -> Json raise McapError, stop_after? : Int32, cancelled? : () -> Bool) -> Json raise McapError
 
 pub fn scan_file(Bytes, limits? : Limits) -> Array[Record] raise McapError
 
-pub fn scan_source(ReadSource, SourceVisitor, limits? : Limits, declaration_bytes? : Int, cancelled? : () -> Bool, trace? : (SourceScanEvent) -> Unit) -> UInt64 raise McapError
+pub fn scan_source(ReadSource, SourceVisitor, limits? : Limits, declaration_bytes? : Int32, cancelled? : () -> Bool, trace? : (SourceScanEvent) -> Unit) -> UInt64 raise McapError
 
 pub fn shift_time(Log, UInt64, backwards? : Bool) -> Log raise McapError
 
 pub fn slice_log(Log, Query) -> Log raise McapError
 
-pub fn sort_storage((Int) -> WriteSink raise McapError, (Int) -> ReadSource raise McapError, (Int) -> Unit raise McapError, finish? : () -> Unit raise McapError) -> SortStorage
+pub fn sort_storage((Int32) -> WriteSink raise McapError, (Int32) -> ReadSource raise McapError, (Int32) -> Unit raise McapError, finish? : () -> Unit raise McapError) -> SortStorage
 
 pub fn source_visitor(schema? : (Schema) -> Unit raise McapError, channel? : (Channel) -> Unit raise McapError, message? : (Message, MessageLocation) -> Unit raise McapError, attachment? : (Attachment) -> Unit raise McapError, metadata? : (Metadata) -> Unit raise McapError) -> SourceVisitor
 
-pub fn standard_payload_decoder(options? : ProtobufOptions, cdr? : CdrOptions, cache_bytes? : Int, max_schemas? : Int, selection? : DecodeSelection) -> PayloadDecoder raise McapError
+pub fn standard_payload_decoder(options? : ProtobufOptions, cdr? : CdrOptions, cache_bytes? : Int32, max_schemas? : Int32, selection? : DecodeSelection) -> PayloadDecoder raise McapError
 
-pub fn standard_payload_rewriter(options? : ProtobufOptions, cdr? : CdrOptions, cache_bytes? : Int, max_schemas? : Int) -> PayloadRewriter raise McapError
+pub fn standard_payload_rewriter(options? : ProtobufOptions, cdr? : CdrOptions, cache_bytes? : Int32, max_schemas? : Int32) -> PayloadRewriter raise McapError
 
-pub fn start_disk_sidecar_audit(ReadSource, ReadSource, IndexVerification, limits? : Limits, declaration_bytes? : Int, cache_pages? : Int, chunk_cache_bytes? : Int, index_bytes? : UInt64) -> DiskSidecarAudit raise McapError
+pub fn start_disk_sidecar_audit(ReadSource, ReadSource, IndexVerification, limits? : Limits, declaration_bytes? : Int32, cache_pages? : Int32, chunk_cache_bytes? : Int32, index_bytes? : UInt64) -> DiskSidecarAudit raise McapError
 
 pub fn stats_report(LogStats) -> String
 
@@ -343,7 +343,7 @@ pub fn tf_stamped_json(TfStamped) -> Json
 
 pub fn tf_transform_json(TfTransform) -> Json
 
-pub fn tf_tree(sample_limit? : Int, byte_limit? : Int) -> TfTree raise McapError
+pub fn tf_tree(sample_limit? : Int32, byte_limit? : Int32) -> TfTree raise McapError
 
 pub fn transform_log(Log, TransformOptions) -> Log raise McapError
 
@@ -355,27 +355,27 @@ pub fn trigger_options() -> TriggerOptions
 
 pub fn trigger_recorder(Log, (Log, Json) -> Unit raise McapError, options? : TriggerOptions) -> TriggerRecorder raise McapError
 
-pub fn validate_attachment_indexes(Bytes, limits? : Limits) -> Int raise McapError
+pub fn validate_attachment_indexes(Bytes, limits? : Limits) -> Int32 raise McapError
 
 pub fn validate_file_indexes(Bytes, limits? : Limits) -> Array[ChunkIndex] raise McapError
 
-pub fn validate_file_statistics(Log, FileStatistics, UInt) -> Unit raise McapError
+pub fn validate_file_statistics(Log, FileStatistics, UInt32) -> Unit raise McapError
 
 pub fn validate_log(Log, limits? : Limits) -> Unit raise McapError
 
 pub fn validate_message_index(MessageIndex, Chunk) -> Unit raise McapError
 
-pub fn validate_metadata_indexes(Bytes, limits? : Limits) -> Int raise McapError
+pub fn validate_metadata_indexes(Bytes, limits? : Limits) -> Int32 raise McapError
 
-pub fn validate_summary(Bytes, limits? : Limits) -> Int raise McapError
+pub fn validate_summary(Bytes, limits? : Limits) -> Int32 raise McapError
 
-pub fn verify_crc(Bytes, UInt, label? : String) -> Unit raise McapError
+pub fn verify_crc(Bytes, UInt32, label? : String) -> Unit raise McapError
 
-pub fn worker_chunk_properties(Bytes, limits? : Limits) -> (Int, String) raise McapError
+pub fn worker_chunk_properties(Bytes, limits? : Limits) -> (Int32, String) raise McapError
 
-pub fn write_chunked(Log, messages_per_chunk? : Int, checksums? : Bool, compression? : Compression, limits? : Limits) -> Bytes raise McapError
+pub fn write_chunked(Log, messages_per_chunk? : Int32, checksums? : Bool, compression? : Compression, limits? : Limits) -> Bytes raise McapError
 
-pub fn write_indexed(Log, messages_per_chunk? : Int, compression? : Compression, limits? : Limits) -> Bytes raise McapError
+pub fn write_indexed(Log, messages_per_chunk? : Int32, compression? : Compression, limits? : Limits) -> Bytes raise McapError
 
 pub fn write_log(Log, checksums? : Bool, limits? : Limits) -> Bytes raise McapError
 
@@ -392,8 +392,8 @@ pub(all) struct AggregateOptions {
   by_topic : Bool
   window : UInt64
   origin : UInt64
-  max_groups : Int
-  group_bytes : Int
+  max_groups : Int32
+  group_bytes : Int32
   invalid : JsonInvalidPolicy
 }
 
@@ -408,13 +408,13 @@ type AggregateState
 pub struct ArtifactBatchStorage {
   load : () -> Bytes? raise McapError
   save : (Bytes) -> Unit raise McapError
-  create : (Int) -> WriteSink raise McapError
-  seal : (Int) -> Unit raise McapError
-  digest : (Int) -> String raise McapError
-  publish : (Int) -> Unit raise McapError
-  published : (Int) -> Bool raise McapError
-  discard : (Int) -> Unit raise McapError
-  inventory : () -> Array[Int] raise McapError
+  create : (Int32) -> WriteSink raise McapError
+  seal : (Int32) -> Unit raise McapError
+  digest : (Int32) -> String raise McapError
+  publish : (Int32) -> Unit raise McapError
+  published : (Int32) -> Bool raise McapError
+  discard : (Int32) -> Unit raise McapError
+  inventory : () -> Array[Int32] raise McapError
 }
 
 type ArtifactReceipt
@@ -442,11 +442,11 @@ pub(all) struct AttachmentIndex {
 
 pub(all) struct BinaryField {
   path : String
-  offset : Int
-  byte_length : Int
-  elements : Int
+  offset : Int32
+  byte_length : Int32
+  elements : Int32
   element_type : String
-  stride : Int
+  stride : Int32
   little_endian : Bool
   aligned : Bool
 } derive(Eq, @debug.Debug)
@@ -455,7 +455,7 @@ pub(all) struct BlockRecoveryEvidence {
   start : UInt64
   end : UInt64
   recovered : Bool
-  messages : Int
+  messages : Int32
   actual_start : UInt64?
   actual_end : UInt64?
   advertised_start : UInt64
@@ -466,7 +466,7 @@ pub(all) struct BlockRecoveryEvidence {
 pub(all) struct BlockRecoveryReport {
   recovered : Array[RecoveredBlock]
   skipped : Array[SkippedBlock]
-  messages : Int
+  messages : Int32
   output_bytes : UInt64
   source_complete : Bool
 }
@@ -477,7 +477,7 @@ pub struct CdrDecoder {
   name : String
   definitions : Map[String, Array[CdrField]]
   options : CdrOptions
-  field_count : Int
+  field_count : Int32
   ros1 : Bool
 }
 pub fn CdrDecoder::decode(Self, Bytes) -> Json raise McapError
@@ -487,12 +487,12 @@ pub fn CdrDecoder::view(Self, Bytes, selection? : DecodeSelection) -> PayloadVie
 type CdrField
 
 pub(all) struct CdrOptions {
-  schema_bytes : Int
-  message_bytes : Int
-  string_bytes : Int
-  items : Int
-  fields : Int
-  depth : Int
+  schema_bytes : Int32
+  message_bytes : Int32
+  string_bytes : Int32
+  items : Int32
+  fields : Int32
+  depth : Int32
   int64_as_string : Bool
 }
 
@@ -501,8 +501,8 @@ type CdrProjection
 type CdrWire
 
 pub(all) struct Channel {
-  id : Int
-  schema_id : Int
+  id : Int32
+  schema_id : Int32
   topic : String
   message_encoding : String
   metadata : Array[(String, String)]
@@ -522,7 +522,7 @@ pub(all) struct ChunkIndex {
   end_time : UInt64
   chunk_start : UInt64
   chunk_length : UInt64
-  message_index_offsets : Array[(Int, UInt64)]
+  message_index_offsets : Array[(Int32, UInt64)]
   message_index_length : UInt64
   compression : String
   compressed_size : UInt64
@@ -535,19 +535,19 @@ type ChunkPart
 
 pub(all) struct ChunkReadRequest {
   span : ReadSpan
-  chunk_bytes : Int
-  expanded_bytes : Int
+  chunk_bytes : Int32
+  expanded_bytes : Int32
   compression : String
 }
 
 type ChunkSegment
 
 pub(all) struct ClipStreamOptions {
-  context_bytes : Int
-  context_messages : Int
+  context_bytes : Int32
+  context_messages : Int32
   output_messages : UInt64
   output_payload_bytes : UInt64
-  pending_bytes : Int
+  pending_bytes : Int32
   writer : StreamOptions
   limits : Limits
 }
@@ -572,16 +572,16 @@ pub(all) struct CommandOptions {
   query : Query
   compression : Compression
   format : String
-  max_file_bytes : Int
-  cache_bytes : Int
-  chunk_messages : Int
+  max_file_bytes : Int32
+  cache_bytes : Int32
+  chunk_messages : Int32
   full : Bool
   transform : TransformOptions
   external : ExternalOptions
   temp_dir : String
   indexes : Array[String]
   fast_index : Bool
-  index_bytes : Int
+  index_bytes : Int32
   content : JsonFilter?
   job_dir : String
   resume_job : Bool
@@ -606,7 +606,7 @@ pub(all) struct ContextClip {
 
 pub(all) struct ContextRule {
   topic : String
-  depth : Int
+  depth : Int32
   max_age : UInt64
   required : Bool
 }
@@ -620,59 +620,59 @@ type DataInspection
 pub struct Dataset {
   sources : Array[QuerySource]
   declarations : Log
-  remaps : Array[Map[Int, Int]]
+  remaps : Array[Map[Int32, Int32]]
   limits : Limits
 }
 pub fn Dataset::channels(Self) -> Array[Channel]
-pub fn Dataset::cursor(Self, Query, pending_bytes? : Int) -> DatasetCursor raise McapError
-pub fn Dataset::remap_message(Self, Int, Message) -> Message raise McapError
+pub fn Dataset::cursor(Self, Query, pending_bytes? : Int32) -> DatasetCursor raise McapError
+pub fn Dataset::remap_message(Self, Int32, Message) -> Message raise McapError
 pub fn Dataset::schemas(Self) -> Array[Schema]
 
 pub struct DatasetCursor {
   dataset : Dataset
   original : Query
-  budget : Int
+  budget : Int32
   streams : Array[MessageStream]
   heap : Array[DatasetMessage]
   mut query : Query
   mut state : FileCursorState
   mut initialized : Bool
-  mut loaded : Int
-  mut advance : Int?
-  mut remaining : Int
-  mut offset_left : Int
-  mut emitted : Int
-  mut skipped : Int
-  mut peak : Int
+  mut loaded : Int32
+  mut advance : Int32?
+  mut remaining : Int32
+  mut offset_left : Int32
+  mut emitted : Int32
+  mut skipped : Int32
+  mut peak : Int32
 }
 pub fn DatasetCursor::cancel(Self) -> Unit
 pub fn DatasetCursor::next(Self) -> Message? raise McapError
-pub fn DatasetCursor::next_page(Self, Int) -> Array[DatasetMessage] raise McapError
+pub fn DatasetCursor::next_page(Self, Int32) -> Array[DatasetMessage] raise McapError
 pub fn DatasetCursor::next_record(Self) -> DatasetMessage? raise McapError
 pub fn DatasetCursor::progress(Self) -> DatasetProgress
 pub fn DatasetCursor::seek(Self, UInt64) -> Unit raise McapError
-pub fn DatasetCursor::write_ndjson(Self, WriteSink) -> Int raise McapError
+pub fn DatasetCursor::write_ndjson(Self, WriteSink) -> Int32 raise McapError
 
 pub(all) struct DatasetMessage {
-  source_index : Int
+  source_index : Int32
   message : Message
 } derive(Eq, @debug.Debug)
 
 pub(all) struct DatasetProgress {
   state : FileCursorState
-  sources : Int
-  materialized_sources : Int
-  loaded_sources : Int
-  emitted_messages : Int
-  skipped_messages : Int
-  pending_bytes : Int
-  peak_pending_bytes : Int
+  sources : Int32
+  materialized_sources : Int32
+  loaded_sources : Int32
+  emitted_messages : Int32
+  skipped_messages : Int32
+  pending_bytes : Int32
+  peak_pending_bytes : Int32
 } derive(Eq, @debug.Debug)
 
 pub(all) struct DecodeSelection {
   paths : Array[String]
-  inline_array_items : Int
-  scan_items : Int
+  inline_array_items : Int32
+  scan_items : Int32
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Diagnostic {
@@ -701,11 +701,11 @@ type DiffBag
 
 pub(all) struct DiffOptions {
   json_payloads : Bool
-  bucket_bytes : Int
-  auxiliary_bytes : Int
-  max_details : Int
-  detail_bytes : Int
-  fallback_bytes : Int
+  bucket_bytes : Int32
+  auxiliary_bytes : Int32
+  max_details : Int32
+  detail_bytes : Int32
+  fallback_bytes : Int32
   limits : Limits
 }
 
@@ -715,7 +715,7 @@ type DiskIndexEntry
 
 pub struct DiskSidecarAudit {
   reader : DiskSidecarReader
-  mut page : Int
+  mut page : Int32
   mut previous : DiskIndexEntry?
   mut failed : Bool
 }
@@ -726,16 +726,16 @@ pub fn DiskSidecarAudit::poll(Self) -> ReadSpan? raise McapError
 pub struct DiskSidecarCursor {
   reader : DiskSidecarReader
   original : Query
-  allowed : Map[Int, Bool]
+  allowed : Map[Int32, Bool]
   mut query : Query
-  mut position : Int
-  mut offset : Int
-  mut remaining : Int
+  mut position : Int32
+  mut offset : Int32
+  mut remaining : Int32
   mut state : FileCursorState
 }
 pub fn DiskSidecarCursor::cancel(Self) -> Unit
 pub fn DiskSidecarCursor::next(Self) -> Message? raise McapError
-pub fn DiskSidecarCursor::next_page(Self, Int) -> Array[Message] raise McapError
+pub fn DiskSidecarCursor::next_page(Self, Int32) -> Array[Message] raise McapError
 pub fn DiskSidecarCursor::seek(Self, UInt64) -> Unit raise McapError
 
 pub(all) enum DiskSidecarPoll {
@@ -748,24 +748,24 @@ pub(all) enum DiskSidecarPoll {
 pub struct DiskSidecarPollCursor {
   reader : DiskSidecarReader
   original : Query
-  allowed : Map[Int, Bool]
+  allowed : Map[Int32, Bool]
   mut query : Query
-  mut low : Int
-  mut high : Int
+  mut low : Int32
+  mut high : Int32
   mut searching : Bool
-  mut position : Int
-  mut offset : Int
-  mut remaining : Int
+  mut position : Int32
+  mut offset : Int32
+  mut remaining : Int32
   mut state : FileCursorState
-  mut current : (Int, Array[DiskIndexEntry])?
-  mut waiting_page : Int?
+  mut current : (Int32, Array[DiskIndexEntry])?
+  mut waiting_page : Int32?
   mut waiting_entry : SidecarEntry?
   mut ready : Message?
 }
 pub fn DiskSidecarPollCursor::cancel(Self) -> Unit
 pub fn DiskSidecarPollCursor::feed_index(Self, Bytes) -> Unit raise McapError
 pub fn DiskSidecarPollCursor::feed_source(Self, Bytes, expanded? : Bytes) -> Unit raise McapError
-pub fn DiskSidecarPollCursor::pending_bytes(Self) -> Int
+pub fn DiskSidecarPollCursor::pending_bytes(Self) -> Int32
 pub fn DiskSidecarPollCursor::poll(Self) -> DiskSidecarPoll raise McapError
 pub fn DiskSidecarPollCursor::seek(Self, UInt64) -> Unit raise McapError
 pub fn DiskSidecarPollCursor::skip_source(Self) -> Unit raise McapError
@@ -773,14 +773,14 @@ pub fn DiskSidecarPollCursor::skip_source(Self) -> Unit raise McapError
 pub struct DiskSidecarReader {
   index : ReadSource
   base : SidecarReader
-  count : Int
-  width : Int
+  count : Int32
+  width : Int32
   start : UInt64
-  cache_limit : Int
-  pages : Array[(Int, Array[DiskIndexEntry])]
-  mut page_reads : Int
-  mut cache_hits : Int
-  mut peak_pages : Int
+  cache_limit : Int32
+  pages : Array[(Int32, Array[DiskIndexEntry])]
+  mut page_reads : Int32
+  mut cache_hits : Int32
+  mut peak_pages : Int32
 }
 pub fn DiskSidecarReader::channels(Self) -> Array[Channel]
 pub fn DiskSidecarReader::cursor(Self, Query) -> DiskSidecarCursor raise McapError
@@ -835,23 +835,23 @@ pub(all) struct EventWindow {
 type ExactDecimal
 
 pub(all) struct ExternalOptions {
-  run_bytes : Int
-  merge_bytes : Int
-  fan_in : Int
+  run_bytes : Int32
+  merge_bytes : Int32
+  fan_in : Int32
   spool_bytes : UInt64
-  run_limit : Int
-  declaration_bytes : Int
+  run_limit : Int32
+  declaration_bytes : Int32
   limits : Limits
   output : StreamOptions
 }
 
 pub(all) struct ExternalReport {
-  input_files : Int
+  input_files : Int32
   messages : UInt64
-  runs_created : Int
-  merge_passes : Int
-  peak_run_bytes : Int
-  peak_merge_bytes : Int
+  runs_created : Int32
+  merge_passes : Int32
+  peak_run_bytes : Int32
+  peak_merge_bytes : Int32
   peak_spool_bytes : UInt64
   output_bytes : UInt64
 }
@@ -866,8 +866,8 @@ pub struct FieldIndex {
   zones : Map[UInt64, FieldZone]
 }
 pub fn FieldIndex::info(Self) -> Json
-pub fn FieldIndex::location_filter(Self, JsonFilter) -> ((UInt64, Int) -> Bool raise McapError) raise McapError
-pub fn FieldIndex::to_bytes(Self, max_bytes? : Int) -> Bytes raise McapError
+pub fn FieldIndex::location_filter(Self, JsonFilter) -> ((UInt64, Int32) -> Bool raise McapError) raise McapError
+pub fn FieldIndex::to_bytes(Self, max_bytes? : Int32) -> Bytes raise McapError
 
 pub struct FieldPage {
   index : FieldIndex
@@ -877,12 +877,12 @@ pub struct FieldPage {
 }
 pub fn FieldPage::end_offset(Self) -> UInt64
 pub fn FieldPage::first_offset(Self) -> UInt64
-pub fn FieldPage::may_match(Self, UInt64, Int, JsonFilter) -> Bool raise McapError
+pub fn FieldPage::may_match(Self, UInt64, Int32, JsonFilter) -> Bool raise McapError
 
 pub(all) struct FieldPageLayout {
-  header_bytes : Int
-  page_bytes : Int
-  pages : Int
+  header_bytes : Int32
+  page_bytes : Int32
+  pages : Int32
 } derive(Eq, @debug.Debug)
 
 pub struct FieldQueryPlan {
@@ -890,8 +890,8 @@ pub struct FieldQueryPlan {
   filter : JsonFilter
   decoder : PayloadDecoder
   all_skipped : Bool
-  total : Int
-  skipped : Int
+  total : Int32
+  skipped : Int32
   start_bytes : UInt64
 }
 pub fn FieldQueryPlan::info(Self) -> Json
@@ -904,33 +904,33 @@ pub struct FileCursor {
   original : Query
   candidates : Array[ChunkIndex]
   heap : Array[FileItem]
-  allowed : Map[Int, Bool]
-  pending_budget : Int
-  span_budget : Int
+  allowed : Map[Int32, Bool]
+  pending_budget : Int32
+  span_budget : Int32
   mut active : Query
   mut fallback : QueryCursor?
   mut state : FileCursorState
-  mut loaded : Int
-  mut visited : Int
-  mut emitted : Int
-  mut skipped : Int
-  mut offset_left : Int
-  mut remaining : Int
-  mut pending_bytes : Int
-  mut peak_pending : Int
+  mut loaded : Int32
+  mut visited : Int32
+  mut emitted : Int32
+  mut skipped : Int32
+  mut offset_left : Int32
+  mut remaining : Int32
+  mut pending_bytes : Int32
+  mut peak_pending : Int32
 }
 pub fn FileCursor::cancel(Self) -> Unit
 pub fn FileCursor::current_chunk_location(Self) -> MessageLocation raise McapError
 pub fn FileCursor::feed(Self, Bytes) -> Unit raise McapError
 pub fn FileCursor::feed_expanded(Self, Bytes, Bytes) -> Unit raise McapError
 pub fn FileCursor::next(Self) -> Message? raise McapError
-pub fn FileCursor::next_page(Self, Int) -> Array[Message] raise McapError
+pub fn FileCursor::next_page(Self, Int32) -> Array[Message] raise McapError
 pub fn FileCursor::poll(Self) -> FilePoll raise McapError
 pub fn FileCursor::progress(Self) -> FileProgress
 pub fn FileCursor::seek(Self, UInt64) -> Unit raise McapError
 pub fn FileCursor::skip_chunk(Self) -> Unit raise McapError
-pub fn FileCursor::upcoming_reads(Self, Int) -> Array[ChunkReadRequest] raise McapError
-pub fn FileCursor::write_ndjson(Self, WriteSink) -> Int raise McapError
+pub fn FileCursor::upcoming_reads(Self, Int32) -> Array[ChunkReadRequest] raise McapError
+pub fn FileCursor::write_ndjson(Self, WriteSink) -> Int32 raise McapError
 
 pub(all) enum FileCursorState {
   FileActive
@@ -943,8 +943,8 @@ pub(all) struct FileDiagnosis {
   valid : Bool
   data_valid : Bool
   data_crc_verified : Bool
-  messages : Int
-  chunks : Int
+  messages : Int32
+  chunks : Int32
   data_end : UInt64?
   issues : Array[Diagnostic]
 } derive(Eq, @debug.Debug)
@@ -959,26 +959,26 @@ pub(all) enum FilePoll {
 
 pub(all) struct FileProgress {
   state : FileCursorState
-  candidate_chunks : Int
-  loaded_chunks : Int
-  emitted_messages : Int
-  skipped_messages : Int
-  pending_messages : Int
-  pending_bytes : Int
-  peak_pending_bytes : Int
+  candidate_chunks : Int32
+  loaded_chunks : Int32
+  emitted_messages : Int32
+  skipped_messages : Int32
+  pending_messages : Int32
+  pending_bytes : Int32
+  peak_pending_bytes : Int32
   used_fallback : Bool
 } derive(Eq, @debug.Debug)
 
 pub(all) struct FileStatistics {
   message_count : UInt64
-  schema_count : Int
-  channel_count : UInt
-  attachment_count : UInt
-  metadata_count : UInt
-  chunk_count : UInt
+  schema_count : Int32
+  channel_count : UInt32
+  attachment_count : UInt32
+  metadata_count : UInt32
+  chunk_count : UInt32
   start_time : UInt64
   end_time : UInt64
-  channel_message_counts : Array[(Int, UInt64)]
+  channel_message_counts : Array[(Int32, UInt64)]
 } derive(Eq, @debug.Debug)
 pub fn FileStatistics::equal(Self, Self) -> Bool
 pub fn FileStatistics::not_equal(Self, Self) -> Bool
@@ -987,7 +987,7 @@ pub fn FileStatistics::to_repr(Self) -> @debug.Repr
 pub(all) struct Footer {
   summary_start : UInt64
   summary_offset_start : UInt64
-  summary_crc : UInt
+  summary_crc : UInt32
 } derive(Eq, @debug.Debug)
 pub fn Footer::equal(Self, Self) -> Bool
 pub fn Footer::not_equal(Self, Self) -> Bool
@@ -997,7 +997,7 @@ pub struct GrowingTail {
   identity : String
   fingerprint : (ReadSource) -> String raise McapError
   limits : Limits
-  batch_bytes : Int
+  batch_bytes : Int32
   mut offset : UInt64
   mut digest : String
   mut declarations : Log
@@ -1005,7 +1005,7 @@ pub struct GrowingTail {
   mut data_end : Bool
   mut complete : Bool
 }
-pub fn GrowingTail::poll(Self, ReadSource, units? : Int) -> LiveBatch raise McapError
+pub fn GrowingTail::poll(Self, ReadSource, units? : Int32) -> LiveBatch raise McapError
 pub fn GrowingTail::snapshot(Self) -> Bytes raise McapError
 
 pub(all) struct Header {
@@ -1036,8 +1036,8 @@ pub(all) struct JoinOptions {
   mode : JoinMode
   tolerance : UInt64
   missing : MissingMatch
-  buffer_bytes : Int
-  buffer_messages : Int
+  buffer_bytes : Int32
+  buffer_messages : Int32
 } derive(Eq, @debug.Debug)
 
 pub(all) enum JoinPoll {
@@ -1055,8 +1055,8 @@ pub struct JsonFilter {
   condition : JsonCondition
   projections : Array[(String, Array[String])]
   policy : JsonInvalidPolicy
-  maximum : Int
-  depth : Int
+  maximum : Int32
+  depth : Int32
 }
 pub fn JsonFilter::matches(Self, Bytes) -> Bool raise McapError
 pub fn JsonFilter::project(Self, Bytes) -> Json raise McapError
@@ -1069,10 +1069,10 @@ pub(all) enum JsonInvalidPolicy {
 } derive(Eq)
 
 pub(all) struct Limits {
-  max_record_bytes : Int
-  max_string_bytes : Int
-  max_records : Int
-  max_decompressed_bytes : Int
+  max_record_bytes : Int32
+  max_string_bytes : Int32
+  max_records : Int32
+  max_decompressed_bytes : Int32
 } derive(Eq, @debug.Debug)
 pub fn Limits::equal(Self, Self) -> Bool
 pub fn Limits::not_equal(Self, Self) -> Bool
@@ -1089,7 +1089,7 @@ pub struct LiveQuality {
   settings : Json
   start : UInt64
   lateness : UInt64
-  pending_limit : Int
+  pending_limit : Int32
   pending : Array[LiveQualityItem]
   mut maximum : UInt64?
   mut watermark : UInt64?
@@ -1121,23 +1121,23 @@ pub struct LogBuilder {
   log : Log
   limits : Limits
   mut closed : Bool
-  mut next_schema : Int
-  mut next_channel : Int
-  sequences : Map[Int, UInt]
+  mut next_schema : Int32
+  mut next_channel : Int32
+  sequences : Map[Int32, UInt32]
 }
 pub fn LogBuilder::add_attachment(Self, Attachment) -> Unit raise McapError
 pub fn LogBuilder::add_metadata(Self, Metadata) -> Unit raise McapError
-pub fn LogBuilder::append(Self, Int, UInt64, Bytes, publish_time? : UInt64) -> Unit raise McapError
-pub fn LogBuilder::finish(Self, indexed? : Bool, messages_per_chunk? : Int, compression? : Compression) -> Bytes raise McapError
-pub fn LogBuilder::message_count(Self) -> Int
-pub fn LogBuilder::register_channel(Self, String, String, schema_id? : Int, metadata? : Array[(String, String)]) -> Int raise McapError
-pub fn LogBuilder::register_schema(Self, String, String, Bytes) -> Int raise McapError
+pub fn LogBuilder::append(Self, Int32, UInt64, Bytes, publish_time? : UInt64) -> Unit raise McapError
+pub fn LogBuilder::finish(Self, indexed? : Bool, messages_per_chunk? : Int32, compression? : Compression) -> Bytes raise McapError
+pub fn LogBuilder::message_count(Self) -> Int32
+pub fn LogBuilder::register_channel(Self, String, String, schema_id? : Int32, metadata? : Array[(String, String)]) -> Int32 raise McapError
+pub fn LogBuilder::register_schema(Self, String, String, Bytes) -> Int32 raise McapError
 pub fn LogBuilder::snapshot(Self) -> Log
 
 pub(all) struct LogStats {
-  schema_count : Int
-  channel_count : Int
-  message_count : Int
+  schema_count : Int32
+  channel_count : Int32
+  message_count : Int32
   payload_bytes : UInt64
   topics : Array[TopicStats]
 }
@@ -1145,8 +1145,8 @@ pub(all) struct LogStats {
 type MergeState
 
 pub(all) struct Message {
-  channel_id : Int
-  sequence : UInt
+  channel_id : Int32
+  sequence : UInt32
   log_time : UInt64
   publish_time : UInt64
   data : Bytes
@@ -1156,20 +1156,20 @@ pub fn Message::not_equal(Self, Self) -> Bool
 pub fn Message::to_repr(Self) -> @debug.Repr
 
 pub(all) struct MessageIndex {
-  channel_id : Int
+  channel_id : Int32
   entries : Array[(UInt64, UInt64)]
 }
 
 pub(all) struct MessageLocation {
   offset : UInt64
-  span : Int
-  inner : Int?
+  span : Int32
+  inner : Int32?
 } derive(Eq, @debug.Debug)
 
 pub struct MessageStream {
   next_message : () -> Message? raise McapError
   stop : () -> Unit
-  pending : () -> Int
+  pending : () -> Int32
 }
 pub fn MessageStream::cancel(Self) -> Unit
 pub fn MessageStream::next(Self) -> Message? raise McapError
@@ -1195,8 +1195,8 @@ pub(all) enum MissingMatch {
 
 pub(all) enum NormalizedConversion {
   KeepValue
-  SignedValue(Int)
-  UnsignedValue(Int)
+  SignedValue(Int32)
+  UnsignedValue(Int32)
   ScaleValue(Double, Double)
   TextValue
   BooleanValue
@@ -1226,7 +1226,7 @@ pub fn PagedFieldHeader::layout(Self) -> FieldPageLayout
 pub struct PayloadDecoder {
   decode_payload : (Schema?, Channel, Bytes) -> Json raise McapError
 }
-pub fn PayloadDecoder::decode_message(Self, Message, Log, max_bytes? : Int) -> Message raise McapError
+pub fn PayloadDecoder::decode_message(Self, Message, Log, max_bytes? : Int32) -> Message raise McapError
 pub fn PayloadDecoder::require_filter_fields(Self, JsonFilter) -> Self raise McapError
 
 pub(all) struct PayloadEdit {
@@ -1252,14 +1252,14 @@ pub struct PayloadView {
   source : Bytes
   value : Json
   binary : Map[String, BinaryField]
-  visited : Int
+  visited : Int32
 }
 pub fn PayloadView::binary_fields(Self) -> Array[BinaryField]
 pub fn PayloadView::info(Self) -> Json
 pub fn PayloadView::json(Self) -> Json
-pub fn PayloadView::read_binary(Self, String, Int, Int, max_bytes? : Int) -> Bytes raise McapError
-pub fn PayloadView::read_elements(Self, String, Int, Int, max_elements? : Int) -> Json raise McapError
-pub fn PayloadView::write_binary(Self, String, WriteSink, block_bytes? : Int, cancelled? : () -> Bool) -> UInt64 raise McapError
+pub fn PayloadView::read_binary(Self, String, Int32, Int32, max_bytes? : Int32) -> Bytes raise McapError
+pub fn PayloadView::read_elements(Self, String, Int32, Int32, max_elements? : Int32) -> Json raise McapError
+pub fn PayloadView::write_binary(Self, String, WriteSink, block_bytes? : Int32, cancelled? : () -> Bool) -> UInt64 raise McapError
 
 type ProtoCache
 
@@ -1281,7 +1281,7 @@ pub struct ProtobufDecoder {
   messages : Map[String, ProtoMessage]
   enums : Map[String, ProtoEnum]
   options : ProtobufOptions
-  field_count : Array[Int]
+  field_count : Array[Int32]
 }
 pub fn ProtobufDecoder::decode(Self, String, Bytes) -> Json raise McapError
 pub fn ProtobufDecoder::decode_selected(Self, String, Bytes, DecodeSelection) -> Json raise McapError
@@ -1289,11 +1289,11 @@ pub fn ProtobufDecoder::encode(Self, String, Json) -> Bytes raise McapError
 pub fn ProtobufDecoder::rewrite(Self, String, Bytes, Array[PayloadEdit]) -> Bytes raise McapError
 
 pub(all) struct ProtobufOptions {
-  descriptor_bytes : Int
-  message_bytes : Int
-  depth : Int
-  items : Int
-  fields : Int
+  descriptor_bytes : Int32
+  message_bytes : Int32
+  depth : Int32
+  items : Int32
+  fields : Int32
   int64_as_string : Bool
   protojson : Bool
   emit_defaults : Bool
@@ -1301,7 +1301,7 @@ pub(all) struct ProtobufOptions {
 
 pub(all) struct QualityRule {
   topic : String
-  minimum_messages : Int
+  minimum_messages : Int32
   max_gap : UInt64?
   check_sequence : Bool
   condition : String?
@@ -1315,8 +1315,8 @@ pub(all) struct Query {
   start_time : UInt64
   end_time : UInt64
   descending : Bool
-  offset : Int
-  limit : Int
+  offset : Int32
+  limit : Int32
 }
 
 pub struct QueryCursor {
@@ -1324,14 +1324,14 @@ pub struct QueryCursor {
   query : Query
   heap : Array[CursorRun]
   mut state : QueryCursorState
-  mut matching : Int
-  mut skipped : Int
-  mut emitted : Int
-  mut remaining : Int
+  mut matching : Int32
+  mut skipped : Int32
+  mut emitted : Int32
+  mut remaining : Int32
 }
 pub fn QueryCursor::cancel(Self) -> Unit
 pub fn QueryCursor::next(Self) -> Message?
-pub fn QueryCursor::next_page(Self, Int) -> Array[Message] raise McapError
+pub fn QueryCursor::next_page(Self, Int32) -> Array[Message] raise McapError
 pub fn QueryCursor::progress(Self) -> QueryProgress
 pub fn QueryCursor::seek(Self, UInt64) -> Unit raise McapError
 
@@ -1342,16 +1342,16 @@ pub(all) enum QueryCursorState {
 } derive(Eq, @debug.Debug)
 
 pub(all) struct QueryDiagnostics {
-  total_chunks : Int
-  candidate_chunks : Int
-  matching_messages : Int
+  total_chunks : Int32
+  candidate_chunks : Int32
+  matching_messages : Int32
   used_file_indexes : Bool
 }
 
 pub struct QueryIndex {
   log : Log
-  by_channel : Map[Int, Array[Int]]
-  all_messages : Array[Int]
+  by_channel : Map[Int32, Array[Int32]]
+  all_messages : Array[Int32]
 }
 pub fn QueryIndex::cursor(Self, Query) -> QueryCursor raise McapError
 pub fn QueryIndex::query(Self, Query) -> Array[Message] raise McapError
@@ -1359,11 +1359,11 @@ pub fn QueryIndex::query_source(Self) -> QuerySource raise McapError
 
 pub(all) struct QueryProgress {
   state : QueryCursorState
-  matching_messages : Int
-  skipped_messages : Int
-  emitted_messages : Int
-  remaining_messages : Int
-  buffered_heads : Int
+  matching_messages : Int32
+  skipped_messages : Int32
+  emitted_messages : Int32
+  remaining_messages : Int32
+  buffered_heads : Int32
 } derive(Eq, @debug.Debug)
 
 pub(all) struct QueryResult {
@@ -1373,14 +1373,14 @@ pub(all) struct QueryResult {
 
 pub struct QuerySource {
   declarations : Log
-  open : (Query, Int) -> MessageStream raise McapError
+  open : (Query, Int32) -> MessageStream raise McapError
   materialized : Bool
 }
 pub fn QuerySource::calibrate_time(Self, ClockMap, same_publish_clock? : Bool) -> Self raise McapError
 pub fn QuerySource::declaration_log(Self) -> Log
-pub fn QuerySource::decode_payload(Self, PayloadDecoder, max_bytes? : Int) -> Self raise McapError
+pub fn QuerySource::decode_payload(Self, PayloadDecoder, max_bytes? : Int32) -> Self raise McapError
 pub fn QuerySource::filter_json(Self, JsonFilter) -> Self raise McapError
-pub fn QuerySource::stream(Self, query? : Query, pending_bytes? : Int) -> MessageStream raise McapError
+pub fn QuerySource::stream(Self, query? : Query, pending_bytes? : Int32) -> MessageStream raise McapError
 
 pub struct RangeReader {
   source : ReadSource
@@ -1388,18 +1388,18 @@ pub struct RangeReader {
   declarations : Log
   indexes : Array[ChunkIndex]
   cache : Array[CachedChunk]
-  cache_budget : Int
-  fallback_budget : Int
+  cache_budget : Int32
+  fallback_budget : Int32
   data_end : UInt64
-  mut cache_bytes : Int
-  mut peak_cache_bytes : Int
-  mut decoded_chunks : Int
-  mut cache_hits : Int
+  mut cache_bytes : Int32
+  mut peak_cache_bytes : Int32
+  mut decoded_chunks : Int32
+  mut cache_hits : Int32
   mut full_validation : Bool
 }
 pub fn RangeReader::channels(Self) -> Array[Channel]
 pub fn RangeReader::clear_cache(Self) -> Unit
-pub fn RangeReader::cursor(Self, Query, pending_bytes? : Int, span_bytes? : Int) -> FileCursor raise McapError
+pub fn RangeReader::cursor(Self, Query, pending_bytes? : Int32, span_bytes? : Int32) -> FileCursor raise McapError
 pub fn RangeReader::declaration_log(Self) -> Log
 pub fn RangeReader::diagnostics(Self) -> ReadDiagnostics
 pub fn RangeReader::plan_field_query(Self, FieldIndex, JsonFilter, (ReadSource) -> String raise McapError, String, decoder? : PayloadDecoder) -> FieldQueryPlan raise McapError
@@ -1410,33 +1410,33 @@ pub fn RangeReader::validate_all(Self) -> Unit raise McapError
 type RangeRecord
 
 pub(all) struct ReadDiagnostics {
-  read_calls : Int
+  read_calls : Int32
   bytes_read : UInt64
-  decoded_chunks : Int
-  cache_hits : Int
-  cache_bytes : Int
-  peak_cache_bytes : Int
+  decoded_chunks : Int32
+  cache_hits : Int32
+  cache_bytes : Int32
+  peak_cache_bytes : Int32
   indexed : Bool
   full_validation : Bool
 } derive(Eq, @debug.Debug)
 
 pub struct ReadSource {
   size : UInt64
-  read_at : (UInt64, Int) -> Bytes raise McapError
-  mut calls : Int
+  read_at : (UInt64, Int32) -> Bytes raise McapError
+  mut calls : Int32
   mut bytes_read : UInt64
 }
-pub fn ReadSource::read_exact(Self, UInt64, Int) -> Bytes raise McapError
+pub fn ReadSource::read_exact(Self, UInt64, Int32) -> Bytes raise McapError
 pub fn ReadSource::size(Self) -> UInt64
 
 pub(all) struct ReadSpan {
   offset : UInt64
-  length : Int
+  length : Int32
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Record {
   opcode : Byte
-  offset : Int
+  offset : Int32
   body : Bytes
 } derive(Eq, @debug.Debug)
 pub fn Record::equal(Self, Self) -> Bool
@@ -1445,10 +1445,10 @@ pub fn Record::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RecordingOptions {
   stream : StreamOptions
-  segment_messages : Int
+  segment_messages : Int32
   segment_bytes_target : UInt64
   segment_span : UInt64
-  segment_limit : Int
+  segment_limit : Int32
   sequences : SequencePolicy
   source_identity : String
 } derive(Eq, @debug.Debug)
@@ -1459,17 +1459,17 @@ pub struct RecordingSession {
   options : RecordingOptions
   storage : RecordingStorage
   completed : Array[Json]
-  mut next_ordinal : Int
-  mut active : Int?
+  mut next_ordinal : Int32
+  mut active : Int32?
   mut writer : StreamWriter?
-  mut next_sequence : Map[Int, UInt64]
-  mut committed_next : Map[Int, UInt64]
+  mut next_sequence : Map[Int32, UInt64]
+  mut committed_next : Map[Int32, UInt64]
   mut total : UInt64
   mut start_time : UInt64
   mut end_time : UInt64
   mut state : WriterState
-  mut adopted : Int
-  mut quarantined : Int
+  mut adopted : Int32
+  mut quarantined : Int32
 }
 pub fn RecordingSession::append(Self, Message) -> Unit raise McapError
 pub fn RecordingSession::cancel(Self) -> Unit
@@ -1478,13 +1478,13 @@ pub fn RecordingSession::finish(Self) -> Json raise McapError
 pub fn RecordingSession::info(Self) -> Json
 
 pub struct RecordingStorage {
-  create : (Int) -> WriteSink raise McapError
-  open : (Int) -> ReadSource raise McapError
-  exists : (Int) -> Bool raise McapError
-  seal : (Int) -> Unit raise McapError
+  create : (Int32) -> WriteSink raise McapError
+  open : (Int32) -> ReadSource raise McapError
+  exists : (Int32) -> Bool raise McapError
+  seal : (Int32) -> Unit raise McapError
   save : (Bytes) -> Unit raise McapError
-  quarantine : (Int) -> Unit raise McapError
-  list : () -> Array[Int] raise McapError
+  quarantine : (Int32) -> Unit raise McapError
+  list : () -> Array[Int32] raise McapError
   fingerprint : (ReadSource) -> String raise McapError
 }
 
@@ -1493,19 +1493,19 @@ pub struct RecordingTail {
   mut config : Json?
   accepted : Array[Json]
 }
-pub fn RecordingTail::poll(Self, Bytes, (Int) -> ReadSource raise McapError, (ReadSource) -> String raise McapError, batch_bytes? : Int) -> LiveBatch? raise McapError
+pub fn RecordingTail::poll(Self, Bytes, (Int32) -> ReadSource raise McapError, (ReadSource) -> String raise McapError, batch_bytes? : Int32) -> LiveBatch? raise McapError
 pub fn RecordingTail::snapshot(Self) -> Bytes raise McapError
 
 pub(all) struct RecoveredBlock {
   start : UInt64
   end : UInt64
-  messages : Int
+  messages : Int32
 } derive(Eq, @debug.Debug)
 
 pub(all) struct RecoveryReport {
   log : Log
-  recovered_records : Int
-  stop_offset : Int
+  recovered_records : Int32
+  stop_offset : Int32
   complete : Bool
   reason : String
 }
@@ -1513,17 +1513,17 @@ pub(all) struct RecoveryReport {
 pub struct Replay {
   source : QuerySource
   query : Query
-  budget : Int
+  budget : Int32
   mut stream : MessageStream
   mut pending : Message?
   mut state : ReplayState
   mut position : UInt64
   mut wall : UInt64
   mut last_clock : UInt64?
-  mut numerator : Int
-  mut denominator : Int
-  mut emitted : Int
-  mut generation : Int
+  mut numerator : Int32
+  mut denominator : Int32
+  mut emitted : Int32
+  mut generation : Int32
   mut previous : UInt64?
 }
 pub fn Replay::cancel(Self) -> Unit
@@ -1532,7 +1532,7 @@ pub fn Replay::poll(Self, UInt64) -> ReplayPoll raise McapError
 pub fn Replay::progress(Self, UInt64) -> ReplayProgress raise McapError
 pub fn Replay::resume(Self, UInt64) -> Unit raise McapError
 pub fn Replay::seek(Self, UInt64, UInt64) -> Unit raise McapError
-pub fn Replay::set_rate(Self, Int, Int, UInt64) -> Unit raise McapError
+pub fn Replay::set_rate(Self, Int32, Int32, UInt64) -> Unit raise McapError
 pub fn Replay::step(Self, UInt64) -> Message? raise McapError
 
 pub(all) enum ReplayPoll {
@@ -1545,10 +1545,10 @@ pub(all) enum ReplayPoll {
 pub(all) struct ReplayProgress {
   state : ReplayState
   position : UInt64
-  emitted : Int
-  rate_numerator : Int
-  rate_denominator : Int
-  generation : Int
+  emitted : Int32
+  rate_numerator : Int32
+  rate_denominator : Int32
+  generation : Int32
 }
 
 pub(all) enum ReplayState {
@@ -1572,7 +1572,7 @@ type RunHead
 type RunInput
 
 pub(all) struct Schema {
-  id : Int
+  id : Int32
   name : String
   encoding : String
   data : Bytes
@@ -1593,26 +1593,26 @@ pub(all) enum SequencePolicy {
 pub struct SidecarCursor {
   reader : SidecarReader
   original : Query
-  allowed : Map[Int, Bool]
+  allowed : Map[Int32, Bool]
   mut query : Query
   mut state : FileCursorState
-  mut position : Int
-  mut remaining : Int
-  mut offset_left : Int
-  mut emitted : Int
-  mut skipped : Int
+  mut position : Int32
+  mut remaining : Int32
+  mut offset_left : Int32
+  mut emitted : Int32
+  mut skipped : Int32
   mut waiting : ReadSpan?
   mut ready : Message?
 }
 pub fn SidecarCursor::cancel(Self) -> Unit
 pub fn SidecarCursor::feed(Self, Bytes) -> Unit raise McapError
 pub fn SidecarCursor::next(Self) -> Message? raise McapError
-pub fn SidecarCursor::next_page(Self, Int) -> Array[Message] raise McapError
-pub fn SidecarCursor::pending_bytes(Self) -> Int
+pub fn SidecarCursor::next_page(Self, Int32) -> Array[Message] raise McapError
+pub fn SidecarCursor::pending_bytes(Self) -> Int32
 pub fn SidecarCursor::poll(Self) -> FilePoll raise McapError
 pub fn SidecarCursor::progress(Self) -> Json
 pub fn SidecarCursor::seek(Self, UInt64) -> Unit raise McapError
-pub fn SidecarCursor::write_ndjson(Self, WriteSink) -> Int raise McapError
+pub fn SidecarCursor::write_ndjson(Self, WriteSink) -> Int32 raise McapError
 
 type SidecarEntry
 
@@ -1620,16 +1620,16 @@ pub struct SidecarReader {
   source : ReadSource
   declarations : Log
   entries : Array[SidecarEntry]
-  positions : Array[Int]
+  positions : Array[Int32]
   limits : Limits
   digest : String
   content_verified : Bool
-  index_bytes : Int
-  cache_budget : Int
+  index_bytes : Int32
+  cache_budget : Int32
   mut cached_offset : UInt64?
-  mut cached_span : Int
+  mut cached_span : Int32
   mut cached : Chunk?
-  mut cached_bytes : Int
+  mut cached_bytes : Int32
 }
 pub fn SidecarReader::channels(Self) -> Array[Channel]
 pub fn SidecarReader::clear_cache(Self) -> Unit
@@ -1650,17 +1650,17 @@ type SortRow
 type SortSession
 
 pub struct SortStorage {
-  create : (Int) -> WriteSink raise McapError
-  open : (Int) -> ReadSource raise McapError
-  remove : (Int) -> Unit raise McapError
+  create : (Int32) -> WriteSink raise McapError
+  open : (Int32) -> ReadSource raise McapError
+  remove : (Int32) -> Unit raise McapError
   finish : () -> Unit raise McapError
 }
 
 pub(all) enum SourceScanEvent {
   RecordStart(UInt64)
-  RecordRead(UInt64, Byte, Int)
-  RecordAccepted(UInt64, Byte, Int)
-  DataChecksum(UInt64, UInt, UInt)
+  RecordRead(UInt64, Byte, Int32)
+  RecordAccepted(UInt64, Byte, Int32)
+  DataChecksum(UInt64, UInt32, UInt32)
   DataValidated(UInt64, Bool)
   SummaryStart(UInt64)
 }
@@ -1678,24 +1678,24 @@ pub(all) struct SourceVisitor {
 pub struct StreamDecoder {
   limits : Limits
   pending : @buffer.Buffer
-  mut expected : Int
-  mut offset : Int
-  mut count : Int
+  mut expected : Int32
+  mut offset : Int32
+  mut count : Int32
   mut failed : Bool
   mut finished : Bool
 }
-pub fn StreamDecoder::buffered_bytes(Self) -> Int
+pub fn StreamDecoder::buffered_bytes(Self) -> Int32
 pub fn StreamDecoder::feed(Self, Bytes) -> Array[Record] raise McapError
 pub fn StreamDecoder::finish(Self) -> Unit raise McapError
-pub fn StreamDecoder::new(limits? : Limits, base? : Int) -> Self raise McapError
-pub fn StreamDecoder::record_count(Self) -> Int
+pub fn StreamDecoder::new(limits? : Limits, base? : Int32) -> Self raise McapError
+pub fn StreamDecoder::record_count(Self) -> Int32
 
 pub(all) struct StreamOptions {
   compression : Compression
-  chunk_bytes : Int
-  chunk_messages : Int
+  chunk_bytes : Int32
+  chunk_messages : Int32
   chunk_span : UInt64
-  summary_bytes : Int
+  summary_bytes : Int32
 } derive(Eq, @debug.Debug)
 
 pub struct StreamWriter {
@@ -1705,17 +1705,17 @@ pub struct StreamWriter {
   declarations : Log
   pending : Array[Record]
   summary : Array[(Byte, Bytes)]
-  counts : Map[Int, UInt64]
+  counts : Map[Int32, UInt64]
   mut state : WriterState
-  mut crc : UInt
-  mut records : Int
-  mut buffered : Int
-  mut peak_buffered : Int
-  mut retained : Int
+  mut crc : UInt32
+  mut records : Int32
+  mut buffered : Int32
+  mut peak_buffered : Int32
+  mut retained : Int32
   mut messages : UInt64
-  mut chunks : UInt
-  mut attachments : UInt
-  mut metadata : UInt
+  mut chunks : UInt32
+  mut attachments : UInt32
+  mut metadata : UInt32
   mut start_time : UInt64
   mut end_time : UInt64
   mut chunk_start : UInt64
@@ -1780,8 +1780,8 @@ pub(all) struct SyncOptions {
   tolerance : UInt64
   keep_missing : Bool
   interpolation_paths : Array[String]
-  buffer_bytes : Int
-  json_bytes : Int
+  buffer_bytes : Int32
+  json_bytes : Int32
   output_rows : UInt64
   input_messages : UInt64
 }
@@ -1805,7 +1805,7 @@ pub struct SyncStream {
   mut examined : UInt64
   mut emitted : UInt64
   mut missing : UInt64
-  mut peak_bytes : Int
+  mut peak_bytes : Int32
   mut anchor : TimedSyncMessage?
 }
 pub fn SyncStream::cancel(Self) -> Unit
@@ -1819,7 +1819,7 @@ pub struct TemporalJoinCursor {
   mut after : Message?
   mut left_done : Bool
   mut right_done : Bool
-  mut waiting : Int
+  mut waiting : Int32
   mut last_left : UInt64?
   mut last_right : UInt64?
   mut state : FileCursorState
@@ -1827,7 +1827,7 @@ pub struct TemporalJoinCursor {
   mut right_read : UInt64
   mut matched : UInt64
   mut unmatched : UInt64
-  mut peak_bytes : Int
+  mut peak_bytes : Int32
 }
 pub fn TemporalJoinCursor::cancel(Self) -> Unit
 pub fn TemporalJoinCursor::feed_left(Self, Message?) -> Unit raise McapError
@@ -1885,10 +1885,10 @@ pub(all) struct TfTransform {
 
 pub struct TfTree {
   edges : Map[String, TfEdge]
-  sample_limit : Int
-  byte_limit : Int
-  mut count : Int
-  mut bytes : Int
+  sample_limit : Int32
+  byte_limit : Int32
+  mut count : Int32
+  mut bytes : Int32
 }
 pub fn TfTree::add(Self, TfStamped) -> Unit raise McapError
 pub fn TfTree::context(Self, Array[String], UInt64, UInt64) -> Array[TfStamped] raise McapError
@@ -1903,18 +1903,18 @@ pub(all) struct TfVector {
 type TimedSyncMessage
 
 pub(all) struct TopicStats {
-  channel_id : Int
+  channel_id : Int32
   topic : String
-  message_count : Int
+  message_count : Int32
   payload_bytes : UInt64
   first_time : UInt64?
   last_time : UInt64?
   maximum_gap : UInt64
   median_gap : UInt64
   p95_gap : UInt64
-  arrival_regressions : Int
-  sequence_discontinuities : Int
-  publish_after_log : Int
+  arrival_regressions : Int32
+  sequence_discontinuities : Int32
+  publish_after_log : Int32
   frequency_hz : Double
 }
 
@@ -1934,8 +1934,8 @@ pub(all) struct TransformOptions {
 
 pub(all) struct TransformReport {
   input_messages : UInt64
-  sampled_messages : Int
-  output_messages : Int
+  sampled_messages : Int32
+  output_messages : Int32
   output_bytes : UInt64
   peak_temporary_bytes : UInt64
 }
@@ -1943,11 +1943,11 @@ pub(all) struct TransformReport {
 pub(all) struct TriggerOptions {
   pre : UInt64
   post : UInt64
-  buffer_bytes : Int
-  buffer_messages : Int
-  clip_bytes : Int
-  clip_messages : Int
-  event_limit : Int
+  buffer_bytes : Int32
+  buffer_messages : Int32
+  clip_bytes : Int32
+  clip_messages : Int32
+  event_limit : Int32
 }
 
 pub struct TriggerRecorder {
@@ -1955,19 +1955,19 @@ pub struct TriggerRecorder {
   options : TriggerOptions
   emit : (Log, Json) -> Unit raise McapError
   mut ring : Array[Message?]
-  mut head : Int
-  mut buffered_bytes : Int
+  mut head : Int32
+  mut buffered_bytes : Int32
   mut first : UInt64?
   mut last : UInt64?
   mut capacity_evicted_through : UInt64?
   mut evicted : UInt64
   mut active : Array[Message]?
-  mut active_bytes : Int
+  mut active_bytes : Int32
   mut start : UInt64
   mut deadline : UInt64
   mut pre_complete : Bool
   labels : Array[String]
-  mut completed : Int
+  mut completed : Int32
   mut state : WriterState
   mut delivering : Bool
 }
@@ -1981,10 +1981,10 @@ pub(all) struct WriteProgress {
   state : WriterState
   bytes_written : UInt64
   messages : UInt64
-  chunks : UInt
-  buffered_bytes : Int
-  peak_buffered_bytes : Int
-  retained_summary_bytes : Int
+  chunks : UInt32
+  buffered_bytes : Int32
+  peak_buffered_bytes : Int32
+  retained_summary_bytes : Int32
 } derive(Eq, @debug.Debug)
 
 pub struct WriteSink {

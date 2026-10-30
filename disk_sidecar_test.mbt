@@ -10,7 +10,7 @@ test "disk index pages preserve physical ties across layouts and bounded cache" 
         @moonmcap.write_indexed(log, compression~, messages_per_chunk=7),
       ] {
       let source = @moonmcap.memory_source(bytes)
-      let files : Map[Int, @buffer.Buffer] = Map([])
+      let files : Map[Int32, @buffer.Buffer] = Map([])
       let closed = [false]
       let out = @buffer.Buffer::Buffer()
       ignore(
@@ -142,7 +142,7 @@ test "disk index refuses damaged header pages reordered CRC-valid pages and stal
 test "disk index total spool failures and cancellation clean dedicated storage" {
   let bytes = @moonmcap.write_indexed(cursor_fixture())
   for cancel in [false, true] {
-    let files : Map[Int, @buffer.Buffer] = Map([])
+    let files : Map[Int32, @buffer.Buffer] = Map([])
     let closed = [false]
     let calls = [0]
     try

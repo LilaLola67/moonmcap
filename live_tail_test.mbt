@@ -147,7 +147,9 @@ test "recording tail ignores unfinished segments and preserves committed prefix"
   ) {
     "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
   }
-  let open : (Int) -> @moonmcap.ReadSource raise @moonmcap.McapError = fn(id) {
+  let open : (Int32) -> @moonmcap.ReadSource raise @moonmcap.McapError = fn(
+    id,
+  ) {
     @moonmcap.memory_source(fixture.files[id].to_bytes())
   }
   session.append({
@@ -217,7 +219,7 @@ test "live quality reorders bounded arrivals excludes finalized late data and re
     },
   ]
   let quality = @moonmcap.live_quality(rules, 0UL, lateness=5UL)
-  fn message(time : UInt64, sequence : UInt) -> @moonmcap.Message {
+  fn message(time : UInt64, sequence : UInt32) -> @moonmcap.Message {
     {
       channel_id: 1,
       sequence,

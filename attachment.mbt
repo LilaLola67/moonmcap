@@ -14,7 +14,7 @@ pub extend Attachment with Eq::{equal, not_equal}
 pub extend Attachment with @debug.Debug::{to_repr}
 
 ///|
-pub fn encode_attachment(value : Attachment, checksums? : Bool = true) -> Bytes {
+pub fn encode_attachment(value : Attachment, checksums~ : Bool = true) -> Bytes {
   let out = @buffer.Buffer::Buffer()
   out.write_uint64_le(value.log_time)
   out.write_uint64_le(value.create_time)
@@ -29,7 +29,7 @@ pub fn encode_attachment(value : Attachment, checksums? : Bool = true) -> Bytes 
 ///|
 pub fn decode_attachment(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Attachment raise McapError {
   let input = cursor(bytes, limits)
   let log_time = input.u64()
@@ -71,7 +71,7 @@ pub fn encode_attachment_index(value : AttachmentIndex) -> Bytes {
 ///|
 pub fn decode_attachment_index(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> AttachmentIndex raise McapError {
   let input = cursor(bytes, limits)
   let offset = input.u64()
@@ -87,8 +87,8 @@ pub fn decode_attachment_index(
 ///|
 pub fn find_attachments(
   log : Log,
-  name? : String = "",
-  media_type? : String = "",
+  name~ : String = "",
+  media_type~ : String = "",
 ) -> Array[Attachment] {
   log.attachments
   .filter(fn(a) {
@@ -101,8 +101,8 @@ pub fn find_attachments(
 ///|
 pub fn validate_attachment_indexes(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
-) -> Int raise McapError {
+  limits~ : Limits = default_limits(),
+) -> Int32 raise McapError {
   let records = scan_file(bytes, limits~)
   let physical : Map[UInt64, Record] = {}
   for record in records {

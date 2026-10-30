@@ -23,9 +23,9 @@ fn append_group(
 /// Serialize MessageIndex, ChunkIndex, grouped summary and SummaryOffset records.
 pub fn write_indexed(
   log : Log,
-  messages_per_chunk? : Int = 256,
-  compression? : Compression = Uncompressed,
-  limits? : Limits = default_limits(),
+  messages_per_chunk~ : Int32 = 256,
+  compression~ : Compression = Uncompressed,
+  limits~ : Limits = default_limits(),
 ) -> Bytes raise McapError {
   let sequential = write_chunked(
     log,
@@ -74,7 +74,7 @@ pub fn write_indexed(
       continue
     }
     let chunk = decode_chunk(record.body, limits~)
-    let entries : Map[Int, Array[(UInt64, UInt64)]] = {}
+    let entries : Map[Int32, Array[(UInt64, UInt64)]] = {}
     let mut uncompressed_size = 0UL
     for nested in chunk.records {
       uncompressed_size += (nested.body.length() + 9).to_uint64()
@@ -182,7 +182,7 @@ pub fn write_indexed(
 /// Check physical index pointers against record boundaries and chunk contents.
 pub fn validate_file_indexes(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> Array[ChunkIndex] raise McapError {
   let records = scan_file(bytes, limits~)
   let by_offset : Map[UInt64, Record] = {}
@@ -191,8 +191,8 @@ pub fn validate_file_indexes(
   }
   let result = []
   let indexed_chunks : Map[UInt64, Bool] = {}
-  let summary_channels : Map[Int, Channel] = Map([])
-  let summary_schemas : Map[Int, Schema] = Map([])
+  let summary_channels : Map[Int32, Channel] = Map([])
+  let summary_schemas : Map[Int32, Schema] = Map([])
   let mut summary = false
   for record in records {
     if record.opcode == 0x0f {
@@ -243,7 +243,7 @@ pub fn validate_file_indexes(
       raise Invalid("ChunkIndex payload sizes disagree with Chunk")
     }
     let mut total_index_length = 0UL
-    let channel_ids : Map[Int, Bool] = {}
+    let channel_ids : Map[Int32, Bool] = {}
     for pair in index.message_index_offsets {
       let message_record = match by_offset.get(pair.1) {
         Some(value) => value

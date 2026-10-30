@@ -1,5 +1,5 @@
 ///|
-extern "js" fn argument(index : Int) -> String =
+extern "js" fn argument(index : Int32) -> String =
   #| i => process.argv.slice(2)[i] ?? ''
 
 ///|

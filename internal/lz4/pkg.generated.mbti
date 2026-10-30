@@ -8,7 +8,7 @@ pub fn compress(Bytes) -> Bytes
 pub(all) suberror Lz4Error {
   InvalidHeader(String)
   CorruptData(String)
-  ChecksumMismatch(expected~ : UInt, got~ : UInt)
+  ChecksumMismatch(expected~ : UInt32, got~ : UInt32)
   ContentSizeMismatch
   UnexpectedEOF
 } derive(Show)

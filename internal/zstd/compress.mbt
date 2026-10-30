@@ -5,8 +5,8 @@
 /// Uses LZ77 match finding and zstd compressed blocks with predefined FSE tables.
 pub fn compress(
   data : Bytes,
-  level? : CompressionLevel = Default,
-  dict? : Bytes = Bytes::default(),
+  level~ : CompressionLevel = Default,
+  dict~ : Bytes = Bytes::default(),
 ) -> Bytes {
   ignore(level)
   // This MCAP adapter emits dictionary-free blocks with explicit offsets.
@@ -91,11 +91,11 @@ fn is_all_same(data : BytesView) -> Bool {
 ///|
 fn write_block_header_fixed(
   dst : FixedArray[Byte],
-  pos_ : Int,
+  pos_ : Int32,
   is_last : Bool,
-  block_type : Int,
-  block_size : Int,
-) -> Int {
+  block_type : Int32,
+  block_size : Int32,
+) -> Int32 {
   let last_flag = if is_last { 1 } else { 0 }
   let block_header = last_flag | (block_type << 1) | (block_size << 3)
   dst.unsafe_set(pos_, (block_header & 0xFF).to_byte())
@@ -107,16 +107,16 @@ fn write_block_header_fixed(
 // ── LZ77 match finder ──────────────────────────────────────────────
 
 ///|
-const ZSTD_HASH_BITS : Int = 14
+const ZSTD_HASH_BITS : Int32 = 14
 
 ///|
-const ZSTD_HASH_SIZE : Int = 16384
+const ZSTD_HASH_SIZE : Int32 = 16384
 
 ///|
-const ZSTD_MIN_MATCH : Int = 4
+const ZSTD_MIN_MATCH : Int32 = 4
 
 ///|
-fn zstd_hash(data : BytesView, pos : Int) -> Int {
+fn zstd_hash(data : BytesView, pos : Int32) -> Int32 {
   let u = data.unsafe_get(pos).to_int() |
     (data.unsafe_get(pos + 1).to_int() << 8) |
     (data.unsafe_get(pos + 2).to_int() << 16) |
@@ -127,18 +127,18 @@ fn zstd_hash(data : BytesView, pos : Int) -> Int {
 
 ///|
 priv struct ZstdSequence {
-  lit_len : Int
-  offset : Int // offset_value for encoding (1/2/3 for repeat, actual+3 for new)
-  match_len : Int
-  actual_offset : Int // the real match offset in bytes (for splitting)
+  lit_len : Int32
+  offset : Int32 // offset_value for encoding (1/2/3 for repeat, actual+3 for new)
+  match_len : Int32
+  actual_offset : Int32 // the real match offset in bytes (for splitting)
 }
 
 ///|
 fn find_sequences_with_prefix(
   src : BytesView,
   prefix : BytesView,
-  rep_init : Array[Int],
-) -> (Array[ZstdSequence], FixedArray[Byte], Int) {
+  rep_init : Array[Int32],
+) -> (Array[ZstdSequence], FixedArray[Byte], Int32) {
   let combined = @blit.Buffer::new(size_hint=prefix.length() + src.length())
   if prefix.length() > 0 {
     combined.write_bytesview(prefix)
@@ -150,9 +150,9 @@ fn find_sequences_with_prefix(
 ///|
 fn find_sequences_combined(
   combined : Bytes,
-  base : Int,
-  rep_init : Array[Int],
-) -> (Array[ZstdSequence], FixedArray[Byte], Int) {
+  base : Int32,
+  rep_init : Array[Int32],
+) -> (Array[ZstdSequence], FixedArray[Byte], Int32) {
   let src = combined[:]
   let src_len = combined.length() - base
   let sequences : Array[ZstdSequence] = []
@@ -293,23 +293,23 @@ fn find_sequences_combined(
 /// Per-symbol compression transform parameters, matching the reference
 /// FSE_symbolCompressionTransform struct.
 priv struct FseSymbolTT {
-  delta_nb_bits : Int
-  delta_find_state : Int
+  delta_nb_bits : Int32
+  delta_find_state : Int32
 }
 
 ///|
 /// FSE compression table.
 priv struct FseCTable {
-  state_table : FixedArray[Int]
+  state_table : FixedArray[Int32]
   symbol_tt : FixedArray[FseSymbolTT]
 }
 
 ///|
 /// Build an FSE CTable from normalized counts.
 fn build_fse_ctable(
-  norm_counts : FixedArray[Int],
-  max_symbol : Int,
-  table_log : Int,
+  norm_counts : FixedArray[Int32],
+  max_symbol : Int32,
+  table_log : Int32,
 ) -> FseCTable {
   let table_size = 1 << table_log
   // Spread symbols (same algorithm as decode table)
@@ -397,9 +397,9 @@ fn build_fse_ctable(
 fn fse_encode_symbol(
   ct : FseCTable,
   bw : FseBitWriter,
-  state : Int,
-  symbol : Int,
-) -> Int {
+  state : Int32,
+  symbol : Int32,
+) -> Int32 {
   let stt = ct.symbol_tt.unsafe_get(symbol)
   let nb_bits_out = (state + stt.delta_nb_bits) >> 16
   bw.add_bits(state, nb_bits_out)
@@ -409,7 +409,7 @@ fn fse_encode_symbol(
 
 ///|
 /// Initialize FSE state for a given symbol (FSE_initCState2).
-fn fse_init_state(ct : FseCTable, symbol : Int) -> Int {
+fn fse_init_state(ct : FseCTable, symbol : Int32) -> Int32 {
   let stt = ct.symbol_tt.unsafe_get(symbol)
   let nb_bits_out = (stt.delta_nb_bits + (1 << 15)) >> 16
   let val = (nb_bits_out << 16) - stt.delta_nb_bits
@@ -418,7 +418,7 @@ fn fse_init_state(ct : FseCTable, symbol : Int) -> Int {
 
 ///|
 /// Flush FSE state: write the final state value as table_log bits.
-fn fse_flush_state(bw : FseBitWriter, state : Int, table_log : Int) -> Unit {
+fn fse_flush_state(bw : FseBitWriter, state : Int32, table_log : Int32) -> Unit {
   bw.add_bits(state, table_log)
   bw.flush()
 }
@@ -430,13 +430,13 @@ fn fse_flush_state(bw : FseBitWriter, state : Int, table_log : Int) -> Unit {
 /// Produces a forward byte stream that is then reversed for the backward format.
 priv struct FseBitWriter {
   buf : FixedArray[Byte]
-  mut byte_pos : Int
+  mut byte_pos : Int32
   mut bit_buf : UInt64
-  mut bit_pos : Int
+  mut bit_pos : Int32
 }
 
 ///|
-fn FseBitWriter::new(capacity : Int) -> FseBitWriter {
+fn FseBitWriter::new(capacity : Int32) -> FseBitWriter {
   {
     buf: FixedArray::make(capacity, b'\x00'),
     byte_pos: 0,
@@ -446,7 +446,11 @@ fn FseBitWriter::new(capacity : Int) -> FseBitWriter {
 }
 
 ///|
-fn FseBitWriter::add_bits(self : FseBitWriter, value : Int, nb : Int) -> Unit {
+fn FseBitWriter::add_bits(
+  self : FseBitWriter,
+  value : Int32,
+  nb : Int32,
+) -> Unit {
   if nb == 0 {
     return
   }
@@ -488,8 +492,8 @@ fn FseBitWriter::close(self : FseBitWriter) -> Unit {
 fn FseBitWriter::copy_to(
   self : FseBitWriter,
   dst : FixedArray[Byte],
-  dst_pos : Int,
-) -> Int {
+  dst_pos : Int32,
+) -> Int32 {
   let n = self.byte_pos
   for i in 0..<n {
     dst.unsafe_set(dst_pos + i, self.buf.unsafe_get(i))
@@ -502,14 +506,14 @@ fn FseBitWriter::copy_to(
 ///|
 /// Offset encoding: offset field is already the offset_value
 /// (1/2/3 for repeat offsets, actual_offset+3 for new offsets).
-fn get_offset_code(offset_value : Int) -> (Int, Int, Int) {
+fn get_offset_code(offset_value : Int32) -> (Int32, Int32, Int32) {
   let code = highest_bit(offset_value) - 1
   let extra = offset_value - (1 << code)
   (code, code, extra)
 }
 
 ///|
-fn get_ll_code(ll : Int) -> (Int, Int, Int) {
+fn get_ll_code(ll : Int32) -> (Int32, Int32, Int32) {
   if ll < 16 {
     return (ll, 0, 0)
   }
@@ -526,7 +530,7 @@ fn get_ll_code(ll : Int) -> (Int, Int, Int) {
 }
 
 ///|
-fn get_ml_code(ml : Int) -> (Int, Int, Int) {
+fn get_ml_code(ml : Int32) -> (Int32, Int32, Int32) {
   if ml <= 34 {
     return (ml - 3, 0, 0)
   }
@@ -549,10 +553,10 @@ fn get_ml_code(ml : Int) -> (Int, Int, Int) {
 fn compress_block_from_sequences(
   sequences : Array[ZstdSequence],
   literals : FixedArray[Byte],
-  lit_start : Int,
-  lit_count : Int,
+  lit_start : Int32,
+  lit_count : Int32,
   dst : FixedArray[Byte],
-) -> Int {
+) -> Int32 {
   if sequences.length() == 0 {
     return 0
   }
@@ -611,8 +615,8 @@ fn compress_block_from_sequences(
 fn encode_sequences(
   sequences : Array[ZstdSequence],
   dst : FixedArray[Byte],
-  dst_pos : Int,
-) -> Int {
+  dst_pos : Int32,
+) -> Int32 {
   let num_seq = sequences.length()
   if num_seq == 0 {
     return 0

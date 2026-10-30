@@ -65,7 +65,7 @@ fn run(values : Array[String]) -> Unit raise @mcap.McapError {
     raise @mcap.io_error("1..128 device channels required")
   }
   let builder = @mcap.new_builder()
-  let ids : Map[String, Int] = {}
+  let ids : Map[String, Int32] = {}
   let json_channels : Map[String, Bool] = {}
   for value in channels {
     let channel = object(value, [

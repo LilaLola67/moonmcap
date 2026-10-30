@@ -2,14 +2,14 @@
 /// MCAP Statistics record (opcode 0x0b), distinct from timing diagnostics.
 pub(all) struct FileStatistics {
   message_count : UInt64
-  schema_count : Int
-  channel_count : UInt
-  attachment_count : UInt
-  metadata_count : UInt
-  chunk_count : UInt
+  schema_count : Int32
+  channel_count : UInt32
+  attachment_count : UInt32
+  metadata_count : UInt32
+  chunk_count : UInt32
   start_time : UInt64
   end_time : UInt64
-  channel_message_counts : Array[(Int, UInt64)]
+  channel_message_counts : Array[(Int32, UInt64)]
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -30,7 +30,7 @@ pub fn encode_file_statistics(value : FileStatistics) -> Bytes raise McapError {
   out.write_uint64_le(value.start_time)
   out.write_uint64_le(value.end_time)
   let pairs = @buffer.Buffer::Buffer()
-  let seen : Map[Int, Bool] = Map([])
+  let seen : Map[Int32, Bool] = Map([])
   for (id, count) in value.channel_message_counts {
     if seen.contains(id) {
       raise Invalid("duplicate Statistics channel id")
@@ -46,7 +46,7 @@ pub fn encode_file_statistics(value : FileStatistics) -> Bytes raise McapError {
 ///|
 pub fn decode_file_statistics(
   bytes : Bytes,
-  limits? : Limits = default_limits(),
+  limits~ : Limits = default_limits(),
 ) -> FileStatistics raise McapError {
   let input = cursor(bytes, limits)
   let message_count = input.u64()
@@ -59,7 +59,7 @@ pub fn decode_file_statistics(
   let end_time = input.u64()
   let pairs = cursor(input.blob(), limits)
   let channel_message_counts = []
-  let seen : Map[Int, Bool] = Map([])
+  let seen : Map[Int32, Bool] = Map([])
   while pairs.pos < pairs.data.length() {
     let id = pairs.u16()
     let count = pairs.u64()
@@ -83,8 +83,11 @@ pub fn decode_file_statistics(
 }
 
 ///|
-pub fn compute_file_statistics(log : Log, chunk_count : UInt) -> FileStatistics {
-  let counts : Map[Int, UInt64] = Map([])
+pub fn compute_file_statistics(
+  log : Log,
+  chunk_count : UInt32,
+) -> FileStatistics {
+  let counts : Map[Int32, UInt64] = Map([])
   let mut start_time = 0UL
   let mut end_time = 0UL
   for i = 0; i < log.messages.length(); i = i + 1 {
@@ -117,7 +120,7 @@ pub fn compute_file_statistics(log : Log, chunk_count : UInt) -> FileStatistics 
 pub fn validate_file_statistics(
   log : Log,
   value : FileStatistics,
-  chunk_count : UInt,
+  chunk_count : UInt32,
 ) -> Unit raise McapError {
   let expected = compute_file_statistics(log, chunk_count)
   if value.message_count != expected.message_count ||
@@ -133,7 +136,7 @@ pub fn validate_file_statistics(
   if value.channel_message_counts.is_empty() {
     return
   }
-  let actual : Map[Int, UInt64] = Map([])
+  let actual : Map[Int32, UInt64] = Map([])
   for (id, count) in value.channel_message_counts {
     if actual.contains(id) {
       raise Invalid("duplicate Statistics channel id")
