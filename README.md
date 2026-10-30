@@ -1,261 +1,106 @@
 # MoonMCAP
 
-0.16.10 的 [工具链验证记录](examples/validation/release-0.16.10.json)：以 0.10.17 为固定基准，Wasm 214 项、JS 236 项测试通过；当前 0.10.18 的 JS 检查、构建、测试和文档生成通过。完整文件工作流由 [CI](https://github.com/LilaLola67/moonmcap/actions/workflows/ci.yml) 使用同一基准执行。
+MoonBit 的 **MCAP 0 消息日志库**，用于读取和校验机器人、传感器与仿真日志，按主题和时间查询，并裁剪、合并或恢复可读数据。当前版本 **0.17.1**。
 
-0.16.9 的 [历史验证记录](examples/validation/release-0.16.9.json)：61 个工作流、Wasm 214 项 / JS 236 项测试通过，0.10.14 与 0.10.17 双工具链验证通过。
+从 [首次使用](docs/quickstart.md) 开始，选择入口前阅读 [支持范围](docs/scope.md)。完整索引见 [文档导航](docs/README.md)，异常处理见 [排错说明](docs/troubleshooting.md)。
 
-新增[可复现处理配方](docs/recipes.md)、[容差回归与失败证据](docs/regression.md)、
-[实时设备录制和 Foxglove 桥接](docs/device-bridge.md)、[增量查询与实时质量监控](docs/live-tail.md)、
-[离线 TF](docs/tf.md)、[Arrow/Parquet 导出](docs/columnar.md)及
-[多话题同步和重采样](docs/synchronization.md)。外部 Python/SDK 适配器均为可选组件。
+## 安装
 
-新增[消息定义升级与统一查询视图](docs/schema-evolution.md)：按编码报告双向兼容性，以显式别名、默认值、整数检查和单位规则统一不同版本的数据。
+项目固定编译基准为 **moonc 0.10.17+d971670cd**，满足不低于 0.10.16 的要求；另以当前官方工具链验证兼容性。本地文件和网络宿主需要 **JS/Node.js 22.3+**。
 
-新增[结构化载荷回写](docs/payload-rewrite.md)：JSON、Protobuf、ROS1 和 plain XCDR1 字段修改，提供严格类型检查、反向编码和保留未知 Protobuf 字段的修改路径。
+在已有 MoonBit 项目中执行下面的安装命令；从空目录开始时，先创建 `moon.mod`：
 
-新增[流式上下文片段与可恢复批量导出](docs/stream-context.md)：逐条写出大窗口，独立限制上下文和输出总量；批量任务逐片段保存 SHA-256 收据，支持进程中断后校验并继续。
+```text
+name = "example/use-mcap"
+version = "0.0.1"
+```
 
-新增[数据质量与故障复现工作流](docs/incident-workflows.md)：可配置质量规则、持续事件定位、带上下文的片段导出、有界触发录制，以及显式锚点时钟校正。附[可直接运行的配置](examples/incidents/README.md)，文件互操作通过独立 Python MCAP reader/writer 验证；时钟校正不声称真实设备精度。
+```sh
+moon add LilaLola67/moonmcap@0.17.1
+```
 
-0.15.32 的 [历史验证记录](examples/validation/release-0.15.32.json)：49 个工作流、Wasm 185 项 / JS 207 项测试通过，0.10.14 与 0.10.17 双工具链验证通过。
+使用方的 `moon.pkg`：
 
-统一组合查询入口与复现说明见 [异步查询管线](docs/pipeline.md)。
+```text
+import { "LilaLola67/moonmcap" @mcap, }
+pkgtype(kind:"executable")
+```
 
-0.15.31 的 [历史验证记录](examples/validation/release-0.15.31.json)：48 个工作流、Wasm 173 项 / JS 195 项测试通过；0.10.14 与 0.10.17 已验证，本地当前工具链文档生成通过。
+将下面保存为 `main.mbt`，执行 `moon run .` 或 `moon run . --target js`：
 
-新增能力：MFLD2 分页字段索引、[按需解码与大数组](docs/payload-views.md)、[ROS 1 载荷](docs/ros1.md)、[跨话题时间关联](docs/temporal-join.md)、[持久录制会话](docs/recording-session.md)。
+```moonbit
+///|
+fn main {
+  try {
+    let recorder = @mcap.new_builder()
+    let channel = recorder.register_channel("/events", "json")
+    recorder.append(channel, 100UL, b"{\"value\":1}")
+    let bytes = recorder.finish(compression=@mcap.Zstd)
+    let messages = @mcap.query_file(bytes, {
+      ..@mcap.all_query(), topics: ["/events"], start_time: 100UL, end_time: 100UL,
+    }).messages
+    assert_eq(messages.length(), 1)
+    assert_eq(messages[0].data, b"{\"value\":1}")
+    println("MCAP_SAMPLE_OK")
+  } catch {
+    @mcap.Invalid(reason) => abort(reason)
+    error => abort("\{error}")
+  }
+}
+```
 
-0.15.30 的 [历史验证记录](examples/validation/release-0.15.30.json)包含 47 个独立工作流和当时的测试、源码统计。
+预期输出 `MCAP_SAMPLE_OK`。库中的时间是 **UInt64 纳秒**，查询区间包含两端。
+JSON 时间使用字符串保留精度；不根据设备字段名推断单位或时钟关系。
 
-[可选工作线程](docs/parallel-codecs.md)在 Node.js 中并行解压和解码，保留排序、预算和背压；附耗时及进程内存实测。
-
-[贯通恢复任务](docs/chunk-pipeline.md)把 Chunk 副本、最终排序段和归并组进度保存在同一任务中，支持进程中断后复用。
-
-[字段范围索引](docs/field-index.md)通过块级数值/字符串摘要保守排除不命中块，并保留最后的精确筛选与完整结果。
-
-[异步分页索引](docs/async-disk-sidecar.md)可组合本地/远程 MIDX2、持久 HTTP 缓存和消息解码，完整审核后按页查询。
-
-HTTP 远程日志支持有界持久页缓存、并发预取、ETag 快照校验、校验失败重取与中断恢复，见[HTTP 缓存](docs/http-cache.md)。
-
-消息结构解码：内置 JSON、Protobuf FileDescriptorSet 和 ROS 2 ros2msg / XCDR1 解码，可接入同步、异步筛选、投影与精确聚合，支持自定义插件。见[消息解码](docs/payload-decoding.md)和 [CDR 范围与样例](docs/cdr-decoding.md)。
-
-[0.15.24 本地验证报告](examples/validation/release-0.15.24.json)记录 41 组回归、11 个语料案例、4719 条公开 CDR 消息的独立解码对照，以及 200 条消息的并行/串行对照，区分真实录制、转换数据与合成样例。
-
-MoonBit 原生 **MCAP 0** 容器库，提供标准记录编解码、三种压缩模式、磁盘游标、异步录制、HTTP 范围查询、外部排序合并和诊断恢复。当前模块版本 **0.16.10**，见 [更新记录](CHANGELOG.md) 和 [迁移说明](docs/migration.md)。
-
-## 安装与运行
-
-[块级保存点](docs/chunk-checkpoint.md)为可独立校验的索引块保存持久副本，输入未完成时也能保留录入进度。
-
-[外部聚合](docs/external-aggregation.md)在分组缓冲超限时溢写临时磁盘，精确归并并逐组输出 NDJSON。
-
-[分页磁盘索引](docs/disk-sidecar.md)使用外部排序和有限页缓存，提供百万条实际构建与查询报告。
-
-[公开数据验证](docs/corpus-validation.md)分别记录真实机械臂日志与复杂合成分布，提供来源、固定指纹和独立参考核对。
-
-[大文件诊断](docs/source-diagnostics.md)按记录完整校验，提供首错范围、读取统计和实际恢复消息时间证据。
-
-[统一异步查询](docs/async-dataset.md)组合本地/HTTP、侧车、JSON 条件、跨文件分页和 NDJSON 导出。
-
-[时间回放](docs/replay.md)提供倍速、暂停、单步、跳转，以及有背压的异步消息回调。
-
-[日志差异比较](docs/semantic-diff.md)区分消息、声明、附件和元数据变化，忽略压缩及索引布局差异。
-
-[流式聚合](docs/aggregation.md)支持 JSON 数值统计、字段分组和时间窗口，累计十进制值保持精度。
-
-[JSON 内容查询](docs/json-query.md)支持精确数字条件、字段投影、跨文件分页及流式转换筛选。
-
-[可恢复合并任务](docs/resumable-merge.md)支持逐输入保存点、持久归并检查点、已完成排序段复用，以及任务查看和清理。
-
-[文件 I/O](docs/file-io.md)提供直接字节桥接、可关闭文件句柄、有界预读及物理读取统计。
-
-项目工具链基准为 `moonc 0.10.17+d971670cd`，高于 `moonc >= 0.10.16` 的要求。主要 CI 固定使用该版本完成检查、Wasm/JS 构建、测试和完整文件工作流，另以当前官方工具链验证 JS 与文档生成。文件操作示例需要 Node.js 22.3 及以上。工具链安装见 [MoonBit 官方下载页](https://www.moonbitlang.com/download/)。
+## 文件处理
 
 ```sh
 git clone https://github.com/LilaLola67/moonmcap.git
 cd moonmcap
 moon update
+moon build --target js
+node _build/js/debug/build/cmd/mcap/mcap.js query examples/files/zstd-summary.mcap --topic /imu --start 20000000000 --end 30000000000 --full
+```
+
+应查询到 **5 条消息**，时间为 21、23、25、27、29 秒。完整的裁剪、校验和截断恢复命令及预期结果见 [首次使用](docs/quickstart.md)。示例文件随仓库提供，不需要实体设备。
+
+## 能力与边界
+
+- **核心库（Wasm/JS）**：MCAP 0 标准记录、CRC、索引、无压缩/LZ4/Zstd、查询、变换与恢复。压缩字典、拼接帧和未声明的格式扩展不在支持范围，详见 [格式兼容表](docs/compatibility.md)。
+- **宿主与大文件路径（JS/Node）**：按需读取、磁盘索引、流式输出、外部排序、持久任务、HTTP 范围读取和可选工作线程。它们分别有预算，不能把单个预算视作总进程内存上限。
+- **消息与外部适配**：JSON/Protobuf/ROS1/plain XCDR1 解码及回写、时间与质量处理按各自文档约束使用。Python/PyArrow/Foxglove 工具为可选适配器，不属于核心运行依赖。
+
+快速查询不等于完整校验；需要审核全文件时使用 `validate` 或 `--full`。普通查询/裁剪默认最多 **100000 条**，内存型文件处理默认编码输入预算 **64 MiB**。已有输出不覆盖；文件发布需要同目录硬链接支持。流式 stdout 失败时可能已有部分结果，需检查退出码。完整约定见 [使用边界](docs/scope.md)。
+
+## 按目标查文档
+
+| 目标 | 入口 |
+| --- | --- |
+| 查询、裁剪、合并和修复 | [CLI](docs/cli.md)、[可运行样例](examples/README.md)、[诊断](docs/source-diagnostics.md) |
+| 选择性 IO、大文件和恢复任务 | [RangeReader](docs/range-reader.md)、[索引](docs/disk-sidecar.md)、[流式片段](docs/stream-context.md)、[外部合并](docs/external-merge.md) |
+| 解释或修改消息 | [解码](docs/payload-decoding.md)、[回写](docs/payload-rewrite.md)、[结构演进](docs/schema-evolution.md) |
+| 时间、质量和实验处理 | [同步](docs/synchronization.md)、[TF](docs/tf.md)、[质量](docs/incident-workflows.md)、[回归](docs/regression.md) |
+| 可选工具集成 | [列式导出](docs/columnar.md)、[设备桥接](docs/device-bridge.md)、[处理配方](docs/recipes.md) |
+
+## 验证与数据来源
+
+```sh
 moon check
 moon build
-moon test
-moon run cmd/main
+moon test --target wasm
+moon test --target js
+python tools/check_docs.py
+python tools/quickstart_smoke.py
 ```
 
-JS 目标：`moon test --target js`、`moon run cmd/main --target js`。内存示例录制 6 条消息和一个附件，再读取、统计、查询和裁剪，最后输出 `MCAP_HEX=` 数据用于互操作验证。
+[测试方法](docs/testing.md) 区分单元测试、独立参考实现、真实进程中断、干净源码副本、发行包安装和公开数据验证；[GitHub CI](https://github.com/LilaLola67/moonmcap/actions/workflows/ci.yml) 保存可复核的报告。公开录制、转换数据和合成样例分别标注，见 [公开语料](docs/corpus-validation.md)；历史百万消息和大文件实测的环境与限制见 [性能报告](docs/performance.md)。设备 SDK 桥接尚未进行实体设备联调。
 
-[可运行文件样例](examples/README.md)提供无压缩/LZ4/Zstd 的实际输入文件、裁剪/合并/恢复的预期输出及一键验证命令：`python examples/run.py`。
+本轮的失败合同、文档重放和公开语料复核结果见 [0.17.1 质量验证记录](examples/validation/release-0.17.1.json)。
 
-安装 Mooncakes 发行版本：
+历史验证记录保留在 [验证报告](examples/validation/release-0.16.10.json) 等文件中，版本变化见 [更新记录](CHANGELOG.md) 与 [迁移说明](docs/migration.md)。
 
-```sh
-moon add LilaLola67/moonmcap@0.16.10
-```
+从 Mooncakes 全新安装的验证命令为 `python tools/install_smoke.py --version 0.17.1`，不使用仓库源路径覆盖。
 
-已发布版本的独立安装验证：`python tools/install_smoke.py --version 0.16.10`。脚本在全新使用者目录中安装发行包，编译使用者自己的 worker 入口，运行查询、分页字段索引、二进制视图、ROS1、时间关联、录制恢复、质量、事件、上下文、触发录制、时钟映射，以及流式片段、批量恢复、载荷回写、结构比较、归一化、多话题同步、TF 历史上下文、增量读取和质量水位线共 20 类公开接口样例；产物保存在 `_interop/installed/`，旧版本按其实际可用接口选择样例。
+## 开源许可
 
-也可从 GitHub 克隆复现全部样例；[发布包校验](docs/distribution.md) 可生成经过文件清单检查的模块归档。LZ4/Zstd、xxHash 与字节缓冲使用发行包内的独立内部组件，保留上游 Apache-2.0 许可证及来源，详见 [第三方说明](third_party/README.md)；异步包使用固定版本的 `moonbitlang/async 0.20.2`。运行时不需要 Python，也不调用外部压缩进程。
-
-## API 示例
-
-安装依赖后，使用方在 `moon.pkg` 中导入 `"LilaLola67/moonmcap" @mcap`：
-
-```moonbit
-let recorder = @mcap.new_builder()
-let channel = recorder.register_channel("/events", "json")
-recorder.append(channel, 100UL, b"{\"value\":1}")
-let bytes = recorder.finish(compression=@mcap.Zstd, messages_per_chunk=256)
-let log = @mcap.read_log(bytes)
-let query = { ..@mcap.all_query(), topics: ["/events"], start_time: 100UL, end_time: 200UL }
-let messages = @mcap.query_file(bytes, query).messages
-let sliced = @mcap.slice_log(log, query)
-let output = @mcap.write_indexed(sliced, compression=@mcap.Lz4)
-```
-
-调用会抛出 `McapError`，应在声明该错误的函数或 `try/catch` 内使用。时间是 UInt64 纳秒，查询区间两端包含；升序按 `(时间,原始物理位置)` 排序，倒序反转整个次序，支持偏移和数量分页。`Uncompressed`、`Lz4`、`Zstd` 是三种写入模式。
-
-连续读取时，可以复用同一个索引与游标：
-
-```moonbit
-let cursor = @mcap.build_query_index(log).cursor(query)
-let first_page = cursor.next_page(32)
-let second_page = cursor.next_page(32)
-cursor.seek(150UL) // 包含时间边界；不重新应用 offset
-let progress = cursor.progress()
-cursor.cancel()
-```
-
-游标最多保留每个匹配通道的一个归并头部，不为每页重新构造完整候选数组。`offset`、`limit` 作用于整个遍历；`seek` 重置本次进度和 limit，取消后不能重开。索引仍持有完整内存快照。完整约定和示例见 [消息游标](docs/query-cursor.md)，运行 `moon run cmd/cursor` 或 `moon run cmd/cursor --target js`。
-
-## 大文件与异步工作流
-
-| 功能 | 行为与边界 |
-| --- | --- |
-| [磁盘游标](docs/file-cursor.md) | 逐页按需加载、处理时间重叠块、seek/取消；候选负载超预算显式失败 |
-| [流式变换](docs/stream-transform.md) | 临时文件支持大文件排序、采样、分页及对齐；NDJSON 逐条导出 |
-| [跨文件数据集](docs/dataset.md) | 冲突 ID 重映射、全局分页与跳转、来源编号；不生成合并文件 |
-| [侧车索引](docs/sidecar-index.md) | 为无索引文件建立持久定位表，SHA-256 过期检查、显式快速身份模式、跨文件接入 |
-| [异步读写与轮转](docs/async-io.md) | 实际异步宿主 I/O、等待输出接纳、任务取消；每个完成段独立可读 |
-| [HTTP 查询](docs/http-source.md) | Range + 强 ETag + If-Match，超时、有限重试、活动请求中止；拒绝整文件回退 |
-| [外部排序合并](docs/external-merge.md) | 乱序输入写临时排序段，多轮归并、稳定重复次序、声明重映射、临时空间预算及清理 |
-| [独立块恢复](docs/block-recovery.md) | 显式跳过坏块、校验后续索引块并输出范围清单；始终标为部分提取 |
-
-异步文件和 HTTP 宿主支持 JS/Node；同步核心、磁盘游标协议和排序算法支持 Wasm。原路径的解压/排序仍在当前线程运行，可选工作线程后端分担解压和负载解码；异步 I/O 本身不意味着多线程压缩。负载预算分别计账，不是总进程内存上限，见 [内存实测](docs/performance.md)。
-
-## 容器与压缩
-
-覆盖 MCAP 0 的全部 **15 类标准记录**，包括 Statistics、消息/块索引、附件与元数据索引和 SummaryOffset。读取时检查记录顺序、声明依赖、摘要副本、统计内容、物理偏移以及数据区、摘要、块和附件 CRC。可读取顺序、分块、有/无摘要、有/无摘要偏移、无消息索引的合法文件，并在重写时重新生成统计及索引。
-
-- LZ4：标准帧读写；读取独立/依赖块、块校验及内容校验。
-- Zstd：标准单帧读写；读取 raw/RLE/compressed 块、未知内容大小及可选校验；写端采用固定编码策略，不提供压缩等级调节。
-- 每个 Chunk 独立判断压缩方式，允许同一文件混用三种模式。
-- 默认记录大小上限 16 MiB、单块解压上限 64 MiB、字符串 1 MiB、记录数量 100,000，可通过 `Limits` 配置。新增的 `max_decompressed_bytes` 限制单块展开，嵌套记录也计入文件记录预算。
-
-[兼容范围与可复现案例](docs/compatibility.md) 说明了具体边界。容器读写保留原始消息字节；可选解码适配器支持 JSON / Protobuf 和明确范围的 ROS 2 XCDR1 结构查询，完整 ROS profile 语义需要业务方处理。
-
-## 日志操作
-
-- 主题/时间裁剪，清理无引用声明并保留附件、元数据。
-- 按内容去重 schema/channel，合并时安全重映射 ID 并保留重复消息。
-- 平移消息和附件时间，检查 UInt64 溢出/下溢。
-- 时序统计：消息数、数据量、时间间隔、乱序与序号异常；与标准 Statistics 记录分别提供 API。
-- 查询游标：逐条/分批取消息、稳定分页、双向时间跳转、取消和进度；同一索引可共享给多个独立游标。
-- 录制器提供声明去重、自动序号、快照、添加失败原子性及结束状态。
-- 分片记录流解码与连续前缀恢复。压缩块完全解码并通过校验后才接纳消息，遇到损坏或截断就停止，不穿过坏字节重同步。
-
-## 文件示例与验证
-
-下面的 JS 命令将文件转为 Zstd 索引文件：
-
-```sh
-moon run cmd/interop --target js -- input.mcap output.mcap zstd rewrite
-```
-
-还支持 `slice`（筛选 `/imu` 的 20–30 秒闭区间）、`merge`（在参数末尾追加第二个文件路径）和 `recover`，用于复现完整工作流。该命令的文件访问使用 Node.js；核心编解码、压缩及变换在 Wasm 和 JS 上均可运行。
-
-```sh
-python -m pip install mcap==1.3.0 lz4==4.4.5 zstandard==0.25.0
-python tools/interop.py
-python tools/conformance.py
-python tools/count_source.py
-```
-
-- MoonBit 单元/回归测试：Wasm 214 项、JS 236 项；JS 增加 Node 适配器和真实异步暂停、取消、背压、轮转状态测试。
-- 真实文件验证：30 项；包含 `3 输入压缩 × 2 摘要布局 × 3 输出压缩 = 18` 组双向读写检查，以及顺序文件、无消息索引、无摘要偏移、混合压缩和查询/合并/恢复工作流。
-- 真实文件验证还覆盖按需读取、三种流式输出、8 项 CLI、4 项批量变换、8 项诊断修复，以及 5 项异步录制、15 项 HTTP 故障、5 项磁盘排序、9 项独立块恢复、108 项固定种子差分检查和 4 组进程 RSS 测量。执行命令见下方，结果位于 `_interop/` 各子目录的 `report.json`。GitHub Actions 完整执行并上传报告。
-- 新增 45 项大文件诊断与恢复故障用例，百万条消息与实际超过 2 GiB 文件的本地验证见 [规模报告](docs/performance.md)。常规 CI 使用缩小规模，完整规模测试可手动启用。
-
-```sh
-python tools/range_benchmark.py
-python tools/stream_workflows.py
-python tools/cli_workflows.py
-python tools/batch_workflows.py
-python tools/repair_workflows.py
-python tools/async_workflows.py
-python tools/http_workflows.py
-python tools/external_workflows.py
-python tools/block_workflows.py
-python tools/transform_stream_workflows.py
-python tools/dataset_workflows.py
-python tools/sidecar_workflows.py
-python tools/json_workflows.py
-python tools/checkpoint_workflows.py
-python tools/input_checkpoint_workflows.py
-python tools/io_workflows.py
-python tools/aggregate_workflows.py
-python tools/diff_workflows.py
-python tools/replay_workflows.py
-python tools/async_dataset_workflows.py
-python tools/source_diagnostic_workflows.py
-python tools/large_source_workflows.py
-python tools/fuzz_workflows.py
-python tools/memory_benchmark.py
-python tools/corpus_workflows.py
-python tools/disk_index_workflows.py
-python tools/disk_index_scale.py
-python tools/aggregate_external_workflows.py
-python tools/chunk_checkpoint_workflows.py
-python tools/protobuf_workflows.py
-python tools/cached_http_workflows.py
-python tools/protojson_workflows.py
-python tools/cdr_workflows.py
-python tools/async_paged_workflows.py
-python tools/field_index_workflows.py
-python tools/chunk_pipeline_workflows.py
-python tools/worker_workflows.py
-python tools/worker_benchmark.py
-python tools/package_audit.py
-```
-
-## 文件工具
-
-[多话题同步与重采样](docs/synchronization.md) 支持显式时钟、最近/前值/后值、缺失和消费规则，以及保留括点来源的固定网格线性插值。
-
-[列式导出适配器](docs/columnar.md) 将归一化视图按显式类型分批导出 Arrow IPC 或 Parquet，保留 UInt64 纳秒时间。[离线 TF](docs/tf.md) 支持历史坐标查询、旋转插值和保留静态状态及动态括点的语义片段。
-
-[增量查询与质量监控](docs/live-tail.md) 从已提交录制分段或增长中的完整消息块续读，支持原子状态输出、水位线和迟到数据计数，并区分部分与完整容器校验。
-
-[设备与 Foxglove SDK 适配器](docs/device-bridge.md) 将逐行设备消息交给 MoonBit 持久化分段录制，再用当前官方 SDK 广播同一载荷，提供逐条确认与恢复入口。
-
-[实验容差回归](docs/regression.md) 对归一化视图进行明确时间对齐和精确数值容差比较，统计缺失、额外消息和事件边界变化，并可输出带来源散列的失败证据片段。
-
-[通用命令行](docs/cli.md) 提供 `inspect`、`query`、`slice`、`merge`、`external-merge`、`recover`、`recover-blocks`、`rewrite`、`transform`、`validate`、`reindex`。主题、UInt64 纳秒时间、分页、压缩和预算均可配置；查询支持 JSON/CSV，输出文件拒绝覆盖已有路径。
-
-```sh
-moon run cmd/mcap --target js -- query examples/files/zstd-summary.mcap --topic /imu --start 20000000000 --end 30000000000
-moon run cmd/mcap --target js -- validate examples/files/zstd-summary.mcap
-moon run cmd/mcap --target js -- reindex broken-summary.mcap --output rebuilt.mcap --compression zstd
-```
-
-[批量变换](docs/batch-transform.md) 提供主题映射、按通道时间窗采样、时间对齐、附件和元数据筛选。[结构化诊断与修复](docs/diagnostics.md) 区分数据区和索引/摘要问题，已知时给出偏移、记录类型与预期/实际值；只从完整有效的数据区重建索引，数据损坏可显式选择连续前缀恢复或索引块部分提取。
-
-Python `mcap==1.3.0` 仅为开发阶段的官方参考工具，其包版本不是文件格式版本。生成测试不计入有效源码；`tools/count_source.py` 只统计根目录手写核心的非空、非注释 `.mbt` 行，排除测试、生成接口、示例及 `internal/zstd` 引用代码。
-
-## 边界
-
-不支持外部压缩字典、拼接帧、skippable frame 或自定义压缩算法。消息体可显式执行 JSON 条件和投影，Protobuf 和受支持的 ros2msg/XCDR1 可先按日志内定义解码；其他编码保留原始字节。原有文件 API 接收已加载的 Bytes；RangeReader 和 Node.js 文件适配器支持 [按需读取](docs/range-reader.md)，快速模式不校验未读取的数据。[StreamWriter](docs/stream-writer.md) 支持同步输出、增量校验和与分块/摘要预算；旧 LogBuilder 仍提供完整快照和原子添加。
-
-`scan_file` 可取得未知原始记录；`Log` 是语义模型，重写会重建容器，不保留未知记录和扩展字段的原始字节。未提供 CRC 的内容无法仅凭解析证明未损坏。互操作结果限于已执行的矩阵与声明边界，不等于所有未来扩展格式都已验证。
-
-## 原创与参考
-
-MCAP 容器实现独立编写，依据 [官方规范](https://mcap.dev/spec)，参考生态为 [foxglove/mcap](https://github.com/foxglove/mcap)（MIT）。容器核心采用 MIT，引用的 Zstd 实现及压缩依赖遵循其 Apache-2.0 许可证，详见 [third_party](third_party/README.md)。[公开项目检索记录](docs/duplication-review.md) 说明了检索范围与相邻项目差异。
+项目主体采用 [MIT](LICENSE)。压缩与字节缓冲的适配组件保留上游 Apache-2.0 许可和来源，见 [第三方说明](third_party/README.md)；这些引用实现不计入原创核心源码统计。公开录制文件遵循其发布方的条款，项目 MIT 许可不对它们重新授权。

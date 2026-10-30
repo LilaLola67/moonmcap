@@ -1,0 +1,153 @@
+{
+  "version": "0.17.1",
+  "date": "2026-10-30",
+  "focus": [
+    "explicit support and failure boundaries",
+    "independent failure-path regression",
+    "task-based and checked documentation",
+    "clean-source and public-recording reproducibility"
+  ],
+  "baseline_compiler": "0.10.17+d971670cd",
+  "tests": {
+    "wasm": 214,
+    "js": 236
+  },
+  "current_toolchain": {
+    "moonc": "0.10.18+6c83a7f62",
+    "steps": [
+      {
+        "step": "check",
+        "passed": true
+      },
+      {
+        "step": "build",
+        "passed": true
+      },
+      {
+        "step": "test",
+        "passed": true
+      },
+      {
+        "step": "doc",
+        "passed": true
+      }
+    ]
+  },
+  "targeted_regression": {
+    "result": "passed",
+    "scripts": [
+      "tools/check_docs.py",
+      "tools/quickstart_smoke.py",
+      "tools/reliability_workflows.py",
+      "tools/cli_workflows.py",
+      "tools/batch_workflows.py",
+      "tools/block_workflows.py",
+      "tools/sidecar_workflows.py",
+      "tools/dataset_workflows.py",
+      "tools/json_workflows.py",
+      "tools/diff_workflows.py",
+      "tools/aggregate_workflows.py",
+      "tools/external_workflows.py"
+    ]
+  },
+  "cli_failure_contracts": {
+    "result": "passed",
+    "commands": 21,
+    "cases": [
+      "inapplicable options fail before IO",
+      "exact byte budget boundary",
+      "Unicode, spaces and option-like input path",
+      "late malformed JSON: atomic file failure versus partial stdout, three codecs",
+      "independent UInt64/UInt32 boundary recording",
+      "fast query is not full CRC validation",
+      "existing destination preserved and temporary files cleaned"
+    ],
+    "data": "synthetic with independent Python MCAP writer"
+  },
+  "clean_quickstart": {
+    "result": "passed",
+    "documented_commands": 9,
+    "fixture_sha256_checked": true,
+    "workspace_build_artifacts_used": false,
+    "readme_api_example": "Wasm and JS compiled and executed against exported source dependency",
+    "source_tree": "bab9e4f5d73c61e96874027f909ab5ff1f5e2318",
+    "fresh_published_install": false,
+    "checks": [
+      "five exact timestamps",
+      "slice auxiliary records",
+      "recovery boundary",
+      "existing output preserved"
+    ]
+  },
+  "public_corpus": {
+    "synthetic_cases": 9,
+    "public_cases": [
+      {
+        "case": "so101-real",
+        "kind": "physical-robot-recording",
+        "source": "https://foxglove.dev/blog/record-and-replay-with-a-ros-2-powered-so-101",
+        "url": "https://assets.foxglove.dev/website/blog/record-and-replay-with-a-ros-2-powered-so-101/replay_capture_2026_10_14_15_10_26_0.mcap",
+        "conversion": null,
+        "origin_sha256": null,
+        "sha256": "e11ebd97b793b101b91237dcb4ceac32540aa2adb515df97650ad22116f6ac84",
+        "bytes": 2592733,
+        "messages": 4719,
+        "topics": [
+          "/dynamic_joint_states",
+          "/joint_commands_replay",
+          "/joint_states",
+          "/tf",
+          "/tf_static"
+        ],
+        "checks": [
+          "official physical-order oracle and CRC",
+          "bounded diagnosis",
+          "sidecar validation",
+          "forward reverse topic paging through two providers",
+          "input unchanged"
+        ],
+        "data_crc_verified": false,
+        "result": "passed"
+      },
+      {
+        "case": "driving-real",
+        "kind": "public-driving-recording-converted-from-rosbag1",
+        "source": "https://assets.foxglove.dev/demo.bag",
+        "url": "https://assets.foxglove.dev/demo.bag",
+        "conversion": "rosbag1-raw-v1",
+        "origin_sha256": "3e6e0049cc2567afe437da3f019debfcf1d96bd33f8c12d3680353a0329b6510",
+        "sha256": "cc941e50af6a0411071abcebafca764e4002898801a01b5c85ea04d4fef161cd",
+        "bytes": 60236244,
+        "messages": 1606,
+        "topics": [
+          "/diagnostics",
+          "/image_color/compressed",
+          "/radar/points",
+          "/radar/range",
+          "/radar/tracks",
+          "/tf",
+          "/velodyne_points"
+        ],
+        "checks": [
+          "official physical-order oracle and CRC",
+          "bounded diagnosis",
+          "sidecar validation",
+          "forward reverse topic paging through two providers",
+          "input unchanged"
+        ],
+        "data_crc_verified": true,
+        "result": "passed"
+      }
+    ]
+  },
+  "public_api_signatures_unchanged": true,
+  "scope": "Prepublication local evidence. Full CI, registry build, fresh registry installation and hosted documentation are checked separately for the published commit.",
+  "limitations": [
+    "No new business processing direction in this release.",
+    "CLI formerly ignored option combinations now fail; callers must remove those options.",
+    "Clean export reuses the installed toolchain and its download cache; it is not a fresh OS.",
+    "Device bridge loopback does not establish physical hardware integration.",
+    "The public driving case is converted from ROS bag; source and assigned timestamps/sequence remain explicitly labelled.",
+    "No inference of absent CRC verification or arbitrary file sizes from limited fixtures."
+  ]
+}

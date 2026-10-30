@@ -6,7 +6,7 @@
 
 ## 一键运行
 
-从仓库根目录执行，需要 MoonBit（已验证 moonc 0.10.14）和 Node.js 22.3 以上：
+从仓库根目录执行，需要 MoonBit（固定基准 moonc 0.10.17+d971670cd）和 Node.js 22.3 以上。首次使用且不想安装 Python 参考库时，可先按 [首次使用](../docs/quickstart.md) 运行纯 MoonBit/Node 文件流程：
 
 ```sh
 moon update
@@ -93,4 +93,4 @@ moon run cmd/interop --target js -- examples/files/truncated-zstd.mcap _interop/
 python tools/conformance.py
 ```
 
-格式与压缩边界见 [兼容说明](../docs/compatibility.md)。不支持的压缩字典、拼接帧或消息体语义解码不会由这些样例隐含承诺。验证关注内容和容器语义一致，不要求未来编码器产生字节完全相同的输出。
+格式与压缩边界见 [兼容说明](../docs/compatibility.md)。这些容器样例不覆盖压缩字典、拼接帧或可选消息解码器的全部语义；各解码器范围见 [消息解码](../docs/payload-decoding.md)。验证关注内容和容器语义一致，不要求未来编码器产生字节完全相同的输出。

@@ -34,6 +34,14 @@ test "command parser rejects invalid options overflow and missing output" {
       ["rewrite", "f", "--output", "x", "--compression", "gzip"],
       ["merge", "a", "--output", "x"],
       ["query", "f", "--chunk-messages", "0"],
+      ["slice", "f", "--output", "x", "--format", "json"],
+      ["diff", "a", "b", "--compression", "zstd"],
+      ["job-clean", "job", "--output", "x"],
+      ["job-inspect", "job", "--compression", "none"],
+      ["index-query", "f", "--index", "i", "--max-file-bytes", "1"],
+      ["dataset-query", "f", "--index", "i", "--max-file-bytes", "1"],
+      ["recover-blocks", "f", "--output", "x", "--max-file-bytes", "1"],
+      ["dataset-query", "f", "--index-bytes", "1"],
     ] {
     try @moonmcap.parse_command(args) catch {
       @moonmcap.Invalid(_) => ()

@@ -38,6 +38,7 @@ jobs:
       - run: moon update
       - run: python tools/count_source.py
       - run: python tools/runtime_audit.py
+      - run: python tools/check_docs.py
       - run: moon check --target ${{ matrix.target }}
       - run: moon build --target ${{ matrix.target }}
       - run: moon test --target ${{ matrix.target }}
@@ -58,6 +59,12 @@ jobs:
       - name: Verify checked-in file examples
         if: matrix.target == 'js'
         run: python examples/run.py
+      - name: Verify documented quickstart in a clean source tree
+        if: matrix.target == 'js'
+        run: python tools/quickstart_smoke.py
+      - name: Verify CLI failure and validation contracts
+        if: matrix.target == 'js'
+        run: python tools/reliability_workflows.py
       - name: Verify selective IO and cache benchmark
         if: matrix.target == 'js'
         run: python tools/range_benchmark.py
@@ -242,6 +249,9 @@ jobs:
             _interop/conformance/report.json
             _interop/corpus/report.json
             _interop/examples/report.json
+            _interop/docs/report.json
+            _interop/quickstart/report.json
+            _interop/reliability/report.json
             _interop/range/report.json
             _interop/stream/report.json
             _interop/cli/report.json

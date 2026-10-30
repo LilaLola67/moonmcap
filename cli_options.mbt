@@ -29,6 +29,10 @@ fn decimal_int(text : String) -> Int32 raise McapError {
 }
 
 ///|
+/// Parse the general CLI without opening input, output or job paths.
+/// Time bounds are inclusive UInt64 nanoseconds. Query/slice default to at most
+/// 100000 messages. Unsupported option families are rejected rather than
+/// accepted as if they changed the output or enforced a resource limit.
 pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
   if args.is_empty() || args[0] == "--help" || args[0] == "help" {
     return {
@@ -254,6 +258,36 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
     raise Invalid("CSV/NDJSON is available for query")
   }
   let output = values.get("--output").unwrap_or("")
+  // Reject options that previously appeared to succeed while being ignored.
+  let mcap_output = [
+    "slice", "merge", "recover", "rewrite", "transform", "reindex", "external-merge",
+    "stream-transform", "recover-blocks",
+  ].contains(command)
+  if (mcap_output || ["index-build", "index-rebuild"].contains(command)) &&
+    values.contains("--format") {
+    raise Invalid("--format selects report output, not binary output")
+  }
+  if !mcap_output &&
+    (values.contains("--compression") || values.contains("--chunk-messages")) {
+    raise Invalid("compression and chunk sizing require MCAP output")
+  }
+  if command == "job-clean" && values.contains("--output") {
+    raise Invalid("job-clean reports to stdout and does not take --output")
+  }
+  if values.contains("--max-file-bytes") &&
+    [
+      "index-build", "index-rebuild", "index-check", "index-query", "recover-blocks",
+      "job-inspect", "job-clean",
+    ].contains(command) {
+    raise Invalid(
+      "--max-file-bytes does not bound this streaming/index/job operation",
+    )
+  }
+  if values.contains("--max-file-bytes") && !indexes.is_empty() {
+    raise Invalid(
+      "--max-file-bytes applies to unindexed input fallback, not sidecar queries",
+    )
+  }
   if command != "diff" &&
     (
       flags.contains("--json-payloads") ||
@@ -354,6 +388,11 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       "aggregate",
     ].contains(command) {
     raise Invalid("--index-bytes requires index command or dataset-query")
+  }
+  if values.contains("--index-bytes") &&
+    indexes.is_empty() &&
+    !["index-build", "index-rebuild"].contains(command) {
+    raise Invalid("--index-bytes requires an index input or index build")
   }
   {
     command,

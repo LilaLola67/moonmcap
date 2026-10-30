@@ -440,6 +440,11 @@ pub fn RangeReader::query(
 }
 
 ///|
+/// Fully load and validate this container within `fallback_bytes` and `limits`.
+/// Unlike indexed queries this checks unread data too; it can reject a file
+/// that an earlier selective query could read successfully. An absent CRC is
+/// not an independently verified checksum. Use scan_source for bounded-record
+/// scanning when the full encoded file exceeds the load budget.
 pub fn RangeReader::validate_all(self : RangeReader) -> Unit raise McapError {
   let size = bounded_length(
     self.source.size,
