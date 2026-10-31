@@ -367,7 +367,7 @@ pub fn TfTree::lookup(
   interpolate~ : Bool = true,
   max_gap~ : UInt64 = 18446744073709551615UL,
 ) -> TfLookup raise McapError {
-  let ancestors : Map[String, Bool] = {}
+  let ancestors : Map[String, Bool] = Map([])
   let mut frame = target
   ancestors[frame] = true
   while self.edges.get(frame) is Some(edge) {
@@ -406,7 +406,7 @@ pub fn TfTree::context(
   if frames.is_empty() || frames.length() > 128 || start > end {
     raise Invalid("invalid TF context request")
   }
-  let needed : Map[String, Bool] = {}
+  let needed : Map[String, Bool] = Map([])
   for frame in frames {
     ignore(self.chain(frame, start, true, 18446744073709551615UL))
     ignore(self.chain(frame, end, true, 18446744073709551615UL))
@@ -491,27 +491,27 @@ pub fn parse_tf_message(
     transforms.length() <= 4096 else {
     raise Invalid("TF transforms array required (max 4096)")
   }
-  fn member(value : Json, key : String) -> Json raise McapError {
+  fn member_name(value : Json, key : String) -> Json raise McapError {
     guard value is Object(fields) && fields.get(key) is Some(found) else {
       raise Invalid("missing TF member: " + key)
     }
     found
   }
   fn text(value : Json, key : String) -> String raise McapError {
-    guard member(value, key) is String(s) else {
+    guard member_name(value, key) is String(s) else {
       raise Invalid("TF string required")
     }
     s
   }
   fn num(value : Json, key : String) -> Double raise McapError {
-    guard member(value, key) is Number(n, ..) && tf_finite(n) else {
+    guard member_name(value, key) is Number(n, ..) && tf_finite(n) else {
       raise Invalid("finite TF number required")
     }
     n
   }
-  transforms.map(fn(item) {
-    let header = member(item, "header")
-    let stamp = member(header, "stamp")
+  transforms.map(item => {
+    let header = member_name(item, "header")
+    let stamp = member_name(header, "stamp")
     let stamp_message : Message = {
       channel_id: 0,
       sequence: 0U,
@@ -523,9 +523,9 @@ pub fn parse_tf_message(
       stamp_message,
       SyncJsonStamp("/sec", "/nanosec"),
     )
-    let transform = member(item, "transform")
-    let p = member(transform, "translation")
-    let q = member(transform, "rotation")
+    let transform = member_name(item, "transform")
+    let p = member_name(transform, "translation")
+    let q = member_name(transform, "rotation")
     {
       parent: text(header, "frame_id"),
       child: text(item, "child_frame_id"),
@@ -544,3 +544,21 @@ pub fn parse_tf_message(
     }
   })
 }
+
+///|
+pub extend TfQuaternion with @debug.Debug::{to_repr}
+
+///|
+pub extend TfQuaternion with Eq::{not_equal, equal}
+
+///|
+pub extend TfTransform with @debug.Debug::{to_repr}
+
+///|
+pub extend TfTransform with Eq::{not_equal, equal}
+
+///|
+pub extend TfVector with @debug.Debug::{to_repr}
+
+///|
+pub extend TfVector with Eq::{not_equal, equal}

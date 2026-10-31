@@ -40,7 +40,7 @@ fn canonical_value(value : Json) -> String raise McapError {
       keys.sort()
       "{" +
       keys
-      .map(fn(key) {
+      .map(key => {
         Json::string(key).stringify() + ":" + canonical_value(fields[key])
       })
       .join(",") +
@@ -51,6 +51,7 @@ fn canonical_value(value : Json) -> String raise McapError {
 }
 
 ///|
+#warnings("-missing_priv")
 struct AggregateState {
   group : Json
   window : UInt64?
@@ -185,110 +186,105 @@ pub fn aggregate_json(
   channels : Array[Channel],
   options~ : AggregateOptions = aggregate_options(),
 ) -> Json raise McapError {
-  try {
-    if options.max_groups < 1 ||
-      options.group_bytes < 1 ||
-      options.group_paths.length() > 16 {
-      raise Invalid("invalid aggregate group budgets")
+  errdefer cursor.cancel()
+
+  if options.max_groups < 1 ||
+    options.group_bytes < 1 ||
+    options.group_paths.length() > 16 {
+    raise Invalid("invalid aggregate group budgets")
+  }
+  let value_path = json_pointer(options.value_path)
+  let paths = options.group_paths.map(json_pointer)
+  let groups : Map[String, AggregateState] = Map([])
+  let charges : Map[String, Int32] = Map([])
+  let mut retained = 0
+  let mut peak = 0
+  let mut skipped = 0
+  while cursor.next() is Some(message) {
+    let channel = channels
+      .iter()
+      .find_first(fn(c) { c.id == message.channel_id })
+      .unwrap()
+    if channel.message_encoding != "json" || message.log_time < options.origin {
+      skipped += 1
+      continue
     }
-    let value_path = json_pointer(options.value_path)
-    let paths = options.group_paths.map(json_pointer)
-    let groups : Map[String, AggregateState] = Map([])
-    let charges : Map[String, Int32] = Map([])
-    let mut retained = 0
-    let mut peak = 0
-    let mut skipped = 0
-    while cursor.next() is Some(message) {
-      let channel = channels
-        .iter()
-        .find_first(fn(c) { c.id == message.channel_id })
-        .unwrap()
-      if channel.message_encoding != "json" || message.log_time < options.origin {
-        skipped += 1
-        continue
-      }
-      let document = parse_json_document(message.data, 1024 * 1024, 64) catch {
-        Invalid(reason) =>
-          if options.invalid == JsonSkip {
-            skipped += 1
-            continue
-          } else {
-            raise Invalid(reason)
-          }
-      }
-      let values : Array[Json] = paths.map(fn(path) {
-        match pointer_value(document, path) {
-          None => { "missing": true }
-          Some(value) => { "value": value }
-        }
-      })
-      let window = if options.window == 0UL {
-        None
-      } else {
-        Some(
-          options.origin +
-          (message.log_time - options.origin) / options.window * options.window,
-        )
-      }
-      let group : Json = {
-        "topic": if options.by_topic {
-          Json::string(channel.topic)
+    let document = parse_json_document(message.data, 1024 * 1024, 64) catch {
+      Invalid(reason) =>
+        if options.invalid == JsonSkip {
+          skipped += 1
+          continue
         } else {
-          Json::null()
-        },
-        "fields": values,
-      }
-      let key = canonical_value(group) +
-        "/" +
-        window.map(fn(n) { n.to_string() }).unwrap_or("")
-      let state = match groups.get(key) {
-        Some(state) => state
-        None => {
-          if groups.length() >= options.max_groups {
-            raise Invalid("aggregate group count budget exceeded")
-          }
-          let state : AggregateState = {
-            group,
-            window,
-            count: 0,
-            numeric: 0,
-            missing: 0,
-            non_numeric: 0,
-            coefficient: @bigint.BigInt::from_int(0),
-            exponent: 0,
-            minimum: None,
-            maximum: None,
-          }
-          groups[key] = state
-          state
+          raise Invalid(reason)
         }
-      }
-      state.count += 1
-      match pointer_value(document, value_path) {
-        None => state.missing += 1
-        Some(Number(_, ..) as value) => state.number(value.stringify())
-        Some(_) => state.non_numeric += 1
-      }
-      let charge = state.charge(key)
-      let old = charges.get(key).unwrap_or(0)
-      if charge - old > options.group_bytes - retained {
-        raise Invalid("aggregate retained group byte budget exceeded")
-      }
-      retained += charge - old
-      charges[key] = charge
-      peak = peak.max(retained)
     }
-    let keys = groups.keys().to_array()
-    keys.sort()
-    {
-      "groups": keys.map(fn(key) { groups[key].report() }),
-      "skipped_messages": skipped,
-      "peak_group_bytes": peak,
+    let values : Array[Json] = paths.map(fn(path) {
+      match pointer_value(document, path) {
+        None => { "missing": true }
+        Some(value) => { "value": value }
+      }
+    })
+    let window = if options.window == 0UL {
+      None
+    } else {
+      Some(
+        options.origin +
+        (message.log_time - options.origin) / options.window * options.window,
+      )
     }
-  } catch {
-    error => {
-      cursor.cancel()
-      raise error
+    let group : Json = {
+      "topic": if options.by_topic {
+        Json::string(channel.topic)
+      } else {
+        Json::null()
+      },
+      "fields": values,
     }
+    let key = canonical_value(group) +
+      "/" +
+      window.map(fn(n) { n.to_string() }).unwrap_or("")
+    let state = match groups.get(key) {
+      Some(state) => state
+      None => {
+        if groups.length() >= options.max_groups {
+          raise Invalid("aggregate group count budget exceeded")
+        }
+        let state : AggregateState = {
+          group,
+          window,
+          count: 0,
+          numeric: 0,
+          missing: 0,
+          non_numeric: 0,
+          coefficient: @bigint.BigInt::from_int(0),
+          exponent: 0,
+          minimum: None,
+          maximum: None,
+        }
+        groups[key] = state
+        state
+      }
+    }
+    state.count += 1
+    match pointer_value(document, value_path) {
+      None => state.missing += 1
+      Some(Number(_, ..) as value) => state.number(value.stringify())
+      Some(_) => state.non_numeric += 1
+    }
+    let charge = state.charge(key)
+    let old = charges.get(key).unwrap_or(0)
+    if charge - old > options.group_bytes - retained {
+      raise Invalid("aggregate retained group byte budget exceeded")
+    }
+    retained += charge - old
+    charges[key] = charge
+    peak = peak.max(retained)
+  }
+  let keys = groups.keys().to_array()
+  keys.sort()
+  {
+    "groups": keys.map(key => groups[key].report()),
+    "skipped_messages": skipped,
+    "peak_group_bytes": peak,
   }
 }

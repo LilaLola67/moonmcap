@@ -24,7 +24,7 @@ test "resumable merge reuses completed runs after durable-save interruption" {
       storage,
       @moonmcap.new_write_sink(fn(_) { () }),
       checkpoint_test_hash,
-      fn(bytes) {
+      bytes => {
         saved[0] = bytes
         saves[0] += 1
         if saves[0] == 3 {
@@ -79,7 +79,7 @@ test "resumable merge rejects changed inputs options checkpoint and run contents
       storage,
       @moonmcap.new_write_sink(fn(_) { () }),
       checkpoint_test_hash,
-      fn(bytes) {
+      bytes => {
         saved[0] = bytes
         raise @moonmcap.io_error("stop")
       },

@@ -5,7 +5,6 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "moonbitlang/core/bigint",
-  "moonbitlang/core/float",
   "moonbitlang/core/double",
   "moonbitlang/core/math",
   "LilaLola67/moonmcap/internal/lz4",

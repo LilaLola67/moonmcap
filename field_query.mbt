@@ -52,10 +52,8 @@ fn JsonCondition::may_match_zone(
   }
   match self {
     Constant(value) => value
-    All(children) =>
-      children.all(fn(child) { child.may_match_zone(zone, pointers) })
-    Any(children) =>
-      children.any(fn(child) { child.may_match_zone(zone, pointers) })
+    All(children) => children.all(child => child.may_match_zone(zone, pointers))
+    Any(children) => children.any(child => child.may_match_zone(zone, pointers))
     Not(_) => true
     Compare(path, op, value) => {
       for i = 0; i < pointers.length(); i = i + 1 {
@@ -86,8 +84,8 @@ pub fn FieldIndex::location_filter(
   self : FieldIndex,
   filter : JsonFilter,
 ) -> ((UInt64, Int32) -> Bool raise McapError) raise McapError {
-  let pointers = self.paths.map(fn(path) { json_pointer(path) })
-  fn(offset, span) {
+  let pointers = self.paths.map(path => json_pointer(path))
+  (offset, span) => {
     match self.zones.get(offset) {
       None => true
       Some(zone) =>
@@ -115,7 +113,7 @@ pub fn RangeReader::plan_field_query(
     Some(decoder) => decoder
     None => standard_payload_decoder()
   }
-  let pointers = index.paths.map(fn(path) { json_pointer(path) })
+  let pointers = index.paths.map(path => json_pointer(path))
   let selected : Array[ChunkIndex] = []
   for chunk in self.indexes {
     let keep = match index.zones.get(chunk.chunk_start) {

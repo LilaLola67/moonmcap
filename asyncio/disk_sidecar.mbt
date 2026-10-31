@@ -19,7 +19,7 @@ pub async fn open_disk_sidecar(
   chunk_cache_bytes~ : Int32 = 8 * 1024 * 1024,
   index_bytes~ : UInt64 = 1099511627776UL,
   pool? : WorkerPool,
-  select_region~ : async (UInt64, Int32) -> Bool = async fn(_, _) { true },
+  select_region~ : async (UInt64, Int32) -> Bool = fn(_, _) { true },
 ) -> AsyncDiskSidecarReader {
   if source.size() < 50UL ||
     index.size() < 16UL ||
@@ -50,7 +50,7 @@ pub async fn open_disk_sidecar(
     }
     AsyncTrustIdentity(token) => @mcap.TrustIdentity(token)
   }
-  let source_mirror = @mcap.new_read_source(source.size(), fn(offset, count) {
+  let source_mirror = @mcap.new_read_source(source.size(), (offset, count) => {
     if offset == 0UL && count == 8 {
       leading
     } else if offset == source.size() - 8UL && count == 8 {
@@ -61,7 +61,7 @@ pub async fn open_disk_sidecar(
       )
     }
   })
-  let index_mirror = @mcap.new_read_source(index.size(), fn(offset, count) {
+  let index_mirror = @mcap.new_read_source(index.size(), (offset, count) => {
     if offset > header.length().to_uint64() ||
       count < 0 ||
       count.to_uint64() > header.length().to_uint64() - offset {
@@ -123,68 +123,60 @@ pub async fn AsyncDiskSidecarCursor::next(
   defer {
     self.busy = false
   }
-  try {
-    while true {
-      match self.cursor.poll() {
-        @mcap.DiskDone => return None
-        @mcap.DiskMessage(message) => return Some(message)
-        @mcap.DiskIndexRead(span) => {
-          if span.length > self.budget {
-            raise @mcap.io_error("index page exceeds async span budget")
-          }
-          self.cursor.feed_index(
-            self.owner.index.read_exact(span.offset, span.length),
-          )
+  errdefer self.cursor.cancel()
+
+  while true {
+    match self.cursor.poll() {
+      @mcap.DiskDone => return None
+      @mcap.DiskMessage(message) => return Some(message)
+      @mcap.DiskIndexRead(span) => {
+        if span.length > self.budget {
+          raise @mcap.io_error("index page exceeds async span budget")
         }
-        @mcap.DiskSourceRead(span) => {
-          if !(self.owner.select_region)(span.offset, span.length) {
-            self.cursor.skip_source()
-            continue
-          }
-          if span.length > self.budget {
-            raise @mcap.io_error("source record exceeds async span budget")
-          }
-          let bytes = self.owner.source.read_exact(span.offset, span.length)
-          let expanded = match self.owner.pool {
-            None => None
-            Some(pool) => {
-              let records = @mcap.decode_records(
-                bytes,
+        self.cursor.feed_index(
+          self.owner.index.read_exact(span.offset, span.length),
+        )
+      }
+      @mcap.DiskSourceRead(span) => {
+        if !(self.owner.select_region)(span.offset, span.length) {
+          self.cursor.skip_source()
+          continue
+        }
+        if span.length > self.budget {
+          raise @mcap.io_error("source record exceeds async span budget")
+        }
+        let bytes = self.owner.source.read_exact(span.offset, span.length)
+        let expanded = match self.owner.pool {
+          None => None
+          Some(pool) => {
+            let records = @mcap.decode_records(bytes, limits=self.owner.limits)
+            if records.length() == 1 && records[0].opcode == 0x06 {
+              let (expanded_bytes, compression) = @mcap.worker_chunk_properties(
+                records[0].body,
                 limits=self.owner.limits,
               )
-              if records.length() == 1 && records[0].opcode == 0x06 {
-                let (expanded_bytes, compression) = @mcap.worker_chunk_properties(
-                  records[0].body,
-                  limits=self.owner.limits,
-                )
-                if compression == "" ||
-                  expanded_bytes - 40 < pool.options.min_chunk_bytes {
-                  None
-                } else {
-                  Some(
-                    pool.expand_chunk(
-                      records[0].body,
-                      expanded_bytes,
-                      limits=self.owner.limits,
-                    ),
-                  )
-                }
-              } else {
+              if compression == "" ||
+                expanded_bytes - 40 < pool.options.min_chunk_bytes {
                 None
+              } else {
+                Some(
+                  pool.expand_chunk(
+                    records[0].body,
+                    expanded_bytes,
+                    limits=self.owner.limits,
+                  ),
+                )
               }
+            } else {
+              None
             }
           }
-          self.cursor.feed_source(bytes, expanded?)
         }
+        self.cursor.feed_source(bytes, expanded?)
       }
     }
-    None
-  } catch {
-    error => {
-      self.cursor.cancel()
-      raise error
-    }
   }
+  None
 }
 
 ///|
@@ -222,7 +214,7 @@ pub fn AsyncDiskSidecarReader::query_source(
   self : AsyncDiskSidecarReader,
   abort_sources_on_cancel~ : Bool = false,
 ) -> AsyncQuerySource raise @mcap.McapError {
-  async_query_source(self.reader.declaration_log(), fn(query, budget) {
+  async_query_source(self.reader.declaration_log(), (query, budget) => {
     let cursor = self.cursor(query, pending_bytes=budget)
     async_message_stream(
       async fn() { cursor.next() },

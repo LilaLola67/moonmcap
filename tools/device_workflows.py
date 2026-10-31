@@ -19,7 +19,7 @@ from google.protobuf import descriptor_pb2
 def main():
     work = ROOT / '_interop/device' / uuid.uuid4().hex
     work.mkdir(parents=True)
-    subprocess.run([os.environ.get('MOON', 'moon'), 'build', '--target', 'js', '--warn-list', '-a'], cwd=ROOT, capture_output=True, check=True)
+    subprocess.run([os.environ.get('MOON', 'moon'), 'build', '--target', 'js', '--deny-warn'], cwd=ROOT, capture_output=True, check=True)
     rules = work / 'rules.json'
     file = descriptor_pb2.FileDescriptorProto(name='value.proto', package='test', syntax='proto3')
     message = file.message_type.add(name='Value')

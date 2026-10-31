@@ -7,8 +7,7 @@ test "range query matches full scan for all compression modes and directions" {
     let reader = @moonmcap.open_reader(@moonmcap.memory_source(bytes))
     for descending in [false, true] {
       for topics in [[], ["/shared", "/shared"], ["/missing"], ["/topic/5"]] {
-        let query = {
-          ..@moonmcap.all_query(),
+        let query : @moonmcap.Query = {
           topics,
           start_time: 8UL,
           end_time: 15UL,
@@ -50,7 +49,11 @@ test "range reads narrow windows and LRU reuse avoids additional IO" {
     @moonmcap.memory_source(bytes),
     cache_bytes=9000,
   )
-  let query = { ..@moonmcap.all_query(), start_time: 20UL, end_time: 23UL, }
+  let query : @moonmcap.Query = {
+    ..@moonmcap.all_query(),
+    start_time: 20UL,
+    end_time: 23UL,
+  }
   assert_eq(reader.query(query).length(), 4)
   let first = reader.diagnostics()
   assert_true(first.bytes_read < bytes.length().to_uint64() / 4UL)
@@ -104,7 +107,7 @@ test "read source retries short reads and propagates IO failures" {
   } noraise {
     _ => fail("zero progress must fail")
   }
-  let failed = @moonmcap.new_read_source(100UL, fn(_, _) {
+  let failed = @moonmcap.new_read_source(100UL, (_, _) => {
     raise @moonmcap.io_error("read failed")
   })
   try @moonmcap.open_reader(failed) catch {

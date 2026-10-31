@@ -66,7 +66,7 @@ pub fn standard_payload_rewriter(
   }
   let entries : Array[ProtoCache] = []
   let retained = [0]
-  payload_rewriter(fn(schema, channel, bytes, edits) {
+  payload_rewriter((schema, channel, bytes, edits) => {
     ignore(payload_edit_paths(edits))
     if channel.message_encoding == "json" {
       let original = parse_json_document(
@@ -192,15 +192,15 @@ pub fn stream_rewrite_payload(
     scan_source(
       source,
       source_visitor(
-        schema=fn(schema) {
+        schema=schema => {
           declarations.schemas.push(schema)
           writer.add_schema(schema)
         },
-        channel=fn(channel) {
+        channel=channel => {
           declarations.channels.push(channel)
           writer.add_channel(channel)
         },
-        message=fn(message, _) {
+        message=(message, _) => {
           guard declarations.channels
             .iter()
             .find_first(fn(c) { c.id == message.channel_id })
@@ -219,8 +219,8 @@ pub fn stream_rewrite_payload(
           }
           total += 1UL
         },
-        attachment=fn(a) { if copy_auxiliary { writer.add_attachment(a) } },
-        metadata=fn(m) { if copy_auxiliary { writer.add_metadata(m) } },
+        attachment=a => if copy_auxiliary { writer.add_attachment(a) },
+        metadata=m => if copy_auxiliary { writer.add_metadata(m) },
       ),
       limits~,
       cancelled~,

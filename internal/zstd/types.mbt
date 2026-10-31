@@ -2,6 +2,7 @@
 
 ///|
 /// Zstandard compression error type.
+#warnings("-deprecated_syntax")
 pub(all) suberror ZstdError {
   InvalidHeader(String)
   CorruptData(String)
@@ -12,6 +13,7 @@ pub(all) suberror ZstdError {
 
 ///|
 /// Encoder signals — returned by Deflater::encode().
+#warnings("-deprecated_syntax")
 pub(all) enum Encode {
   /// Input consumed. Call encode(Some(more)) or encode(None) to finish.
   Ok
@@ -25,6 +27,7 @@ pub(all) enum Encode {
 
 ///|
 /// Decoder signals — returned by Inflater::decode().
+#warnings("-deprecated_syntax")
 pub(all) enum Decode {
   /// Need input. Call src(bytes) then decode() again.
   Await
@@ -38,6 +41,7 @@ pub(all) enum Decode {
 
 ///|
 /// Compression level for Zstandard.
+#warnings("-deprecated_syntax")
 pub(all) enum CompressionLevel {
   Fast
   Default
@@ -66,3 +70,18 @@ const MAX_WINDOW_SIZE : Int32 = 67108864
 ///|
 /// Maximum block size (128 KB).
 const MAX_BLOCK_SIZE : Int32 = 131072
+
+///|
+pub extend CompressionLevel with Eq::{not_equal, equal}
+
+///|
+pub extend CompressionLevel with Show::{to_string, output}
+
+///|
+pub extend Decode with Show::{to_string, output}
+
+///|
+pub extend Encode with Show::{to_string, output}
+
+///|
+pub extend ZstdError with Show::{to_string, output}

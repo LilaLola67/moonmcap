@@ -23,7 +23,7 @@ pub async fn open_parallel_reader(
   summary_bytes~ : Int32 = 8 * 1024 * 1024,
   fallback_bytes~ : Int32 = 64 * 1024 * 1024,
   limits~ : @mcap.Limits = @mcap.default_limits(),
-  select_region~ : async (UInt64, Int32) -> Bool = async fn(_, _) { true },
+  select_region~ : async (UInt64, Int32) -> Bool = fn(_, _) { true },
 ) -> ParallelReader {
   {
     base: open_reader(
@@ -183,45 +183,42 @@ pub async fn ParallelCursor::next(self : ParallelCursor) -> @mcap.Message? {
   defer {
     self.busy = false
   }
-  try {
-    while true {
-      match self.cursor.poll() {
-        @mcap.FileDone => {
-          self.prepared.clear()
-          return None
+  errdefer {
+    self.cursor.cancel()
+    self.prepared.clear()
+  }
+
+  while true {
+    match self.cursor.poll() {
+      @mcap.FileDone => {
+        self.prepared.clear()
+        return None
+      }
+      @mcap.FileMessage(message) => return Some(message)
+      @mcap.FileRead(span) => {
+        if !self.prepared.contains(span.offset) {
+          self.fill()
         }
-        @mcap.FileMessage(message) => return Some(message)
-        @mcap.FileRead(span) => {
-          if !self.prepared.contains(span.offset) {
-            self.fill()
-          }
-          guard self.prepared.get(span.offset) is Some(prepared) else {
-            raise @mcap.io_error("missing prepared Chunk")
-          }
-          self.prepared.remove(span.offset)
-          if prepared.failure is Some(reason) {
-            raise @mcap.io_error(reason)
-          }
-          if prepared.skipped {
-            self.cursor.skip_chunk()
-            continue
-          }
-          match prepared.expanded {
-            None => self.cursor.feed(prepared.original)
-            Some(expanded) =>
-              self.cursor.feed_expanded(prepared.original, expanded)
-          }
+        guard self.prepared.get(span.offset) is Some(prepared) else {
+          raise @mcap.io_error("missing prepared Chunk")
+        }
+        self.prepared.remove(span.offset)
+        if prepared.failure is Some(reason) {
+          raise @mcap.io_error(reason)
+        }
+        if prepared.skipped {
+          self.cursor.skip_chunk()
+          continue
+        }
+        match prepared.expanded {
+          None => self.cursor.feed(prepared.original)
+          Some(expanded) =>
+            self.cursor.feed_expanded(prepared.original, expanded)
         }
       }
     }
-    None
-  } catch {
-    error => {
-      self.cursor.cancel()
-      self.prepared.clear()
-      raise error
-    }
   }
+  None
 }
 
 ///|
@@ -256,7 +253,7 @@ pub fn ParallelReader::query_source(
   }
   async_query_source(
     self.base.reader.declaration_log(),
-    fn(query, budget) {
+    (query, budget) => {
       let cursor = self.cursor(query, pending_bytes=budget)
       async_message_stream(
         async fn() { cursor.next() },
@@ -280,6 +277,7 @@ pub fn ParallelReader::info(self : ParallelReader) -> Json {
 }
 
 ///|
+#warnings("-missing_priv")
 struct ParallelPayload {
   message : @mcap.Message?
   data : Bytes?
@@ -310,7 +308,7 @@ pub fn AsyncQuerySource::decode_parallel(
   }
   async_query_source(
     declarations,
-    fn(query, budget) {
+    (query, budget) => {
       let inner = (self.open)(query, budget)
       let pending : Array[ParallelPayload] = []
       let ended = [false]
@@ -320,123 +318,118 @@ pub fn AsyncQuerySource::decode_parallel(
           if closed[0] {
             return None
           }
-          try {
-            if pending.is_empty() && !ended[0] {
-              let inputs = []
-              let failure : Array[String] = []
-              let mut charged = 0UL
-              for i = 0; i < pool.options.prefetch; i = i + 1 {
-                if !inputs.is_empty() &&
-                  pool.options.input_bytes.to_uint64() +
-                  max_bytes.to_uint64() +
-                  31UL >
-                  budget.to_uint64() - charged {
-                  break
-                }
-                let next = (inner.next)() catch {
-                  error => {
-                    failure.push(
-                      match error {
-                        @mcap.Invalid(reason) => reason
-                        _ => "\{error}"
-                      },
-                    )
-                    ended[0] = true
-                    None
-                  }
-                }
-                guard next is Some(message) else {
-                  ended[0] = true
-                  break
-                }
-                let charge = message.data.length().to_uint64() +
-                  max_bytes.to_uint64() +
-                  31UL
-                if charge > budget.to_uint64() - charged {
+          errdefer {
+            closed[0] = true
+            pending.clear()
+            (inner.stop)()
+          }
+
+          if pending.is_empty() && !ended[0] {
+            let inputs = []
+            let failure : Array[String] = []
+            let mut charged = 0UL
+            for i = 0; i < pool.options.prefetch; i = i + 1 {
+              if !inputs.is_empty() &&
+                pool.options.input_bytes.to_uint64() +
+                max_bytes.to_uint64() +
+                31UL >
+                budget.to_uint64() - charged {
+                break
+              }
+              let next = (inner.next)() catch {
+                error => {
                   failure.push(
-                    "parallel payload exceeds provider buffer budget",
+                    match error {
+                      @mcap.Invalid(reason) => reason
+                      _ => "\{error}"
+                    },
                   )
                   ended[0] = true
-                  break
+                  None
                 }
-                charged += charge
-                inputs.push(message)
               }
-              let results = @async.all(
-                inputs.map(fn(message) {
-                  async fn() {
-                    try {
-                      let data = if message.data.length() <
-                        pool.options.min_payload_bytes {
-                        decoder.decode_message(
-                          message,
-                          self.declarations,
-                          max_bytes~,
-                        ).data
-                      } else {
-                        let job : Json = {
-                          "op": "decode",
-                          "data": @mcap.encode_hex(message.data),
-                          "declarations": encoded,
-                          "channel": message.channel_id,
-                          "output_bytes": max_bytes,
-                        }
-                        pool.call(job, max_bytes)
+              guard next is Some(message) else {
+                ended[0] = true
+                break
+              }
+              let charge = message.data.length().to_uint64() +
+                max_bytes.to_uint64() +
+                31UL
+              if charge > budget.to_uint64() - charged {
+                failure.push("parallel payload exceeds provider buffer budget")
+                ended[0] = true
+                break
+              }
+              charged += charge
+              inputs.push(message)
+            }
+            let results = @async.all(
+              inputs.map(fn(message) {
+                async fn() {
+                  try {
+                    let data = if message.data.length() <
+                      pool.options.min_payload_bytes {
+                      decoder.decode_message(
+                        message,
+                        self.declarations,
+                        max_bytes~,
+                      ).data
+                    } else {
+                      let job : Json = {
+                        "op": "decode",
+                        "data": @mcap.encode_hex(message.data),
+                        "declarations": encoded,
+                        "channel": message.channel_id,
+                        "output_bytes": max_bytes,
                       }
+                      pool.call(job, max_bytes)
+                    }
+                    ParallelPayload::{
+                      message: Some(message),
+                      data: Some(data),
+                      failure: None,
+                    }
+                  } catch {
+                    error =>
                       ParallelPayload::{
                         message: Some(message),
-                        data: Some(data),
-                        failure: None,
+                        data: None,
+                        failure: Some(
+                          match error {
+                            @mcap.Invalid(reason) => reason
+                            _ => "\{error}"
+                          },
+                        ),
                       }
-                    } catch {
-                      error =>
-                        ParallelPayload::{
-                          message: Some(message),
-                          data: None,
-                          failure: Some(
-                            match error {
-                              @mcap.Invalid(reason) => reason
-                              _ => "\{error}"
-                            },
-                          ),
-                        }
-                    }
                   }
-                }),
-                max_concurrent=pool.options.workers,
-              )
-              for result in results {
-                pending.push(result)
-              }
-              if !failure.is_empty() {
-                pending.push({
-                  message: None,
-                  data: None,
-                  failure: Some(failure[0]),
-                })
-              }
+                }
+              }),
+              max_concurrent=pool.options.workers,
+            )
+            for result in results {
+              pending.push(result)
             }
-            if pending.is_empty() {
-              closed[0] = true
-              (inner.stop)()
-              return None
-            }
-            let row = pending.remove(0)
-            if row.failure is Some(reason) {
-              raise @mcap.io_error(reason)
-            }
-            guard row.message is Some(message) && row.data is Some(data) else {
-              raise @mcap.io_error("invalid parallel payload result")
-            }
-            Some({ ..message, data, })
-          } catch {
-            error => {
-              closed[0] = true
-              pending.clear()
-              (inner.stop)()
-              raise error
+            if !failure.is_empty() {
+              pending.push({
+                message: None,
+                data: None,
+                failure: Some(failure[0]),
+              })
             }
           }
+          if pending.is_empty() {
+            closed[0] = true
+            (inner.stop)()
+            return None
+          }
+          let row = pending.remove(0)
+          if row.failure is Some(reason) {
+            raise @mcap.io_error(reason)
+          }
+          guard row.message is Some(message) && row.data is Some(data) else {
+            raise @mcap.io_error("invalid parallel payload result")
+          }
+          Some({ ..message, data, })
         },
         fn() {
           closed[0] = true

@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn stdout_text(text : String) -> @js_async.Promise[Unit] =
@@ -83,7 +88,7 @@ async fn main {
     } else {
       let transaction = @nodeio.output_transaction(options.output)
       transactions.push(transaction)
-      @aio.new_sink(async fn(bytes) { transaction.sink().write(bytes) })
+      @aio.new_sink(bytes => transaction.sink().write(bytes))
     }
     ignore(cursor.write_ndjson(sink, content?=options.content))
     for transaction in transactions {

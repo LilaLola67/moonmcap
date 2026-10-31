@@ -139,7 +139,7 @@ test "sink failure permanently poisons writer and cancellation leaves a prefix" 
   let output = @buffer.Buffer::Buffer()
   let fail_writes = [false]
   let writer = @moonmcap.new_stream_writer(
-    @moonmcap.new_write_sink(fn(bytes) {
+    @moonmcap.new_write_sink(bytes => {
       if fail_writes[0] {
         raise @moonmcap.io_error("disk full")
       }

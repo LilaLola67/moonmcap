@@ -129,7 +129,7 @@ pub fn summarize(log : Log) -> LogStats raise McapError {
 ///|
 /// Human-readable report without converting timestamps to floating-point numbers.
 pub fn stats_report(stats : LogStats) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   out.write_string("MoonMCAP log summary\n")
   out.write_string(
     "schemas=\{stats.schema_count} channels=\{stats.channel_count} messages=\{stats.message_count} payload_bytes=\{stats.payload_bytes}\n",

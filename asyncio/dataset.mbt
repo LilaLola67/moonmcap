@@ -11,7 +11,17 @@ pub fn async_message_stream(
   cancel : () -> Unit,
   pending_bytes~ : () -> Int32 = fn() { 0 },
 ) -> AsyncMessageStream {
-  { next, stop: cancel, pending: pending_bytes, }
+  let stopped = [false]
+  {
+    next,
+    stop: fn() {
+      if !stopped[0] {
+        stopped[0] = true
+        cancel()
+      }
+    },
+    pending: pending_bytes,
+  }
 }
 
 ///|
@@ -37,12 +47,12 @@ pub fn async_query_source(
 pub fn AsyncReader::query_source(
   self : AsyncReader,
   abort_source_on_cancel~ : Bool = false,
-  select_region~ : async (UInt64, Int32) -> Bool = async fn(_, _) { true },
+  select_region~ : async (UInt64, Int32) -> Bool = fn(_, _) { true },
 ) -> AsyncQuerySource raise @mcap.McapError {
   let declarations = self.reader.query_source().declaration_log()
   async_query_source(
     declarations,
-    fn(query, budget) {
+    (query, budget) => {
       let cursor = self.cursor(
         query,
         pending_bytes=budget,
@@ -69,7 +79,7 @@ pub fn AsyncSidecarReader::query_source(
   self : AsyncSidecarReader,
   abort_source_on_cancel~ : Bool = false,
 ) -> AsyncQuerySource raise @mcap.McapError {
-  async_query_source(self.reader.declaration_log(), fn(query, budget) {
+  async_query_source(self.reader.declaration_log(), (query, budget) => {
     let cursor = self.cursor(query, pending_bytes=budget)
     async_message_stream(
       async fn() { cursor.next() },
@@ -91,7 +101,7 @@ pub fn AsyncQuerySource::filter_json(
 ) -> AsyncQuerySource raise @mcap.McapError {
   async_query_source(
     self.declarations,
-    fn(query, budget) {
+    (query, budget) => {
       let inner = (self.open)(
         { ..query, offset: 0, limit: 2147483647, },
         budget,
@@ -106,38 +116,35 @@ pub fn AsyncQuerySource::filter_json(
             closed[0] = true
             return None
           }
-          try {
-            while (inner.next)() is Some(message) {
-              if closed[0] {
-                return None
-              }
-              if !self.declarations.channels.any(fn(c) {
-                  c.id == message.channel_id && c.message_encoding == "json"
-                }) ||
-                !filter.matches(message.data) {
-                continue
-              }
-              if offset[0] > 0 {
-                offset[0] -= 1
-                continue
-              }
-              remaining[0] -= 1
-              if remaining[0] == 0 {
-                closed[0] = true
-                (inner.stop)()
-              }
-              return Some(message)
-            }
+          errdefer {
             closed[0] = true
             (inner.stop)()
-            None
-          } catch {
-            error => {
+          }
+
+          while (inner.next)() is Some(message) {
+            if closed[0] {
+              return None
+            }
+            if !self.declarations.channels.any(fn(c) {
+                c.id == message.channel_id && c.message_encoding == "json"
+              }) ||
+              !filter.matches(message.data) {
+              continue
+            }
+            if offset[0] > 0 {
+              offset[0] -= 1
+              continue
+            }
+            remaining[0] -= 1
+            if remaining[0] == 0 {
               closed[0] = true
               (inner.stop)()
-              raise error
             }
+            return Some(message)
           }
+          closed[0] = true
+          (inner.stop)()
+          None
         },
         fn() {
           closed[0] = true
@@ -164,7 +171,7 @@ pub fn open_dataset(
   declaration_bytes~ : Int32 = 8 * 1024 * 1024,
   max_sources~ : Int32 = 64,
 ) -> AsyncDataset raise @mcap.McapError {
-  let sources = providers.map(fn(provider) {
+  let sources = providers.map(provider => {
     @mcap.query_source(
       provider.declarations,
       fn(_, _) { @mcap.message_stream(fn() { None }, fn() { () }) },
@@ -245,21 +252,16 @@ fn AsyncDatasetCursor::reset(
     self.state = @mcap.FileFailed
     raise @mcap.io_error("async dataset budget too small")
   }
-  try {
-    for source in self.dataset.providers {
-      self.streams.push(
-        (source.open)(
-          { ..query, offset: 0, limit: self.dataset.limits.max_records, },
-          share,
-        ),
-      )
-      self.previous.push(None)
-    }
-  } catch {
-    error => {
-      self.close(@mcap.FileFailed)
-      raise error
-    }
+  errdefer self.close(@mcap.FileFailed)
+
+  for source in self.dataset.providers {
+    self.streams.push(
+      (source.open)(
+        { ..query, offset: 0, limit: self.dataset.limits.max_records, },
+        share,
+      ),
+    )
+    self.previous.push(None)
   }
 }
 
@@ -433,6 +435,16 @@ async fn AsyncDatasetCursor::take(
   if self.state != @mcap.FileActive {
     return None
   }
+  let cancelled = [true]
+  errdefer (if self.state != @mcap.FileCancelled {
+    self.close(
+      if cancelled[0] {
+        @mcap.FileCancelled
+      } else {
+        @mcap.FileFailed
+      },
+    )
+  })
   try {
     if !self.initialized {
       for i = 0; i < self.streams.length(); i = i + 1 {
@@ -475,11 +487,12 @@ async fn AsyncDatasetCursor::take(
     None
   } catch {
     error => {
+      cancelled[0] = @async.is_cancellation_error(error)
       if self.state == @mcap.FileCancelled {
-        return None
+        None
+      } else {
+        raise error
       }
-      self.close(@mcap.FileFailed)
-      raise error
     }
   }
 }
@@ -592,26 +605,21 @@ pub async fn AsyncDatasetCursor::write_ndjson(
     self.busy = false
   }
   let mut count = 0
-  try {
-    while self.take() is Some(record) {
-      let value = match content {
-        None =>
-          @mcap.dataset_message_json(record, self.dataset.metadata.channels())
-        Some(filter) =>
-          @mcap.json_query_record(
-            record,
-            self.dataset.metadata.channels(),
-            filter,
-          )
-      }
-      sink.write(@utf8.encode((value.stringify() + "\n")[:]))
-      count += 1
+  errdefer self.cancel()
+
+  while self.take() is Some(record) {
+    let value = match content {
+      None =>
+        @mcap.dataset_message_json(record, self.dataset.metadata.channels())
+      Some(filter) =>
+        @mcap.json_query_record(
+          record,
+          self.dataset.metadata.channels(),
+          filter,
+        )
     }
-    count
-  } catch {
-    error => {
-      self.cancel()
-      raise error
-    }
+    sink.write(@utf8.encode((value.stringify() + "\n")[:]))
+    count += 1
   }
+  count
 }

@@ -14,11 +14,11 @@ fn buffered_sort_storage(inner : SortStorage, maximum : Int32) -> SortStorage {
     }
   }
   sort_storage(
-    fn(id) {
+    id => {
       flush()
       let sink = (inner.create)(id)
       sinks[id] = sink
-      new_write_sink(fn(bytes) {
+      new_write_sink(bytes => {
         if active[0] != Some(id) {
           flush()
         }
@@ -34,11 +34,11 @@ fn buffered_sort_storage(inner : SortStorage, maximum : Int32) -> SortStorage {
         }
       })
     },
-    fn(id) {
+    id => {
       flush()
       (inner.open)(id)
     },
-    fn(id) {
+    id => {
       if active[0] == Some(id) {
         active[0] = None
         buffer.reset()
@@ -46,7 +46,7 @@ fn buffered_sort_storage(inner : SortStorage, maximum : Int32) -> SortStorage {
       (inner.remove)(id)
       sinks.remove(id)
     },
-    finish=fn() {
+    finish=() => {
       flush()
       (inner.finish)()
     },
@@ -60,15 +60,17 @@ struct DiskIndexEntry {
 }
 
 ///|
-fn disk_entry_bytes(value : DiskIndexEntry) -> Bytes raise McapError {
+fn disk_entry_bytes(value : DiskIndexEntry) -> Bytes {
   let out = @buffer.Buffer::Buffer()
   out.write_uint64_le(value.entry.time)
   out.write_uint64_le(value.ordinal)
-  out.write_uint_le(value.entry.channel.to_uint())
+  out.write_uint_le(value.entry.channel.reinterpret_as_uint())
   out.write_uint64_le(value.entry.location.offset)
-  out.write_uint_le(value.entry.location.span.to_uint())
+  out.write_uint_le(value.entry.location.span.reinterpret_as_uint())
   out.write_uint_le(
-    value.entry.location.inner.map(fn(n) { n.to_uint() }).unwrap_or(4294967295U),
+    value.entry.location.inner
+    .map(fn(n) { n.reinterpret_as_uint() })
+    .unwrap_or(4294967295U),
   )
   out.to_bytes()
 }
@@ -132,13 +134,13 @@ pub fn build_disk_sidecar(
   let mut peak_spool = 0UL
   let backing = buffered_sort_storage(storage, 65536)
   let job = sort_storage(
-    fn(id) {
+    id => {
       if sizes.contains(id) {
         raise Invalid("disk index temporary ID collision")
       }
       let sink = (backing.create)(id)
       sizes[id] = 0UL
-      new_write_sink(fn(bytes) {
+      new_write_sink(bytes => {
         if cancelled() {
           raise Invalid("disk index build cancelled")
         }
@@ -153,8 +155,8 @@ pub fn build_disk_sidecar(
         }
       })
     },
-    fn(id) { (backing.open)(id) },
-    fn(id) {
+    id => (backing.open)(id),
+    id => {
       (backing.remove)(id)
       spool -= sizes[id]
       sizes.remove(id)
@@ -196,9 +198,9 @@ pub fn build_disk_sidecar(
       scan_source(
         source,
         source_visitor(
-          schema=fn(value) { add_schema(declarations, value) },
-          channel=fn(value) { add_channel(declarations, value) },
-          message=fn(message, location) {
+          schema=value => add_schema(declarations, value),
+          channel=value => add_channel(declarations, value),
+          message=(message, location) => {
             let data = disk_entry_bytes({
               entry: {
                 time: message.log_time,
@@ -239,11 +241,11 @@ pub fn build_disk_sidecar(
     put_text(header, identity)
     put_blob(header, write_log(declarations, limits=options.limits))
     header.write_uint64_le(count)
-    header.write_uint_le(page_entries.to_uint())
+    header.write_uint_le(page_entries.reinterpret_as_uint())
     let metadata = header.to_bytes()
     output.write(
       b"MIDX2\r\n\x00" +
-      metadata.length().to_uint().mcap_le_bytes() +
+      metadata.length().reinterpret_as_uint().mcap_le_bytes() +
       metadata +
       crc32(metadata).mcap_le_bytes(),
     )
@@ -262,7 +264,7 @@ pub fn build_disk_sidecar(
     ignore(
       scan_source(
         (job.open)(-2),
-        source_visitor(message=fn(message, _) {
+        source_visitor(message=(message, _) => {
           if cancelled() {
             raise Invalid("disk index build cancelled")
           }
@@ -665,34 +667,31 @@ pub fn DiskSidecarCursor::next(
   if self.state != FileActive {
     return None
   }
-  try {
-    while self.remaining > 0 &&
-          self.position >= 0 &&
-          self.position < self.reader.count {
-      let entry = self.reader.entry(self.position).entry
-      self.position += if self.query.descending { -1 } else { 1 }
-      if entry.time < self.query.start_time || entry.time > self.query.end_time {
-        break
-      }
-      if !self.allowed.contains(entry.channel) {
-        continue
-      }
-      if self.offset > 0 {
-        self.offset -= 1
-        continue
-      }
-      let message = self.reader.base.load(entry)
-      self.remaining -= 1
-      return Some(message)
-    }
-    self.state = FileExhausted
-    None
-  } catch {
-    error => {
-      self.state = FileFailed
-      raise error
-    }
+  errdefer {
+    self.state = FileFailed
   }
+
+  while self.remaining > 0 &&
+        self.position >= 0 &&
+        self.position < self.reader.count {
+    let entry = self.reader.entry(self.position).entry
+    self.position += if self.query.descending { -1 } else { 1 }
+    if entry.time < self.query.start_time || entry.time > self.query.end_time {
+      break
+    }
+    if !self.allowed.contains(entry.channel) {
+      continue
+    }
+    if self.offset > 0 {
+      self.offset -= 1
+      continue
+    }
+    let message = self.reader.base.load(entry)
+    self.remaining -= 1
+    return Some(message)
+  }
+  self.state = FileExhausted
+  None
 }
 
 ///|
@@ -749,8 +748,8 @@ pub fn DiskSidecarCursor::cancel(self : DiskSidecarCursor) -> Unit {
 pub fn DiskSidecarReader::query_source(
   self : DiskSidecarReader,
 ) -> QuerySource raise McapError {
-  query_source(self.base.declarations, fn(query, _) {
+  query_source(self.base.declarations, (query, _) => {
     let cursor = self.cursor(query)
-    message_stream(fn() { cursor.next() }, fn() { cursor.cancel() })
+    message_stream(() => cursor.next(), fn() { cursor.cancel() })
   })
 }

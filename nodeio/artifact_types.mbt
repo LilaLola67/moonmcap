@@ -16,7 +16,7 @@ fn ArtifactDirectory::operation(
   }
   let result = (self.operate)(op, id, bytes)
   if result.has_prefix("!") {
-    raise @mcap.io_error(result[1:].to_string())
+    raise @mcap.io_error(result[1:].to_owned())
   }
   result
 }
@@ -26,7 +26,7 @@ pub fn ArtifactDirectory::storage(
   self : ArtifactDirectory,
 ) -> @mcap.ArtifactBatchStorage {
   @mcap.artifact_batch_storage(
-    fn() {
+    () => {
       let hex = self.operation("load")
       if hex == "" {
         None
@@ -34,26 +34,24 @@ pub fn ArtifactDirectory::storage(
         Some(@mcap.decode_hex(hex, max_bytes=8 * 1024 * 1024))
       }
     },
-    fn(bytes) { ignore(self.operation("save", bytes~)) },
-    fn(id) {
+    bytes => ignore(self.operation("save", bytes~)),
+    id => {
       ignore(self.operation("create", id~))
-      @mcap.new_write_sink(fn(bytes) {
-        ignore(self.operation("write", id~, bytes~))
-      })
+      @mcap.new_write_sink(bytes => ignore(self.operation("write", id~, bytes~)))
     },
-    fn(id) { ignore(self.operation("seal", id~)) },
-    fn(id) { source_sha256(open_file(self.operation("source", id~))) },
-    fn(id) { ignore(self.operation("publish", id~)) },
-    fn(id) { self.operation("published", id~) == "true" },
-    fn(id) { ignore(self.operation("discard", id~)) },
-    fn() {
+    id => ignore(self.operation("seal", id~)),
+    id => source_sha256(open_file(self.operation("source", id~))),
+    id => ignore(self.operation("publish", id~)),
+    id => self.operation("published", id~) == "true",
+    id => ignore(self.operation("discard", id~)),
+    () => {
       let json = @json.parse(self.operation("list")[:]) catch {
         _ => raise @mcap.io_error("invalid artifact inventory")
       }
       guard json is Array(items) else {
         raise @mcap.io_error("invalid artifact inventory")
       }
-      items.map(fn(item) { @mcap.parse_decimal(item.stringify()).to_int() })
+      items.map(item => @mcap.parse_decimal(item.stringify()).to_int())
     },
   )
 }

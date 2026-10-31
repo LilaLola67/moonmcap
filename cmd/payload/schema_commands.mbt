@@ -5,7 +5,7 @@ fn normalized_rules(
   guard config.get("fields") is Some(Array(items)) else {
     raise @mcap.io_error("normalization fields required")
   }
-  items.map(fn(item) {
+  items.map(item => {
     let f = object(item, [
       "source", "target", "default", "required", "conversion", "bits", "scale", "offset",
     ])
@@ -68,7 +68,7 @@ fn normalize_file(
   let topics = match config.get("topics") {
     None => []
     Some(Array(items)) =>
-      items.map(fn(item) {
+      items.map(item => {
         match item {
           String(s) if s != "" => s
           _ => raise @mcap.io_error("topic string required")
@@ -113,7 +113,9 @@ fn normalize_file(
   defer stream.cancel()
   let transaction = @nodeio.output_transaction(values[3])
   let mut rows = 0UL
-  try {
+  {
+    errdefer (transaction.abort() catch { _ => () })
+
     while rows < limit && stream.next() is Some(message) {
       let wrapper = @mcap.json_filter("true").project(message.data)
       guard wrapper is Object(wrapped) else {
@@ -143,13 +145,6 @@ fn normalize_file(
       rows += 1UL
     }
     transaction.publish()
-  } catch {
-    error => {
-      transaction.abort() catch {
-        _ => ()
-      }
-      raise error
-    }
   }
   println(
     (

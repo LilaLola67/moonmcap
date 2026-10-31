@@ -1,0 +1,9 @@
+{
+  "source_sha256": "e11ebd97b793b101b91237dcb4ceac32540aa2adb515df97650ad22116f6ac84",
+  "source_messages": 4719,
+  "topic": "/joint_states",
+  "start": "1791983428732915000",
+  "end": "1791983428992984000",
+  "clip_messages": 14,
+  "recovered_prefix_messages": 2999
+}

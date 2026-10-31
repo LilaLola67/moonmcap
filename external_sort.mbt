@@ -55,6 +55,7 @@ pub(all) struct ExternalReport {
 }
 
 ///|
+#warnings("-missing_priv")
 struct SortRow {
   message : Message
   ordinal : UInt64
@@ -70,6 +71,7 @@ fn compare_rows(a : SortRow, b : SortRow) -> Int32 {
 }
 
 ///|
+#warnings("-missing_priv")
 struct SortSession {
   observer : SourceVisitor?
   trace : ((SourceScanEvent) -> Unit)?
@@ -120,7 +122,7 @@ fn SortSession::create(
   self.next_id += 1
   self.live[id] = 0UL
   let target = (self.storage.create)(id)
-  let sink = new_write_sink(fn(bytes) {
+  let sink = new_write_sink(bytes => {
     self.check_cancel()
     if bytes.length().to_uint64() > self.options.spool_bytes - self.spool {
       raise Invalid("temporary disk byte budget exceeded")
@@ -184,6 +186,7 @@ fn SortSession::add(
 }
 
 ///|
+#warnings("-missing_priv")
 struct RunInput {
   source : ReadSource
   limits : Limits
@@ -256,6 +259,7 @@ fn RunInput::next(self : RunInput) -> SortRow? raise McapError {
 }
 
 ///|
+#warnings("-missing_priv")
 struct RunHead {
   row : SortRow
   input : Int32
@@ -364,13 +368,13 @@ fn SortSession::sort_to(
     let mut start = 0
     while start < current.length() {
       let end = start + self.options.fan_in.min(current.length() - start)
-      let group = current[start:end].to_array()
+      let group = current[start:end].to_owned()
       let mut count = 0UL
       for id in group {
         count += self.open_run(id).count
       }
       let (id, output) = self.create(count)
-      self.merge_group(group, fn(row) { write_sort_row(output, row) })
+      self.merge_group(group, row => write_sort_row(output, row))
       next.push(id)
       for old in group {
         self.remove(old)
@@ -381,7 +385,7 @@ fn SortSession::sort_to(
   }
   if !current.is_empty() {
     self.passes += 1
-    self.merge_group(current, fn(row) { writer.append(row.message) })
+    self.merge_group(current, row => writer.append(row.message))
   }
   for id in current {
     self.remove(id)

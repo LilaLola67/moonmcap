@@ -282,3 +282,15 @@ pub fn QueryCursor::progress(self : QueryCursor) -> QueryProgress {
     buffered_heads: self.heap.length(),
   }
 }
+
+///|
+pub extend QueryCursorState with @debug.Debug::{to_repr}
+
+///|
+pub extend QueryCursorState with Eq::{not_equal, equal}
+
+///|
+pub extend QueryProgress with @debug.Debug::{to_repr}
+
+///|
+pub extend QueryProgress with Eq::{not_equal, equal}

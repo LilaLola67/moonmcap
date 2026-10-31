@@ -11,7 +11,7 @@
 
 name = "LilaLola67/moonmcap"
 
-version = "0.17.3"
+version = "0.17.4"
 
 readme = "README.md"
 
@@ -21,7 +21,7 @@ license = "MIT"
 
 keywords = [ "mcap", "robotics", "binary", "logging", "index" ]
 
-preferred_target = "wasm"
+preferred_target = "js"
 
 description = "MoonBit-native MCAP message-log codec, indexed queries and file transformations"
 

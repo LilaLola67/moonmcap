@@ -14,7 +14,7 @@ fn inventory_file(
   let channels = declarations.channels.copy()
   channels.sort_by(fn(a, b) { a.id.compare(b.id) })
   let types : Json = {
-    "schemas": schemas.map(fn(s) -> Json {
+    "schemas": schemas.map(fn(s) -> Json raise @mcap.McapError {
       {
         "id": s.id,
         "name": s.name,

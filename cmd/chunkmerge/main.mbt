@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn report_error(message : String) -> Unit =
@@ -68,71 +73,64 @@ fn run(
   if parsed.job_dir == "" || parsed.external.run_limit > 2147483647 - maximum {
     raise @mcap.io_error("chunkmerge requires --job and bounded run IDs")
   }
-  let job = @nodeio.open_merge_job(parsed.job_dir, resume=parsed.resume_job)
-  try {
-    let checkpoint = job.checkpoint()
-    if checkpoint is Some(bytes) &&
-      bytes.length() >= 8 &&
-      bytes[0:8].to_owned() == b"CJOB2\r\n\x00" {
-      pipeline = true
-    }
-    let sources = paths.map(fn(path) { scope.open(path) })
-    let transaction = job.output(parsed.output)
-    try {
-      let owned = job.storage()
-      let final_sort = @mcap.sort_storage(
-        fn(id) { (owned.create)(maximum + id) },
-        fn(id) { (owned.open)(maximum + id) },
-        fn(id) { (owned.remove)(maximum + id) },
-      )
-      let report = if pipeline {
-        @mcap.resumable_chunk_pipeline(
-          sources,
-          owned,
-          transaction.sink(),
-          @nodeio.source_sha256,
-          fn(bytes) { job.save(bytes) },
-          checkpoint?,
-          max_parts=maximum,
-          options={
-            ..parsed.external,
-            limits: { ..parsed.external.limits, max_records: records, },
-          },
-        )
-      } else {
-        @mcap.resumable_chunk_merge(
-          sources,
-          owned,
-          final_sort,
-          transaction.sink(),
-          @nodeio.source_sha256,
-          fn(bytes) { job.save(bytes) },
-          checkpoint?,
-          max_parts=maximum,
-          options={
-            ..parsed.external,
-            limits: { ..parsed.external.limits, max_records: records, },
-          },
-        )
-      }
-      transaction.publish()
-      job.complete(report)
-      println(report.stringify())
-    } catch {
-      error => {
-        transaction.abort()
-        raise error
-      }
-    }
-    job.close()
-  } catch {
-    error => {
-      job.close() catch {
-        _ => ()
-      }
-      raise error
-    }
+  let job = @nodeio.open_merge_job(
+    parsed.job_dir,
+    resume_name=parsed.resume_job,
+  )
+  errdefer (job.close() catch { _ => () })
+
+  let checkpoint = job.checkpoint()
+  if checkpoint is Some(bytes) &&
+    bytes.length() >= 8 &&
+    bytes[0:8].to_owned() == b"CJOB2\r\n\x00" {
+    pipeline = true
   }
+  let sources = paths.map(path => scope.open(path))
+  let transaction = job.output(parsed.output)
+  {
+    errdefer transaction.abort()
+
+    let owned = job.storage()
+    let final_sort = @mcap.sort_storage(
+      id => (owned.create)(maximum + id),
+      id => (owned.open)(maximum + id),
+      id => (owned.remove)(maximum + id),
+    )
+    let report = if pipeline {
+      @mcap.resumable_chunk_pipeline(
+        sources,
+        owned,
+        transaction.sink(),
+        @nodeio.source_sha256,
+        bytes => job.save(bytes),
+        checkpoint?,
+        max_parts=maximum,
+        options={
+          ..parsed.external,
+          limits: { ..parsed.external.limits, max_records: records, },
+        },
+      )
+    } else {
+      @mcap.resumable_chunk_merge(
+        sources,
+        owned,
+        final_sort,
+        transaction.sink(),
+        @nodeio.source_sha256,
+        bytes => job.save(bytes),
+        checkpoint?,
+        max_parts=maximum,
+        options={
+          ..parsed.external,
+          limits: { ..parsed.external.limits, max_records: records, },
+        },
+      )
+    }
+    transaction.publish()
+    job.complete(report)
+    println(report.stringify())
+  }
+  job.close()
 }
 
 ///|

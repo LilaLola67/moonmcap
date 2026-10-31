@@ -69,7 +69,7 @@ pub fn encode_chunk_index(value : ChunkIndex) -> Bytes raise McapError {
   out.write_uint64_le(value.chunk_start)
   out.write_uint64_le(value.chunk_length)
   let entries = @buffer.Buffer::Buffer()
-  let seen : Map[Int32, Bool] = {}
+  let seen : Map[Int32, Bool] = Map([])
   for entry in value.message_index_offsets {
     if seen.contains(entry.0) {
       raise Invalid("duplicate ChunkIndex channel")
@@ -101,7 +101,7 @@ pub fn decode_chunk_index(
     raise Invalid("misaligned ChunkIndex map")
   }
   let message_index_offsets = []
-  let seen : Map[Int32, Bool] = {}
+  let seen : Map[Int32, Bool] = Map([])
   while map_input.pos < map_input.data.length() {
     let id = map_input.u16()
     let offset = map_input.u64()
@@ -155,7 +155,7 @@ pub fn validate_message_index(
   index : MessageIndex,
   chunk : Chunk,
 ) -> Unit raise McapError {
-  let seen : Map[UInt64, Bool] = {}
+  let seen : Map[UInt64, Bool] = Map([])
   for entry in index.entries {
     if seen.contains(entry.1) {
       raise Invalid("duplicate MessageIndex record offset")

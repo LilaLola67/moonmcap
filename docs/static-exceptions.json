@@ -1,0 +1,383 @@
+{
+  "version": 1,
+  "exceptions": [
+    {
+      "file": "aggregate.mbt",
+      "declaration": "AggregateState",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "8bfa14da3e6189ee89a3af39bf84d8753c15a3c45633e9fa98ed1b098a30b5fa"
+    },
+    {
+      "file": "aggregate_external.mbt",
+      "declaration": "AggregateRow",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "05ee666ceded993e594a4ef48f2cb9f5903dd2b84981c3aa536e2d29c226820b"
+    },
+    {
+      "file": "aggregate_external.mbt",
+      "declaration": "AggregateRun",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "df63c0215bf0a0c8526c20e331a2afcb64abf431a6befce562213e25864d965d"
+    },
+    {
+      "file": "aggregate_external.mbt",
+      "declaration": "AggregateSpill",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "8e46b9dadd2724075e91c7d85dc07d7fe972da8484e1f1c535ad40b895ba4516"
+    },
+    {
+      "file": "artifact_batch.mbt",
+      "declaration": "ArtifactReceipt",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "ee3361ab68b09ed9d08b2ebd590e1914495534b9e451cbc5ba81eacd60013f53"
+    },
+    {
+      "file": "asyncio/cached_js.mbt",
+      "declaration": "CacheHost",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "3f5a4ff7ab0733e8f530c7dd611b54e2d6247c123882d911ce98c1053ede7fa0"
+    },
+    {
+      "file": "asyncio/node.mbt",
+      "declaration": "FileRead",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "47f9bc9e9dc1862f80d62f355eff57da4a8f9376687c043c0b0ee26202cabff0"
+    },
+    {
+      "file": "asyncio/node.mbt",
+      "declaration": "SourceDigest",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "33bcda2f19780615904267966110752fe3a2b039fb4770e08babb651c487b538"
+    },
+    {
+      "file": "asyncio/parallel_reader.mbt",
+      "declaration": "ParallelPayload",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "959d3cfb3949bca359202c650b238ec075e42eb757bcce73871ab09d5860444b"
+    },
+    {
+      "file": "asyncio/rotating.mbt",
+      "declaration": "RotatingWriter::append",
+      "warning": "fragile_catch_all",
+      "reason": "Catch only classifies the existing runtime cancellation Error; all resource cleanup is in errdefer, which also handles uncaught cancellation signals.",
+      "scope_sha256": "f046b7c66a8be0f7cfcdbc857c7a166410eea6b4860abc97f709363b5a4ff0b5"
+    },
+    {
+      "file": "asyncio/worker_js.mbt",
+      "declaration": "WorkerHost",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "8387fe9b7af3daf30e2788ad0a635c2476ebb4a3d31c24f110daa9ba539fb70c"
+    },
+    {
+      "file": "asyncio/writer.mbt",
+      "declaration": "AsyncWriter::drain",
+      "warning": "fragile_catch_all",
+      "reason": "Catch only classifies the existing runtime cancellation Error; all resource cleanup is in errdefer, which also handles uncaught cancellation signals.",
+      "scope_sha256": "8bc9bb0e8e6594b4c946ca43025326f945d5071678753922515bbd733baf3b7f"
+    },
+    {
+      "file": "binary.mbt",
+      "declaration": "Cursor",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "3cf438ebe0942066e362f0f4fcec9330389e5e961a1a3bfda511a5fcf27b8540"
+    },
+    {
+      "file": "cdr_decode.mbt",
+      "declaration": "CdrWire",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "a1c73be2e08e4e2e540e3370839659b8731d85dac88d29e12c7be2bb1df03571"
+    },
+    {
+      "file": "chunk_checkpoint.mbt",
+      "declaration": "ChunkJobState",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "59922b738f3acc6d80fc2dc7a3e2c99aa0c6713ab6b0dfc0d1548057132aadfd"
+    },
+    {
+      "file": "chunk_checkpoint.mbt",
+      "declaration": "ChunkPart",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "c0d8fb08d704e30f0b3662a1733a2a4ca1cd2b81188e29e406b38362e874b38d"
+    },
+    {
+      "file": "chunk_pipeline.mbt",
+      "declaration": "ChunkSegment",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "5212be9af8972cdbb4d39f7cbf1e48ef8fdeccddab0fdfca9547c4046dfdaefa"
+    },
+    {
+      "file": "diagnostics.mbt",
+      "declaration": "DataInspection",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "0e437453bcbeefd1880b33e0f3ef159ed2a84d884bef7fb9d8039ceb6ef0a363"
+    },
+    {
+      "file": "external_ingest.mbt",
+      "declaration": "SourceTables",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "29448655beb6753f826b3cdb3f6c66ba9a5c3e208001a214c4bbc4b916c371c7"
+    },
+    {
+      "file": "external_sort.mbt",
+      "declaration": "RunHead",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "c0ac5a57aa6b18df2118917626831cee5d10fba3cabddd8b80f48271965a81c3"
+    },
+    {
+      "file": "external_sort.mbt",
+      "declaration": "RunInput",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "957cd0b7d04cc96123948719d0d98b37f31363f0086e3cfa82bb26f7c0dcb470"
+    },
+    {
+      "file": "external_sort.mbt",
+      "declaration": "SortRow",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "3d4b908991d200aa9944af17bf2d32cf2ac031866db5aabfe737e8e83e5048f6"
+    },
+    {
+      "file": "external_sort.mbt",
+      "declaration": "SortSession",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "7dcd159fabe8a7766373298833073fe6d5882e6bd8832df477a8b73ce3b084b2"
+    },
+    {
+      "file": "field_index.mbt",
+      "declaration": "FieldBounds",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "3fc99861fa5a3e4571ce0a2d9bc8af74a3b6963dd0caafed20d7e15a952c86f6"
+    },
+    {
+      "file": "internal/lz4/types.mbt",
+      "declaration": "Decode",
+      "warning": "deprecated_syntax",
+      "reason": "Preserve the upstream internal signal/error Show renderer and its diagnostic text while adapting the runtime.",
+      "scope_sha256": "3e4ffaf27e0d6754bb6a0c83081e6fb0d48a6fe8a7cb640d871d47f572c00728"
+    },
+    {
+      "file": "internal/lz4/types.mbt",
+      "declaration": "Encode",
+      "warning": "deprecated_syntax",
+      "reason": "Preserve the upstream internal signal/error Show renderer and its diagnostic text while adapting the runtime.",
+      "scope_sha256": "a9205c3fc43fee2a4cfd7863d3b17adda52dea942165e003ad9043c879af4d32"
+    },
+    {
+      "file": "internal/lz4/types.mbt",
+      "declaration": "Lz4Error",
+      "warning": "deprecated_syntax",
+      "reason": "Preserve the upstream internal signal/error Show renderer and its diagnostic text while adapting the runtime.",
+      "scope_sha256": "0551a4db5ddffcc113109f1432fb4af01e9b2ed81505ef46745c6017829c719d"
+    },
+    {
+      "file": "internal/zstd/inflater.mbt",
+      "declaration": "decode_compressed_block",
+      "warning": "result_error_return",
+      "reason": "Result is intentionally inspected as incremental decoder state, not an exception-returning public API.",
+      "scope_sha256": "a75bb2403b6cb930c5319075594d0203458de3c0ddf30db038cc352e544bd79a"
+    },
+    {
+      "file": "internal/zstd/inflater.mbt",
+      "declaration": "decode_raw_block",
+      "warning": "result_error_return",
+      "reason": "Result is intentionally inspected as incremental decoder state, not an exception-returning public API.",
+      "scope_sha256": "cc1fc024093194441bdfac3402c61c6440358edb11074b6f55b012d2bb08d277"
+    },
+    {
+      "file": "internal/zstd/inflater.mbt",
+      "declaration": "decode_rle_block",
+      "warning": "result_error_return",
+      "reason": "Result is intentionally inspected as incremental decoder state, not an exception-returning public API.",
+      "scope_sha256": "adae29862625e8732f8feaac1cfeddee2e9407be070474a725557e0af06f9c1a"
+    },
+    {
+      "file": "internal/zstd/types.mbt",
+      "declaration": "CompressionLevel",
+      "warning": "deprecated_syntax",
+      "reason": "Preserve the upstream internal signal/error Show renderer and its diagnostic text while adapting the runtime.",
+      "scope_sha256": "3cf186bd95a5a436c4980ffc8d25442ad2b981af986f5a89df9a6be79ab9ea41"
+    },
+    {
+      "file": "internal/zstd/types.mbt",
+      "declaration": "Decode",
+      "warning": "deprecated_syntax",
+      "reason": "Preserve the upstream internal signal/error Show renderer and its diagnostic text while adapting the runtime.",
+      "scope_sha256": "d8385c86634447310aed9955af6e7b16bd9d6c76780bbf78f18425adafa4ee84"
+    },
+    {
+      "file": "internal/zstd/types.mbt",
+      "declaration": "Encode",
+      "warning": "deprecated_syntax",
+      "reason": "Preserve the upstream internal signal/error Show renderer and its diagnostic text while adapting the runtime.",
+      "scope_sha256": "36cca9fba49c0b4a8bc8d6808dd14a4c21250aac4b9cc91bebaf6775f51dba15"
+    },
+    {
+      "file": "internal/zstd/types.mbt",
+      "declaration": "ZstdError",
+      "warning": "deprecated_syntax",
+      "reason": "Preserve the upstream internal signal/error Show renderer and its diagnostic text while adapting the runtime.",
+      "scope_sha256": "f81a9ac24199b998383e568c2c051433a7f842e28668621512969914844b3e37"
+    },
+    {
+      "file": "json_document.mbt",
+      "declaration": "ExactDecimal",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "f5f57e6af84f011dbc3186f48232edca03a010aabd561a85aacc7e6ecc0bed70"
+    },
+    {
+      "file": "json_document.mbt",
+      "declaration": "JsonDocumentParser",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "ec9a681b0be3cbfebfc26b88ecb4d1d8862d04ada027f1ede0c47a0df6917262"
+    },
+    {
+      "file": "merge_checkpoint.mbt",
+      "declaration": "MergeState",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "2dba1947005281106d4a76fb3fdef736dd568d8b7f84a8483532d9aa3d613713"
+    },
+    {
+      "file": "nodeio/files.mbt",
+      "declaration": "FileRead",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "47f9bc9e9dc1862f80d62f355eff57da4a8f9376687c043c0b0ee26202cabff0"
+    },
+    {
+      "file": "nodeio/fingerprint.mbt",
+      "declaration": "DigestState",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "e41e8d2a55097c830f42d6e82858c2ea25e9fde0a7162e414532dac3df93abd6"
+    },
+    {
+      "file": "nodeio/managed.mbt",
+      "declaration": "NativeFile",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "dc96df63290ef28b2852c44858eeae90bfc8a2cf17148df6eb3cdbbc69839ccb"
+    },
+    {
+      "file": "payload_decoder.mbt",
+      "declaration": "ProtoCache",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "e3f50f3feb16d68d97c38ce56cd6a950376ac8e4d7d427770b2e78af3a3484f1"
+    },
+    {
+      "file": "payload_decoder.mbt",
+      "declaration": "SchemaDecoder",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "85beb3f215a6bd18310c6c7aad35fc17a586358caccd442b634b504fa61de771"
+    },
+    {
+      "file": "payload_encode.mbt",
+      "declaration": "PayloadOutput",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "f73dd278beae0c8110a8a3fb81e52aeb68067317630f76f1bf5d278c165e4bcb"
+    },
+    {
+      "file": "payload_view.mbt",
+      "declaration": "CdrProjection",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "0611b078e0e02def50838d25f49fdf52f13a3caea7d0e906e599b53c4134b82c"
+    },
+    {
+      "file": "protobuf_encode.mbt",
+      "declaration": "ProtoSlice",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "336580688102a6ea9fae63153f90d69d49428bcd4cd03bae835bcd8042403674"
+    },
+    {
+      "file": "protobuf_schema.mbt",
+      "declaration": "ProtoField",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "26f3b1ea0592c70d92ea20fe1384ab125cd84765a8a7521fbff6a8b3bc150a9f"
+    },
+    {
+      "file": "protobuf_wire.mbt",
+      "declaration": "ProtoItem",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "9c216b37a0e91489180f9cb61f0d5dea1073142f5a451ff3dfe7abf35cb1051f"
+    },
+    {
+      "file": "protobuf_wire.mbt",
+      "declaration": "ProtoValue",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "bca2b29ba9e64793a5dbde8a43885d87022a3b5bf00c543c36037a0d8af109e2"
+    },
+    {
+      "file": "protobuf_wire.mbt",
+      "declaration": "ProtoWire",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "a7a50f24471f9cf230c68589918ba3098bfd89e243824ddb0317e2cd24afe60c"
+    },
+    {
+      "file": "range_source.mbt",
+      "declaration": "RangeRecord",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "1ff502609cfa428e3a82c7190dac5a6d2680647ecd1803e07cc0688b003ff410"
+    },
+    {
+      "file": "schema_compare.mbt",
+      "declaration": "SchemaComparison",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "e58017099a4b054c397a899200b006aa6b59c75ef510d1ca56eeef6268d942f4"
+    },
+    {
+      "file": "semantic_diff.mbt",
+      "declaration": "DiffBag",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "94e8f5243ec0089238a82ceea48f7d660b6555c53bb608a6b4151a693ea6d728"
+    },
+    {
+      "file": "semantic_diff.mbt",
+      "declaration": "DiffResult",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "4482d32aa5cb6de23ffd4b557e70625943648f66bbb8905161310b0d5ae4498a"
+    },
+    {
+      "file": "temporary_workspace.mbt",
+      "declaration": "TemporaryWorkspace",
+      "warning": "missing_priv",
+      "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
+      "scope_sha256": "4524217dc96e01dc070e8541518af26c0ef9425afcb1da53cb043031b3152487"
+    }
+  ]
+}

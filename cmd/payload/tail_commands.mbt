@@ -14,7 +14,7 @@ fn tail_file(
     _ => raise @mcap.io_error("tail mode string required")
   }
   let previous = match config.get("snapshot") {
-    None => Map::new()
+    None => Map([])
     Some(String(path)) => {
       let parsed = @mcap.json_filter("true", max_bytes=256 * 1024 * 1024).project(
         @nodeio.read_file(path, maximum=256 * 1024 * 1024),
@@ -80,7 +80,7 @@ fn tail_file(
     )
     let batch = tail.poll(
       manifest,
-      fn(id) { scope.open(values[1] + "/segment-" + id.to_string() + ".mcap") },
+      id => scope.open(values[1] + "/segment-" + id.to_string() + ".mcap"),
       @nodeio.source_sha256,
       batch_bytes~,
     )
@@ -91,7 +91,7 @@ fn tail_file(
   let topics = match config.get("topics") {
     None => []
     Some(Array(items)) =>
-      items.map(fn(v) {
+      items.map(v => {
         match v {
           String(s) => s
           _ => raise @mcap.io_error("topic string required")
@@ -115,21 +115,19 @@ fn tail_file(
   if start > end {
     raise @mcap.io_error("invalid tail query window")
   }
-  let condition = config
-    .get("where")
-    .map(fn(v) { @mcap.json_filter(v.stringify()) })
+  let condition = config.get("where").map(v => @mcap.json_filter(v.stringify()))
   let quality_config = config
     .get("quality")
-    .map(fn(v) {
+    .map(v => {
       object(v, [
         "rules", "start", "lateness", "pending_limit", "watermark", "finish",
       ])
     })
-  let quality = quality_config.map(fn(q) {
+  let quality = quality_config.map(q => {
     guard q.get("rules") is Some(Array(items)) else {
       raise @mcap.io_error("quality rules array required")
     }
-    let rules = items.map(fn(item) {
+    let rules = items.map(item => {
       let rule = object(item, [
         "topic", "minimum_messages", "max_gap", "check_sequence", "condition", "warning",
       ])
@@ -149,7 +147,7 @@ fn tail_file(
         minimum_messages: minimum,
         max_gap: rule
         .get("max_gap")
-        .map(fn(_) { @mcap.parse_decimal(text(rule, "max_gap")) }),
+        .map(_ => @mcap.parse_decimal(text(rule, "max_gap"))),
         check_sequence: boolean(rule, "check_sequence", false),
         condition: rule.get("condition").map(fn(v) { v.stringify() }),
         warning: boolean(rule, "warning", false),
@@ -181,7 +179,7 @@ fn tail_file(
       guard q.get("rules") is Some(Array(items)) else {
         raise @mcap.io_error("quality rules required")
       }
-      items.filter_map(fn(item) {
+      items.filter_map(item => {
         guard item is Object(rule) else { return None }
         if rule.contains("condition") {
           Some(text(rule, "topic"))
@@ -259,7 +257,7 @@ fn tail_file(
     "state": {
       "tail": @mcap.encode_hex(snapshot),
       "quality": quality
-      .map(fn(q) { Json::string(@mcap.encode_hex(q.snapshot())) })
+      .map(q => Json::string(@mcap.encode_hex(q.snapshot())))
       .unwrap_or(Json::null()),
       "settings": Json::object(settings),
     },

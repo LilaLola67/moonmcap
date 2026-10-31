@@ -40,10 +40,14 @@ fn ProtobufDecoder::scalar(
       }
     }
     (3, PVarint(value)) | (16, PFixed64(value)) =>
-      self.integer64(value.to_int64().to_string(), value.to_int64().to_double())
+      self.integer64(
+        value.reinterpret_as_int64().to_string(),
+        value.reinterpret_as_int64().to_double(),
+      )
     (4, PVarint(value)) | (6, PFixed64(value)) =>
       self.integer64(value.to_string(), value.to_double())
-    (5, PVarint(value)) => Json::number(value.to_uint().to_int().to_double())
+    (5, PVarint(value)) =>
+      Json::number(value.to_uint().reinterpret_as_int().to_double())
     (7, PFixed32(value)) => Json::number(value.to_double())
     (8, PVarint(value)) => Json::boolean(value != 0UL)
     (9, PBytes(bytes)) =>
@@ -57,17 +61,23 @@ fn ProtobufDecoder::scalar(
     (14, PVarint(_)) if self.options.protojson &&
       field.type_name == "google.protobuf.NullValue" => Json::null()
     (14, PVarint(value)) =>
-      match self.enums[field.type_name].values.get(value.to_uint().to_int()) {
+      match
+        self.enums[field.type_name].values.get(
+          value.to_uint().reinterpret_as_int(),
+        ) {
         Some(name) => Json::string(name)
-        None => Json::number(value.to_uint().to_int().to_double())
+        None => Json::number(value.to_uint().reinterpret_as_int().to_double())
       }
-    (15, PFixed32(value)) => Json::number(value.to_int().to_double())
+    (15, PFixed32(value)) =>
+      Json::number(value.reinterpret_as_int().to_double())
     (17, PVarint(value)) => {
       let number = value.to_uint()
-      Json::number(((number >> 1) ^ (0U - (number & 1U))).to_int().to_double())
+      Json::number(
+        ((number >> 1) ^ (0U - (number & 1U))).reinterpret_as_int().to_double(),
+      )
     }
     (18, PVarint(value)) => {
-      let decoded = ((value >> 1) ^ (0UL - (value & 1UL))).to_int64()
+      let decoded = ((value >> 1) ^ (0UL - (value & 1UL))).reinterpret_as_int64()
       self.integer64(decoded.to_string(), decoded.to_double())
     }
     _ => raise Invalid("protobuf field/wire type mismatch")
@@ -78,7 +88,7 @@ fn ProtobufDecoder::scalar(
 fn ProtobufDecoder::default_value(
   self : ProtobufDecoder,
   field : ProtoField,
-) -> Json raise McapError {
+) -> Json {
   match field.kind {
     9 | 12 => Json::string("")
     3 | 4 | 6 | 16 | 18 => self.integer64("0", 0)
@@ -250,7 +260,7 @@ fn ProtobufDecoder::message(
         self.message(field.type_name, payload.to_bytes(), budget, depth + 1)
       }
     } else if field.label == 3 {
-      Json::array(items.map(fn(item) { self.scalar(field, item) }))
+      Json::array(items.map(item => self.scalar(field, item)))
     } else {
       self.scalar(field, items[items.length() - 1])
     }
@@ -288,7 +298,7 @@ pub fn ProtobufDecoder::decode(
   if payload.length() > self.options.message_bytes {
     raise Invalid("protobuf message byte budget exceeded")
   }
-  let name = if name.has_prefix(".") { name[1:].to_string() } else { name }
+  let name = if name.has_prefix(".") { name[1:].to_owned() } else { name }
   self.message(name, payload, [self.options.items], 1)
 }
 
@@ -316,7 +326,7 @@ pub fn ProtobufDecoder::decode_selected(
       names.push(p[0])
     }
   }
-  let name = if name.has_prefix(".") { name[1:].to_string() } else { name }
+  let name = if name.has_prefix(".") { name[1:].to_owned() } else { name }
   selected_json(
     self.message(name, payload, [selection.scan_items], 1, keep_fields=names),
     paths,

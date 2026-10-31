@@ -17,16 +17,18 @@ priv struct SeqTables {
 /// Decompresses Zstandard-encoded data.
 pub fn decompress(
   data : Bytes,
-  dict~ : Bytes = Bytes::default(),
+  dict~ : Bytes = Default::default(),
 ) -> Bytes raise ZstdError {
   let inf = Inflater::new(dict~)
   inf.enable_direct_output((data.length() * 4).max(65536))
   inf.src(data[:])
-  loop inf.decode() {
-    Await => raise ZstdError::UnexpectedEOF
-    Data(_) => continue inf.decode()
-    End => inf.take_output()
-    Error(e) => raise e
+  for signal = inf.decode() {
+    match signal {
+      Await => raise ZstdError::UnexpectedEOF
+      Data(_) => continue inf.decode()
+      End => break inf.take_output()
+      Error(e) => raise e
+    }
   }
 }
 

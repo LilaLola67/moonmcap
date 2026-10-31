@@ -85,16 +85,16 @@ pub fn RangeReader::query_source(
     let index = build_query_index(log)
     return query_source(
       { ..log, messages: [], attachments: [], metadata: [], },
-      fn(query, _) {
+      (query, _) => {
         let cursor = index.cursor(query)
         message_stream(fn() { cursor.next() }, fn() { cursor.cancel() })
       },
       materialized=true,
     )
   }
-  query_source(self.declarations, fn(query, budget) {
+  query_source(self.declarations, (query, budget) => {
     let cursor = self.cursor(query, pending_bytes=budget)
-    message_stream(fn() { cursor.next() }, fn() { cursor.cancel() }, pending_bytes=fn() {
+    message_stream(() => cursor.next(), fn() { cursor.cancel() }, pending_bytes=fn() {
       cursor.progress().pending_bytes
     })
   })
@@ -582,3 +582,15 @@ pub fn DatasetCursor::write_ndjson(
   }
   count
 }
+
+///|
+pub extend DatasetMessage with @debug.Debug::{to_repr}
+
+///|
+pub extend DatasetMessage with Eq::{not_equal, equal}
+
+///|
+pub extend DatasetProgress with @debug.Debug::{to_repr}
+
+///|
+pub extend DatasetProgress with Eq::{not_equal, equal}

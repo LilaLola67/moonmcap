@@ -1,7 +1,7 @@
 ///|
 fn print_page(label : String, messages : Array[@mcap.Message]) -> Unit {
   let sequences = messages.map(fn(message) { message.sequence })
-  println("\{label}: sequence=\{sequences}")
+  println("\{label}: sequence=\{@debug.to_string(sequences)}")
 }
 
 ///|

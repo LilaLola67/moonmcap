@@ -10,10 +10,10 @@ test "input checkpoint resumes without reparsing completed source chunks" {
     .filter(fn(r) { r.opcode == 0x06 })
     .map(fn(r) { r.offset.to_uint64() })
   let blocked = [false]
-  let first = @moonmcap.new_read_source(bytes.length().to_uint64(), fn(
+  let first = @moonmcap.new_read_source(bytes.length().to_uint64(), (
     offset,
     length,
-  ) {
+  ) => {
     if blocked[0] &&
       offsets.any(fn(start) { offset == start || offset == start + 9UL }) {
       raise @moonmcap.io_error("completed input was parsed again")
@@ -31,7 +31,7 @@ test "input checkpoint resumes without reparsing completed source chunks" {
       storage,
       @moonmcap.new_write_sink(fn(_) { () }),
       checkpoint_test_hash,
-      fn(bytes) {
+      bytes => {
         saved[0] = bytes
         raise @moonmcap.io_error("stop after first input")
       },
@@ -83,7 +83,7 @@ test "version one merge checkpoints remain resumable and upgrade to version two"
       storage,
       @moonmcap.new_write_sink(fn(_) { () }),
       checkpoint_test_hash,
-      fn(bytes) {
+      bytes => {
         saved[0] = bytes
         if @moonmcap.checkpoint_progress(bytes) is Object(fields) &&
           fields["stage"] == Json::string("merge") {

@@ -126,7 +126,7 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
           topics.push(args[i])
         } else if arg == "--rename" || arg == "--metadata-match" {
           let pair = match args[i].split_once("=") {
-            Some((left, right)) => (left.to_string(), right.to_string())
+            Some((left, right)) => (left.to_owned(), right.to_owned())
             None => raise Invalid("mapping must use KEY=VALUE")
           }
           if arg == "--rename" {
@@ -423,7 +423,6 @@ pub fn parse_command(args : Array[String]) -> CommandOptions raise McapError {
       ),
     },
     aggregate: {
-      ..aggregate_options(),
       value_path: values.get("--value").unwrap_or(""),
       group_paths,
       by_topic: !flags.contains("--no-topic-group"),

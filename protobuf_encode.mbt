@@ -69,7 +69,11 @@ fn ProtobufDecoder::encode_scalar(
       }
       let v = if field.kind == 17 || field.kind == 18 {
         (v << 1) ^
-        (if v.to_int64() < 0L { 18446744073709551615UL } else { 0UL })
+        (if v.reinterpret_as_int64() < 0L {
+          18446744073709551615UL
+        } else {
+          0UL
+        })
       } else {
         v
       }
@@ -122,7 +126,7 @@ fn ProtobufDecoder::encode_scalar(
             }
           }
           match found {
-            Some(n) => n.to_int64().to_uint64()
+            Some(n) => n.to_int64().reinterpret_as_uint64()
             None => raise Invalid("unknown protobuf enum name")
           }
         }
@@ -232,7 +236,7 @@ fn ProtobufDecoder::encode_message(
           for value in values {
             if value is Number(_, ..) &&
               !self.enums[field.type_name].values.contains(
-                payload_signed(value, 32).to_uint().to_int(),
+                payload_signed(value, 32).to_uint().reinterpret_as_int(),
               ) {
               raise Invalid("unknown numeric enum value in proto2")
             }
@@ -263,7 +267,7 @@ pub fn ProtobufDecoder::encode(
       "reverse ProtoJSON mappings are unsupported; use ordinary message objects",
     )
   }
-  let name = if name.has_prefix(".") { name[1:].to_string() } else { name }
+  let name = if name.has_prefix(".") { name[1:].to_owned() } else { name }
   let wire = proto_output(self.options, [self.options.items])
   self.encode_message(wire, name, value, 1)
   let bytes = wire.buffer.to_bytes()
@@ -272,6 +276,7 @@ pub fn ProtobufDecoder::encode(
 }
 
 ///|
+#warnings("-missing_priv")
 struct ProtoSlice {
   number : Int32
   value : ProtoValue
@@ -309,7 +314,7 @@ fn ProtobufDecoder::rewrite_fields(
     if !selected.contains(field.number) {
       selected[field.number] = []
     }
-    selected[field.number].push((path[1:].to_array(), value))
+    selected[field.number].push((path[1:].to_owned(), value))
   }
   // Keep raw slices of every untouched field, including unknown fields/groups.
   let wire = proto_wire(bytes, budget)
@@ -429,7 +434,7 @@ pub fn ProtobufDecoder::rewrite(
   }
   let paths = payload_edit_paths(edits)
   ignore(self.decode(name, bytes))
-  let name = if name.has_prefix(".") { name[1:].to_string() } else { name }
+  let name = if name.has_prefix(".") { name[1:].to_owned() } else { name }
   if edits.is_empty() {
     return bytes
   }

@@ -221,7 +221,7 @@ test "trigger emitter failures latch failed state release buffers and never retr
   let calls = [0]
   let recorder = @moonmcap.trigger_recorder(
     { ..log, messages: [], },
-    fn(_, _) {
+    (_, _) => {
       calls[0] += 1
       raise @moonmcap.io_error("sink failed")
     },

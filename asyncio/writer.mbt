@@ -92,7 +92,7 @@ pub async fn new_writer(
     peak: 0,
   }
   let writer = @mcap.new_stream_writer(
-    @mcap.new_write_sink(fn(bytes) {
+    @mcap.new_write_sink(bytes => {
       if bytes.length() > queue.budget - queue.bytes {
         raise @mcap.io_error("async output queue budget exceeded")
       }
@@ -124,6 +124,7 @@ fn AsyncWriter::fail(self : AsyncWriter) -> Unit {
   self.writer.cancel()
   self.queue.chunks.clear()
   self.queue.bytes = 0
+  self.sink.cancel()
 }
 
 ///|
@@ -138,7 +139,11 @@ pub fn AsyncWriter::cancel(self : AsyncWriter) -> Unit {
 }
 
 ///|
+// Catch classifies legacy cancellation errors; errdefer performs all cleanup.
+#warnings("-fragile_catch_all")
 async fn AsyncWriter::drain(self : AsyncWriter) -> Unit {
+  let cancelled = [true]
+  errdefer (if cancelled[0] { self.cancel() } else { self.fail() })
   try {
     while !self.queue.chunks.is_empty() {
       if self.state != AsyncOpen {
@@ -154,11 +159,7 @@ async fn AsyncWriter::drain(self : AsyncWriter) -> Unit {
     }
   } catch {
     error => {
-      if @async.is_cancellation_error(error) {
-        self.cancel()
-      } else {
-        self.fail()
-      }
+      cancelled[0] = @async.is_cancellation_error(error)
       raise error
     }
   }
@@ -176,13 +177,11 @@ async fn AsyncWriter::operation(
   defer {
     self.busy = false
   }
-  action(self.writer) catch {
-    error => {
-      if self.writer.progress().state != @mcap.WriterOpen {
-        self.fail()
-      }
-      raise error
-    }
+  {
+    errdefer (if self.writer.progress().state != @mcap.WriterOpen {
+      self.fail()
+    })
+    action(self.writer)
   }
   self.drain()
 }
@@ -192,7 +191,7 @@ pub async fn AsyncWriter::add_schema(
   self : AsyncWriter,
   schema : @mcap.Schema,
 ) -> Unit {
-  self.operation(fn(writer) { writer.add_schema(schema) })
+  self.operation(writer => writer.add_schema(schema))
 }
 
 ///|
@@ -200,7 +199,7 @@ pub async fn AsyncWriter::add_channel(
   self : AsyncWriter,
   channel : @mcap.Channel,
 ) -> Unit {
-  self.operation(fn(writer) { writer.add_channel(channel) })
+  self.operation(writer => writer.add_channel(channel))
 }
 
 ///|
@@ -208,7 +207,7 @@ pub async fn AsyncWriter::append(
   self : AsyncWriter,
   message : @mcap.Message,
 ) -> Unit {
-  self.operation(fn(writer) { writer.append(message) })
+  self.operation(writer => writer.append(message))
 }
 
 ///|
@@ -216,7 +215,7 @@ pub async fn AsyncWriter::add_attachment(
   self : AsyncWriter,
   attachment : @mcap.Attachment,
 ) -> Unit {
-  self.operation(fn(writer) { writer.add_attachment(attachment) })
+  self.operation(writer => writer.add_attachment(attachment))
 }
 
 ///|
@@ -224,17 +223,17 @@ pub async fn AsyncWriter::add_metadata(
   self : AsyncWriter,
   metadata : @mcap.Metadata,
 ) -> Unit {
-  self.operation(fn(writer) { writer.add_metadata(metadata) })
+  self.operation(writer => writer.add_metadata(metadata))
 }
 
 ///|
 pub async fn AsyncWriter::flush(self : AsyncWriter) -> Unit {
-  self.operation(fn(writer) { writer.flush() })
+  self.operation(writer => writer.flush())
 }
 
 ///|
 pub async fn AsyncWriter::finish(self : AsyncWriter) -> AsyncWriteProgress {
-  self.operation(fn(writer) { ignore(writer.finish()) })
+  self.operation(writer => ignore(writer.finish()))
   self.state = AsyncFinished
   self.progress()
 }
@@ -249,3 +248,6 @@ pub fn AsyncWriter::progress(self : AsyncWriter) -> AsyncWriteProgress {
     encoded: self.writer.progress(),
   }
 }
+
+///|
+pub extend AsyncWriterState with Eq::{not_equal, equal}

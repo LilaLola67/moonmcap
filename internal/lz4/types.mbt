@@ -3,6 +3,7 @@
 
 ///|
 /// LZ4 compression error type.
+#warnings("-deprecated_syntax")
 pub(all) suberror Lz4Error {
   InvalidHeader(String)
   CorruptData(String)
@@ -13,6 +14,7 @@ pub(all) suberror Lz4Error {
 
 ///|
 /// Encoder signals — returned by Deflater::encode().
+#warnings("-deprecated_syntax")
 pub(all) enum Encode {
   /// Input consumed. Call encode(Some(more)) or encode(None) to finish.
   Ok
@@ -26,6 +28,7 @@ pub(all) enum Encode {
 
 ///|
 /// Decoder signals — returned by Inflater::decode().
+#warnings("-deprecated_syntax")
 pub(all) enum Decode {
   /// Need input. Call src(bytes) then decode() again.
   Await
@@ -62,3 +65,12 @@ let max_block_sizes : FixedArray[Int32] = [
 ///|
 /// Default max block size index (4 = 64KB).
 const DEFAULT_BLOCK_MAX_SIZE_ID : Int32 = 4
+
+///|
+pub extend Decode with Show::{to_string, output}
+
+///|
+pub extend Encode with Show::{to_string, output}
+
+///|
+pub extend Lz4Error with Show::{to_string, output}

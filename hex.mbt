@@ -2,7 +2,7 @@
 /// Portable hexadecimal transport for binary fixtures and command output.
 pub fn encode_hex(bytes : Bytes) -> String {
   let digits = "0123456789abcdef"
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for byte in bytes {
     let value = byte.to_int()
     out.write_char(digits[value >> 4].unsafe_to_char())

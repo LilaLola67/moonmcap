@@ -1,5 +1,7 @@
 # 文档导航
 
+质量与使用入口：[入口选择](entry-points.md)、[静态检查](static-checks.md)、[风险覆盖](risk-coverage.md)、[SO-101 完整示例](../examples/so101/README.md)。
+
 从 [首次使用](quickstart.md) 开始；选择入口前阅读 [支持范围](scope.md)。
 发生错误时查 [排错](troubleshooting.md)，需要复核交付质量时查 [测试方法](testing.md)。
 生成的公开接口索引见 [Mooncakes API](https://mooncakes.io/docs/LilaLola67/moonmcap)。

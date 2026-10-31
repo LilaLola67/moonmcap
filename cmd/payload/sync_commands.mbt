@@ -53,7 +53,7 @@ fn sync_file(
     guard value is Array(items) else {
       raise @mcap.io_error("paths array required")
     }
-    items.map(fn(item) {
+    items.map(item => {
       match item {
         String(s) => s
         _ => raise @mcap.io_error("path string required")
@@ -68,7 +68,6 @@ fn sync_file(
     _ => raise @mcap.io_error("invalid synchronization mode")
   }
   let options : @mcap.SyncOptions = {
-    ..@mcap.sync_options(),
     mode,
     reuse: if boolean(config, "reuse", true) {
       @mcap.SyncAllowReuse
@@ -88,7 +87,7 @@ fn sync_file(
     selected.length() <= 32 else {
     raise @mcap.io_error("topics requires 1..32 input objects")
   }
-  let topics = selected.map(fn(value) {
+  let topics = selected.map(value => {
     let f = object(value, ["topic", "clock", "paths"])
     let topic = text(f, "topic")
     let clock = sync_clock(f.get("clock").unwrap_or(Json::string("log")))
@@ -113,7 +112,7 @@ fn sync_file(
     stream.cancel()
   })
   let declarations = provider.declaration_log()
-  let inputs = topics.map(fn(spec) {
+  let inputs = topics.map(spec => {
     let (topic, clock, selected_paths) = spec
     if !declarations.channels.any(fn(c) { c.topic == topic }) {
       raise @mcap.io_error("synchronization topic absent: " + topic)
@@ -127,7 +126,7 @@ fn sync_file(
     @mcap.sync_input(
       topic,
       stream,
-      clock=fn(message) {
+      clock=message => {
         @mcap.message_timestamp(message, clock, max_bytes=options.json_bytes)
       },
       interpolation_paths?=selected_paths,
@@ -149,9 +148,11 @@ fn sync_file(
   defer stream.cancel()
   let parser = @mcap.json_filter("true", max_bytes=options.json_bytes)
   let transaction = @nodeio.output_transaction(values[3])
-  try {
+  {
+    errdefer (transaction.abort() catch { _ => () })
+
     while stream.next() is Some(row) {
-      let value = @mcap.sync_row_json(row, payload=fn(message) {
+      let value = @mcap.sync_row_json(row, payload=message => {
         guard parser.project(message.data) is Object(fields) else {
           raise @mcap.io_error("invalid decoded synchronization value")
         }
@@ -160,13 +161,6 @@ fn sync_file(
       transaction.sink().write(@utf8.encode((value.stringify() + "\n")[:]))
     }
     transaction.publish()
-  } catch {
-    error => {
-      transaction.abort() catch {
-        _ => ()
-      }
-      raise error
-    }
   }
   println(
     (

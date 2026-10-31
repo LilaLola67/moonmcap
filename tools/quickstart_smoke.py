@@ -65,7 +65,7 @@ def main():
     (work / 'moon.work').write_text('members = ["clean source 目录", "consumer"]\n', encoding='utf-8')
     (consumer / 'moon.pkg').write_text('import { "LilaLola67/moonmcap" @mcap, }\npkgtype(kind:"executable")\n')
     (consumer / 'main.mbt').write_text(example, encoding='utf-8')
-    for command in (['moon', 'run', '.'], ['moon', 'run', '.', '--target', 'js']):
+    for command in (['moon', 'run', '.', '--target', 'wasm'], ['moon', 'run', '.', '--target', 'js']):
         p = run(command, cwd=consumer)
         assert 'MCAP_SAMPLE_OK' in p.stdout
     report = {'result': 'passed', 'documented_commands': len(commands), 'fixture_sha256_checked': True,

@@ -80,7 +80,7 @@ pub async fn open_http(
   }
   let (size, etag) = match metadata.split_once("|") {
     Some((size, etag)) =>
-      (@mcap.parse_decimal(size.to_string()), etag.to_string())
+      (@mcap.parse_decimal(size.to_owned()), etag.to_owned())
     None => raise @mcap.io_error("invalid HTTP metadata")
   }
   new_source(

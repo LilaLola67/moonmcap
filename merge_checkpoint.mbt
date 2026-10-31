@@ -1,4 +1,5 @@
 ///|
+#warnings("-missing_priv")
 struct MergeState {
   runs : Array[Int32]
   hashes : Map[Int32, String]
@@ -26,7 +27,7 @@ fn checkpoint_settings(options : ExternalOptions) -> Bytes {
       options.output.chunk_messages,
       options.output.summary_bytes,
     ] {
-    b.write_uint_le(n.to_uint())
+    b.write_uint_le(n.reinterpret_as_uint())
   }
   b.write_uint64_le(options.spool_bytes)
   b.write_uint64_le(options.output.chunk_span)
@@ -43,7 +44,7 @@ fn checkpoint_settings(options : ExternalOptions) -> Bytes {
 ///|
 fn checkpoint_text(b : @buffer.Buffer, text : String) -> Unit {
   let bytes = @utf8.encode(text[:])
-  b.write_uint_le(bytes.length().to_uint())
+  b.write_uint_le(bytes.length().reinterpret_as_uint())
   b.write_bytes(bytes[:])
 }
 
@@ -55,25 +56,25 @@ fn merge_checkpoint(
   let b = @buffer.Buffer::Buffer()
   b.write_bytes(b"MJOB2\r\n\x00"[:])
   b.write_bytes(checkpoint_settings(session.options)[:])
-  b.write_uint_le(state.inputs.length().to_uint())
+  b.write_uint_le(state.inputs.length().reinterpret_as_uint())
   for fingerprint in state.inputs {
     checkpoint_text(b, fingerprint)
   }
   checkpoint_text(b, state.auxiliary)
   b.write_uint64_le(session.ordinal)
-  b.write_uint_le(session.next_id.to_uint())
-  b.write_uint_le(session.passes.to_uint())
-  b.write_uint_le(session.peak_run.to_uint())
-  b.write_uint_le(session.peak_merge.to_uint())
+  b.write_uint_le(session.next_id.reinterpret_as_uint())
+  b.write_uint_le(session.passes.reinterpret_as_uint())
+  b.write_uint_le(session.peak_run.reinterpret_as_uint())
+  b.write_uint_le(session.peak_merge.reinterpret_as_uint())
   b.write_uint64_le(session.peak_spool)
-  b.write_uint_le(state.runs.length().to_uint())
+  b.write_uint_le(state.runs.length().reinterpret_as_uint())
   for id in state.runs {
-    b.write_uint_le(id.to_uint())
+    b.write_uint_le(id.reinterpret_as_uint())
     b.write_uint64_le(session.live[id])
     checkpoint_text(b, state.hashes[id])
   }
-  b.write_uint_le(state.completed.to_uint())
-  b.write_uint_le(state.input_auxiliary.length().to_uint())
+  b.write_uint_le(state.completed.reinterpret_as_uint())
+  b.write_uint_le(state.input_auxiliary.length().reinterpret_as_uint())
   for digest in state.input_auxiliary {
     checkpoint_text(b, digest)
   }
@@ -114,7 +115,7 @@ fn restore_merge(
     raise Invalid("merge checkpoint options changed")
   }
   let count = bounded_length(c.u32().to_uint64(), 64, "checkpoint input count")
-  let inputs = Array::makei(count, fn(_) { c.text() })
+  let inputs = Array::makei(count, _ => c.text())
   if inputs != fingerprints {
     raise Invalid("merge checkpoint input fingerprint/order changed")
   }
@@ -200,7 +201,7 @@ fn checkpoint_input_state(
     64,
     "checkpoint input auxiliary count",
   )
-  let digests = Array::makei(count, fn(_) { c.text() })
+  let digests = Array::makei(count, _ => c.text())
   if (auxiliary == "" && count != completed) ||
     (auxiliary != "" && (completed != inputs || count != 0)) {
     raise Invalid("checkpoint input/auxiliary stage mismatch")
@@ -294,7 +295,7 @@ fn SortSession::auxiliary_sink(
   id : Int32,
 ) -> WriteSink raise McapError {
   let raw = (self.storage.create)(id)
-  new_write_sink(fn(bytes) {
+  new_write_sink(bytes => {
     self.check_cancel()
     if bytes.length().to_uint64() > self.options.spool_bytes - self.spool {
       raise Invalid("auxiliary MCAP exceeds spool budget")
@@ -318,11 +319,11 @@ fn copy_merge_auxiliary(
     scan_source(
       source,
       source_visitor(
-        schema=fn(s) { writer.add_schema(s) },
-        channel=fn(c) { writer.add_channel(c) },
-        attachment=fn(a) { writer.add_attachment(a) },
-        metadata=fn(m) { writer.add_metadata(m) },
-        message=fn(_, _) { raise Invalid("merge auxiliary contains messages") },
+        schema=s => writer.add_schema(s),
+        channel=c => writer.add_channel(c),
+        attachment=a => writer.add_attachment(a),
+        metadata=m => writer.add_metadata(m),
+        message=(_, _) => raise Invalid("merge auxiliary contains messages"),
       ),
       limits=options.limits,
       declaration_bytes=options.declaration_bytes,
@@ -376,7 +377,7 @@ pub fn resumable_merge(
     passes: 0,
     declared: 0,
   }
-  let fingerprints = sources.map(fn(source) {
+  let fingerprints = sources.map(source => {
     session.check_cancel()
     fingerprint(source)
   })
@@ -445,11 +446,9 @@ pub fn resumable_merge(
         scan_source(
           (storage.open)(-1 - state.completed),
           source_visitor(
-            schema=fn(s) { add_schema(global, s) },
-            channel=fn(c) { add_channel(global, c) },
-            message=fn(_, _) {
-              raise Invalid("input auxiliary contains messages")
-            },
+            schema=s => add_schema(global, s),
+            channel=c => add_channel(global, c),
+            message=(_, _) => raise Invalid("input auxiliary contains messages"),
           ),
           limits=options.limits,
           declaration_bytes=options.declaration_bytes,
@@ -536,15 +535,15 @@ pub fn resumable_merge(
     raise Invalid("merge checkpoint message count mismatch")
   }
   while state.runs.length() > options.fan_in {
-    let group = state.runs[0:options.fan_in].to_array()
+    let group = state.runs[0:options.fan_in].to_owned()
     let mut count = 0UL
     for id in group {
       count += session.open_run(id).count
     }
     let (id, sink) = session.create(count)
-    session.merge_group(group, fn(row) { write_sort_row(sink, row) })
+    session.merge_group(group, row => write_sort_row(sink, row))
     state.hashes[id] = fingerprint((storage.open)(id))
-    let runs = state.runs[options.fan_in:].to_array()
+    let runs = state.runs[options.fan_in:].to_owned()
     runs.push(id)
     let next = { ..state, runs, }
     session.passes += 1
@@ -571,18 +570,18 @@ pub fn resumable_merge(
     scan_source(
       auxiliary,
       source_visitor(
-        schema=fn(s) { writer.add_schema(s) },
-        channel=fn(c) { writer.add_channel(c) },
-        attachment=fn(a) { writer.add_attachment(a) },
-        metadata=fn(m) { writer.add_metadata(m) },
-        message=fn(_, _) { raise Invalid("merge auxiliary contains messages") },
+        schema=s => writer.add_schema(s),
+        channel=c => writer.add_channel(c),
+        attachment=a => writer.add_attachment(a),
+        metadata=m => writer.add_metadata(m),
+        message=(_, _) => raise Invalid("merge auxiliary contains messages"),
       ),
       limits=options.limits,
       declaration_bytes=options.declaration_bytes,
       cancelled~,
     ),
   )
-  session.merge_group(state.runs, fn(row) { writer.append(row.message) })
+  session.merge_group(state.runs, row => writer.append(row.message))
   let result = writer.finish()
   {
     input_files: sources.length(),

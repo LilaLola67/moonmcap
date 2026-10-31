@@ -158,13 +158,12 @@ fn TriggerRecorder::publish(
     ],
   }
   self.delivering = true
-  (self.emit)(log, report) catch {
-    error => {
+  {
+    defer {
       self.delivering = false
-      raise error
     }
+    (self.emit)(log, report)
   }
-  self.delivering = false
   self.completed += 1
   self.active = None
   self.active_bytes = 0
@@ -179,47 +178,44 @@ pub fn TriggerRecorder::feed(
   if self.state != WriterOpen || self.delivering {
     raise Invalid("trigger recorder is closed or delivering")
   }
-  try {
-    if (self.last is Some(time) && message.log_time < time) ||
-      !self.template.channels.any(fn(c) { c.id == message.channel_id }) ||
-      message.data.length() > self.options.buffer_bytes - 31 {
-      raise Invalid(
-        "trigger input is unordered, undeclared or larger than buffer",
-      )
-    }
-    if self.active is Some(_) && message.log_time > self.deadline {
-      self.publish(true)
-    }
-    if self.first is None {
-      self.first = Some(message.log_time)
-    }
-    self.last = Some(message.log_time)
-    self.append_active(message)
-    let cutoff = time_before(message.log_time, self.options.pre)
-    while self.head < self.ring.length() &&
-          self.ring[self.head].unwrap().log_time < cutoff {
-      self.discard_head(false)
-    }
-    while self.head < self.ring.length() &&
-          (
-            self.ring.length() - self.head >= self.options.buffer_messages ||
-            message.data.length() >
-            self.options.buffer_bytes - self.buffered_bytes - 31
-          ) {
-      self.discard_head(true)
-    }
-    self.ring.push(Some(message))
-    self.buffered_bytes += message.data.length() + 31
-    if self.head > 1024 && self.head > self.ring.length() / 2 {
-      self.ring = self.ring[self.head:].to_array()
-      self.head = 0
-    }
-  } catch {
-    error => {
-      self.state = WriterFailed
-      self.release()
-      raise error
-    }
+  errdefer {
+    self.state = WriterFailed
+    self.release()
+  }
+
+  if (self.last is Some(time) && message.log_time < time) ||
+    !self.template.channels.any(fn(c) { c.id == message.channel_id }) ||
+    message.data.length() > self.options.buffer_bytes - 31 {
+    raise Invalid(
+      "trigger input is unordered, undeclared or larger than buffer",
+    )
+  }
+  if self.active is Some(_) && message.log_time > self.deadline {
+    self.publish(true)
+  }
+  if self.first is None {
+    self.first = Some(message.log_time)
+  }
+  self.last = Some(message.log_time)
+  self.append_active(message)
+  let cutoff = time_before(message.log_time, self.options.pre)
+  while self.head < self.ring.length() &&
+        self.ring[self.head].unwrap().log_time < cutoff {
+    self.discard_head(false)
+  }
+  while self.head < self.ring.length() &&
+        (
+          self.ring.length() - self.head >= self.options.buffer_messages ||
+          message.data.length() >
+          self.options.buffer_bytes - self.buffered_bytes - 31
+        ) {
+    self.discard_head(true)
+  }
+  self.ring.push(Some(message))
+  self.buffered_bytes += message.data.length() + 31
+  if self.head > 1024 && self.head > self.ring.length() / 2 {
+    self.ring = self.ring[self.head:].to_owned()
+    self.head = 0
   }
 }
 
@@ -233,34 +229,31 @@ pub fn TriggerRecorder::trigger(
   if self.state != WriterOpen || self.delivering {
     raise Invalid("trigger recorder is closed or delivering")
   }
-  try {
-    guard self.last is Some(time) else {
-      raise Invalid("feed a message before triggering")
+  errdefer {
+    self.state = WriterFailed
+    self.release()
+  }
+
+  guard self.last is Some(time) else {
+    raise Invalid("feed a message before triggering")
+  }
+  if label == "" || label.length() > 256 || self.labels.length() >= 128 {
+    raise Invalid("invalid trigger label or label budget exceeded")
+  }
+  if self.active is None {
+    if self.completed >= self.options.event_limit {
+      raise Invalid("trigger output count exceeded")
     }
-    if label == "" || label.length() > 256 || self.labels.length() >= 128 {
-      raise Invalid("invalid trigger label or label budget exceeded")
-    }
-    if self.active is None {
-      if self.completed >= self.options.event_limit {
-        raise Invalid("trigger output count exceeded")
-      }
-      self.start = time_before(time, self.options.pre)
-      self.pre_complete = self.first.unwrap() <= self.start &&
-        !(self.capacity_evicted_through is Some(t) && t >= self.start)
-      self.active = Some([])
-      for i = self.head; i < self.ring.length(); i = i + 1 {
-        self.append_active(self.ring[i].unwrap())
-      }
-    }
-    self.deadline = time_after(time, self.options.post)
-    self.labels.push(label)
-  } catch {
-    error => {
-      self.state = WriterFailed
-      self.release()
-      raise error
+    self.start = time_before(time, self.options.pre)
+    self.pre_complete = self.first.unwrap() <= self.start &&
+      !(self.capacity_evicted_through is Some(t) && t >= self.start)
+    self.active = Some([])
+    for i = self.head; i < self.ring.length(); i = i + 1 {
+      self.append_active(self.ring[i].unwrap())
     }
   }
+  self.deadline = time_after(time, self.options.post)
+  self.labels.push(label)
 }
 
 ///|
@@ -271,17 +264,14 @@ pub fn TriggerRecorder::finish(self : TriggerRecorder) -> Unit raise McapError {
   if self.state != WriterOpen || self.delivering {
     raise Invalid("trigger recorder is closed or delivering")
   }
-  try {
-    self.publish(self.last is Some(time) && time >= self.deadline)
-    self.state = WriterFinished
+  errdefer {
+    self.state = WriterFailed
     self.release()
-  } catch {
-    error => {
-      self.state = WriterFailed
-      self.release()
-      raise error
-    }
   }
+
+  self.publish(self.last is Some(time) && time >= self.deadline)
+  self.state = WriterFinished
+  self.release()
 }
 
 ///|

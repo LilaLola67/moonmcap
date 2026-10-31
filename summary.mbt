@@ -72,8 +72,8 @@ pub fn validate_summary(
     !offsets.any(fn(r) { r.offset.to_uint64() == footer.summary_offset_start }) {
     raise Invalid("SummaryOffset pointer is not an offset record boundary")
   }
-  let seen : Map[Byte, Bool] = {}
-  let groups : Map[Byte, (UInt64, UInt64)] = {}
+  let seen : Map[Byte, Bool] = Map([])
+  let groups : Map[Byte, (UInt64, UInt64)] = Map([])
   let mut previous : Byte? = None
   for record in summary {
     if previous != Some(record.opcode) {
@@ -90,7 +90,7 @@ pub fn validate_summary(
       group.1 + (record.body.length() + 9).to_uint64(),
     )
   }
-  let indexed : Map[Byte, Bool] = {}
+  let indexed : Map[Byte, Bool] = Map([])
   for record in offsets {
     let value = decode_summary_offset(record.body)
     if indexed.contains(value.opcode) {
@@ -127,11 +127,11 @@ pub fn validate_metadata_indexes(
   limits~ : Limits = default_limits(),
 ) -> Int32 raise McapError {
   let records = scan_file(bytes, limits~)
-  let physical : Map[UInt64, Record] = {}
+  let physical : Map[UInt64, Record] = Map([])
   for record in records {
     physical[record.offset.to_uint64()] = record
   }
-  let seen : Map[UInt64, Bool] = {}
+  let seen : Map[UInt64, Bool] = Map([])
   let mut count = 0
   for record in records {
     if record.opcode != 0x0d {

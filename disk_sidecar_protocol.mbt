@@ -82,23 +82,19 @@ pub fn DiskSidecarAudit::feed(
   self : DiskSidecarAudit,
   bytes : Bytes,
 ) -> Unit raise McapError {
-  try {
-    guard self.poll() is Some(_) else {
-      raise Invalid("disk index audit already complete")
-    }
-    let entries = self.reader.accept_page(self.page, bytes)
-    if self.previous is Some(previous) &&
-      !disk_entry_before(previous, entries[0]) {
-      raise Invalid("disk index cross-page order mismatch")
-    }
-    self.previous = entries.last()
-    self.page += 1
-  } catch {
-    error => {
-      self.failed = true
-      raise error
-    }
+  errdefer {
+    self.failed = true
   }
+
+  guard self.poll() is Some(_) else {
+    raise Invalid("disk index audit already complete")
+  }
+  let entries = self.reader.accept_page(self.page, bytes)
+  if self.previous is Some(previous) && !disk_entry_before(previous, entries[0]) {
+    raise Invalid("disk index cross-page order mismatch")
+  }
+  self.previous = entries.last()
+  self.page += 1
 }
 
 ///|
@@ -215,80 +211,75 @@ pub fn DiskSidecarPollCursor::poll(
   if self.state != FileActive {
     return DiskDone
   }
-  try {
-    while self.searching {
-      if self.low == self.high {
-        self.position = if self.query.descending {
-          self.low - 1
-        } else {
-          self.low
-        }
-        self.searching = false
-        break
-      }
-      let middle = self.low + (self.high - self.low) / 2
-      guard self.entry(middle) is Some(entry) else {
-        return self.index_request()
-      }
-      let time = if self.query.descending {
-        self.query.end_time
+  errdefer {
+    self.state = FileFailed
+  }
+
+  while self.searching {
+    if self.low == self.high {
+      self.position = if self.query.descending {
+        self.low - 1
       } else {
-        self.query.start_time
+        self.low
       }
-      if entry.time < time || (self.query.descending && entry.time == time) {
-        self.low = middle + 1
-      } else {
-        self.high = middle
-      }
+      self.searching = false
+      break
     }
-    while self.remaining > 0 &&
-          self.position >= 0 &&
-          self.position < self.reader.count {
-      guard self.entry(self.position) is Some(entry) else {
-        return self.index_request()
-      }
-      if entry.time < self.query.start_time || entry.time > self.query.end_time {
-        break
-      }
-      if !self.allowed.contains(entry.channel) || self.offset > 0 {
-        if self.allowed.contains(entry.channel) {
-          self.offset -= 1
-        }
-        self.position += if self.query.descending { -1 } else { 1 }
-        continue
-      }
-      let message = match self.ready {
-        Some(message) => message
-        None =>
-          if entry.location.inner is Some(_) &&
-            self.reader.base.cached_offset == Some(entry.location.offset) &&
-            self.reader.base.cached_span == entry.location.span {
-            self.reader.base.load(entry)
-          } else {
-            self.waiting_entry = Some(entry)
-            return DiskSourceRead({
-              offset: entry.location.offset,
-              length: entry.location.span,
-            })
-          }
-      }
-      self.ready = None
-      self.waiting_entry = None
-      self.position += if self.query.descending { -1 } else { 1 }
-      self.remaining -= 1
-      if self.remaining == 0 {
-        self.state = FileExhausted
-      }
-      return DiskMessage(message)
+    let middle = self.low + (self.high - self.low) / 2
+    guard self.entry(middle) is Some(entry) else { return self.index_request() }
+    let time = if self.query.descending {
+      self.query.end_time
+    } else {
+      self.query.start_time
     }
-    self.state = FileExhausted
-    DiskDone
-  } catch {
-    error => {
-      self.state = FileFailed
-      raise error
+    if entry.time < time || (self.query.descending && entry.time == time) {
+      self.low = middle + 1
+    } else {
+      self.high = middle
     }
   }
+  while self.remaining > 0 &&
+        self.position >= 0 &&
+        self.position < self.reader.count {
+    guard self.entry(self.position) is Some(entry) else {
+      return self.index_request()
+    }
+    if entry.time < self.query.start_time || entry.time > self.query.end_time {
+      break
+    }
+    if !self.allowed.contains(entry.channel) || self.offset > 0 {
+      if self.allowed.contains(entry.channel) {
+        self.offset -= 1
+      }
+      self.position += if self.query.descending { -1 } else { 1 }
+      continue
+    }
+    let message = match self.ready {
+      Some(message) => message
+      None =>
+        if entry.location.inner is Some(_) &&
+          self.reader.base.cached_offset == Some(entry.location.offset) &&
+          self.reader.base.cached_span == entry.location.span {
+          self.reader.base.load(entry)
+        } else {
+          self.waiting_entry = Some(entry)
+          return DiskSourceRead({
+            offset: entry.location.offset,
+            length: entry.location.span,
+          })
+        }
+    }
+    self.ready = None
+    self.waiting_entry = None
+    self.position += if self.query.descending { -1 } else { 1 }
+    self.remaining -= 1
+    if self.remaining == 0 {
+      self.state = FileExhausted
+    }
+    return DiskMessage(message)
+  }
+  self.state = FileExhausted
+  DiskDone
 }
 
 ///|
@@ -310,20 +301,17 @@ pub fn DiskSidecarPollCursor::feed_index(
   self : DiskSidecarPollCursor,
   bytes : Bytes,
 ) -> Unit raise McapError {
-  try {
-    guard self.state == FileActive &&
-      self.waiting_page is Some(page) &&
-      self.waiting_entry is None else {
-      raise Invalid("unexpected index page feed")
-    }
-    self.current = Some((page, self.reader.accept_page(page, bytes)))
-    self.waiting_page = None
-  } catch {
-    error => {
-      self.state = FileFailed
-      raise error
-    }
+  errdefer {
+    self.state = FileFailed
   }
+
+  guard self.state == FileActive &&
+    self.waiting_page is Some(page) &&
+    self.waiting_entry is None else {
+    raise Invalid("unexpected index page feed")
+  }
+  self.current = Some((page, self.reader.accept_page(page, bytes)))
+  self.waiting_page = None
 }
 
 ///|
@@ -332,43 +320,36 @@ pub fn DiskSidecarPollCursor::feed_source(
   bytes : Bytes,
   expanded? : Bytes,
 ) -> Unit raise McapError {
-  try {
-    guard self.state == FileActive &&
-      self.waiting_entry is Some(entry) &&
-      self.waiting_page is None &&
-      self.ready is None &&
-      bytes.length() == entry.location.span else {
-      raise Invalid("unexpected indexed source feed")
-    }
-    let span = entry.location
-    let mirror = new_read_source(self.reader.base.source.size, fn(
-      offset,
-      length,
-    ) {
-      if offset < span.offset ||
-        offset - span.offset > bytes.length().to_uint64() {
-        raise Invalid("disk index feed offset mismatch")
-      }
-      let start = (offset - span.offset).to_int()
-      if length > bytes.length() - start {
-        raise Invalid("disk index feed length mismatch")
-      }
-      bytes[start:start + length].to_owned()
-    })
-    let staged = { ..self.reader.base, source: mirror, }
-    self.ready = Some(staged.load(entry, expanded?))
-    self.reader.base.cached = staged.cached
-    self.reader.base.cached_offset = staged.cached_offset
-    self.reader.base.cached_span = staged.cached_span
-    self.reader.base.cached_bytes = staged.cached_bytes
-    self.waiting_entry = None
-  } catch {
-    error => {
-      self.state = FileFailed
-      self.ready = None
-      raise error
-    }
+  errdefer {
+    self.state = FileFailed
+    self.ready = None
   }
+
+  guard self.state == FileActive &&
+    self.waiting_entry is Some(entry) &&
+    self.waiting_page is None &&
+    self.ready is None &&
+    bytes.length() == entry.location.span else {
+    raise Invalid("unexpected indexed source feed")
+  }
+  let span = entry.location
+  let mirror = new_read_source(self.reader.base.source.size, (offset, length) => {
+    if offset < span.offset || offset - span.offset > bytes.length().to_uint64() {
+      raise Invalid("disk index feed offset mismatch")
+    }
+    let start = (offset - span.offset).to_int()
+    if length > bytes.length() - start {
+      raise Invalid("disk index feed length mismatch")
+    }
+    bytes[start:start + length].to_owned()
+  })
+  let staged = { ..self.reader.base, source: mirror, }
+  self.ready = Some(staged.load(entry, expanded?))
+  self.reader.base.cached = staged.cached
+  self.reader.base.cached_offset = staged.cached_offset
+  self.reader.base.cached_span = staged.cached_span
+  self.reader.base.cached_bytes = staged.cached_bytes
+  self.waiting_entry = None
 }
 
 ///|

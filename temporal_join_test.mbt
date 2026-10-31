@@ -13,7 +13,7 @@ fn join_test_stream(
       position[0] += 1
       Some({
         channel_id: 1,
-        sequence: p.to_uint(),
+        sequence: p.reinterpret_as_uint(),
         log_time: times[p],
         publish_time: times[p],
         data: b"x",

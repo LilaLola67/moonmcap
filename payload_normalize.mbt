@@ -68,7 +68,7 @@ fn normalize_conversion(
       if ![8, 16, 32, 64].contains(bits) {
         raise Invalid("invalid normalized integer width")
       }
-      let n = payload_signed(value, bits).to_int64()
+      let n = payload_signed(value, bits).reinterpret_as_int64()
       Json::number(n.to_double(), repr=n.to_string())
     }
     UnsignedValue(bits) => {
@@ -226,7 +226,7 @@ pub fn normalizing_decoder(
   fields : Array[NormalizedField],
 ) -> PayloadDecoder raise McapError {
   let normalizer = payload_normalizer(fields)
-  payload_decoder(fn(schema, channel, bytes) {
+  payload_decoder((schema, channel, bytes) => {
     normalizer.normalize((decoder.decode_payload)(schema, channel, bytes)).value
   })
 }

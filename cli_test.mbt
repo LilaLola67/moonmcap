@@ -76,7 +76,7 @@ test "CSV quotes multiline topics and JSON exports UInt64 clocks as strings" {
     {
       "channel_id": 1,
       "topic": "/a,\"b\n",
-      "sequence": 4294967295U.to_json(),
+      "sequence": Json(4294967295U),
       "log_time": "18446744073709551615",
       "publish_time": "18446744073709551614",
       "data_hex": "00ff",

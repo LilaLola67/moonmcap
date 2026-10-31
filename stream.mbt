@@ -47,13 +47,11 @@ pub fn StreamDecoder::feed(
   if self.failed || self.finished {
     raise Invalid("stream is closed or poisoned")
   }
-  self.feed_inner(bytes) catch {
-    error => {
-      self.failed = true
-      self.pending.reset()
-      raise error
-    }
+  errdefer {
+    self.failed = true
+    self.pending.reset()
   }
+  self.feed_inner(bytes)
 }
 
 ///|

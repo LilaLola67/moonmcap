@@ -264,7 +264,7 @@ def execute_recipe(recipe_path, directory, *, resume=False, stop_after=None):
         seen.add(step['id'])
     with locked(directory, resume) as job:
         moon = os.environ.get('MOON', 'moon')
-        run_command(job, [moon, 'build', '--target', 'js', '--warn-list', '-a'])
+        run_command(job, [moon, 'build', '--target', 'js', '--deny-warn'])
         identity = run_command(job, [moon, 'version', '--all'])
         compiler = re.search(r'moonc v([^\s]+)', identity)
         if compiler is None:

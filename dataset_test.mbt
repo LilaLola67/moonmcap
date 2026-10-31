@@ -38,12 +38,11 @@ test "dataset pages equal stable physical multi-file reference including seek" {
     ),
   ]
   let dataset = @moonmcap.open_dataset(
-    readers.map(fn(reader) { reader.query_source() }),
+    readers.map(reader => reader.query_source()),
   )
   for descending in [false, true] {
     for topics in [[], ["/shared"], ["/different"], ["/missing"]] {
-      let query = {
-        ..@moonmcap.all_query(),
+      let query : @moonmcap.Query = {
         descending,
         topics,
         start_time: 2UL,

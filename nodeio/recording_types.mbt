@@ -16,7 +16,7 @@ fn RecordingDirectory::operation(
   }
   let result = (self.operate)(op, id, bytes)
   if result.has_prefix("!") {
-    raise @mcap.io_error(result[1:].to_string())
+    raise @mcap.io_error(result[1:].to_owned())
   }
   result
 }
@@ -38,25 +38,23 @@ pub fn RecordingDirectory::storage(
   self : RecordingDirectory,
 ) -> @mcap.RecordingStorage {
   @mcap.recording_storage(
-    fn(id) {
+    id => {
       ignore(self.operation("create", id~))
-      @mcap.new_write_sink(fn(bytes) {
-        ignore(self.operation("write", id~, bytes~))
-      })
+      @mcap.new_write_sink(bytes => ignore(self.operation("write", id~, bytes~)))
     },
-    fn(id) { open_file(self.operation("source", id~)) },
-    fn(id) { self.operation("exists", id~) == "true" },
-    fn(id) { ignore(self.operation("seal", id~)) },
-    fn(bytes) { ignore(self.operation("save", bytes~)) },
-    fn(id) { ignore(self.operation("quarantine", id~)) },
-    fn() {
+    id => open_file(self.operation("source", id~)),
+    id => self.operation("exists", id~) == "true",
+    id => ignore(self.operation("seal", id~)),
+    bytes => ignore(self.operation("save", bytes~)),
+    id => ignore(self.operation("quarantine", id~)),
+    () => {
       let value = @json.parse(self.operation("list")[:]) catch {
         _ => raise @mcap.io_error("invalid recording file inventory")
       }
       guard value is Array(items) else {
         raise @mcap.io_error("invalid recording file inventory")
       }
-      items.map(fn(item) { @mcap.parse_decimal(item.stringify()).to_int() })
+      items.map(item => @mcap.parse_decimal(item.stringify()).to_int())
     },
     source_sha256,
   )

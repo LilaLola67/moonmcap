@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn input_lines() -> () -> String =
@@ -65,8 +70,8 @@ fn run(values : Array[String]) -> Unit raise @mcap.McapError {
     raise @mcap.io_error("1..128 device channels required")
   }
   let builder = @mcap.new_builder()
-  let ids : Map[String, Int32] = {}
-  let json_channels : Map[String, Bool] = {}
+  let ids : Map[String, Int32] = Map([])
+  let json_channels : Map[String, Bool] = Map([])
   for value in channels {
     let channel = object(value, [
       "topic", "message_encoding", "schema", "metadata",
@@ -92,7 +97,7 @@ fn run(values : Array[String]) -> Unit raise @mcap.McapError {
       Some(Object(entries)) =>
         entries
         .to_array()
-        .map(fn(pair) {
+        .map(pair => {
           guard pair.1 is String(s) else {
             raise @mcap.io_error("device metadata strings required")
           }
@@ -121,7 +126,7 @@ fn run(values : Array[String]) -> Unit raise @mcap.McapError {
   }
   let directory = @nodeio.open_recording_directory(
     values[1],
-    resume=values.length() == 3,
+    resume_name=values.length() == 3,
   )
   defer directory.close()
   let session = @mcap.open_recording_session(
@@ -136,65 +141,58 @@ fn run(values : Array[String]) -> Unit raise @mcap.McapError {
   )
   let next = input_lines()
   println(({ "kind": "ready" } : Json).stringify())
-  try {
-    while true {
-      let line = next()
-      if line == "" {
-        break
-      }
-      if line.has_prefix("!") {
-        raise @mcap.io_error(line)
-      }
-      let fields = object(parse(@utf8.encode(line[1:][:])), [
-        "topic", "log_time", "publish_time", "sequence", "data_hex", "value",
-      ])
-      let topic = text(fields, "topic")
-      guard ids.get(topic) is Some(channel_id) else {
-        raise @mcap.io_error("unregistered device topic")
-      }
-      if fields.contains("data_hex") == fields.contains("value") {
-        raise @mcap.io_error(
-          "device envelope requires exactly data_hex or value",
-        )
-      }
-      let data = if fields.contains("data_hex") {
-        @mcap.decode_hex(text(fields, "data_hex"), max_bytes=1024 * 1024)
-      } else {
-        if !json_channels[topic] {
-          raise @mcap.io_error("value is only accepted on JSON channels")
-        }
-        @utf8.encode(fields["value"].stringify()[:])
-      }
-      if data.length() > 1024 * 1024 {
-        raise @mcap.io_error("device payload exceeds 1 MiB")
-      }
-      let sequence = @mcap.parse_decimal(text(fields, "sequence"))
-      if sequence > 4294967295UL {
-        raise @mcap.io_error("device sequence exceeds UInt32")
-      }
-      session.append({
-        channel_id,
-        sequence: sequence.to_uint(),
-        log_time: @mcap.parse_decimal(text(fields, "log_time")),
-        publish_time: @mcap.parse_decimal(text(fields, "publish_time")),
-        data,
-      })
-      println(
-        (
-          {
-            "kind": "accepted",
-            "committed_messages": session.committed_messages().to_string(),
-          } : Json).stringify(),
-      )
+  errdefer session.cancel()
+
+  while true {
+    let line = next()
+    if line == "" {
+      break
     }
-    let report = session.finish()
-    println(({ "kind": "finished", "recording": report } : Json).stringify())
-  } catch {
-    error => {
-      session.cancel()
-      raise error
+    if line.has_prefix("!") {
+      raise @mcap.io_error(line)
     }
+    let fields = object(parse(@utf8.encode(line[1:][:])), [
+      "topic", "log_time", "publish_time", "sequence", "data_hex", "value",
+    ])
+    let topic = text(fields, "topic")
+    guard ids.get(topic) is Some(channel_id) else {
+      raise @mcap.io_error("unregistered device topic")
+    }
+    if fields.contains("data_hex") == fields.contains("value") {
+      raise @mcap.io_error("device envelope requires exactly data_hex or value")
+    }
+    let data = if fields.contains("data_hex") {
+      @mcap.decode_hex(text(fields, "data_hex"), max_bytes=1024 * 1024)
+    } else {
+      if !json_channels[topic] {
+        raise @mcap.io_error("value is only accepted on JSON channels")
+      }
+      @utf8.encode(fields["value"].stringify()[:])
+    }
+    if data.length() > 1024 * 1024 {
+      raise @mcap.io_error("device payload exceeds 1 MiB")
+    }
+    let sequence = @mcap.parse_decimal(text(fields, "sequence"))
+    if sequence > 4294967295UL {
+      raise @mcap.io_error("device sequence exceeds UInt32")
+    }
+    session.append({
+      channel_id,
+      sequence: sequence.to_uint(),
+      log_time: @mcap.parse_decimal(text(fields, "log_time")),
+      publish_time: @mcap.parse_decimal(text(fields, "publish_time")),
+      data,
+    })
+    println(
+      (
+        {
+          "kind": "accepted",
+          "committed_messages": session.committed_messages().to_string(),
+        } : Json).stringify(),
+    )
   }
+  let report = session.finish()
+  println(({ "kind": "finished", "recording": report } : Json).stringify())
 }
 
 ///|

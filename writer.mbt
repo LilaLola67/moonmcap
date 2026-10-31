@@ -9,7 +9,7 @@ pub fn validate_log(
     limits.max_decompressed_bytes < 0 {
     raise Invalid("invalid resource limits")
   }
-  let schema_ids : Map[Int32, Bool] = {}
+  let schema_ids : Map[Int32, Bool] = Map([])
   for schema in log.schemas {
     if schema_ids.contains(schema.id) {
       raise Invalid("duplicate schema id")
@@ -21,7 +21,7 @@ pub fn validate_log(
     }
     ignore(decode_schema(body, limits~))
   }
-  let channel_ids : Map[Int32, Bool] = {}
+  let channel_ids : Map[Int32, Bool] = Map([])
   for channel in log.channels {
     if channel_ids.contains(channel.id) {
       raise Invalid("duplicate channel id")

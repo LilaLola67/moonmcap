@@ -4,6 +4,7 @@ extern "js" fn identity(path : String) -> String =
 
 ///|
 #external
+#warnings("-missing_priv")
 type FileRead
 
 ///|
@@ -45,10 +46,10 @@ pub fn open_file(path : String) -> @mcap.ReadSource raise @mcap.McapError {
     raise @mcap.io_error(signature)
   }
   let size = match signature.split_once("|") {
-    Some((size, _)) => @mcap.parse_decimal(size.to_string())
+    Some((size, _)) => @mcap.parse_decimal(size.to_owned())
     None => raise @mcap.io_error("invalid file identity")
   }
-  @mcap.new_read_source(size, fn(offset, length) {
+  @mcap.new_read_source(size, (offset, length) => {
     let result = range_bytes(path, signature, offset.to_string(), length)
     let error = file_read_error(result)
     if error != "" {
@@ -90,7 +91,7 @@ pub fn create_sink(path : String) -> @mcap.WriteSink raise @mcap.McapError {
     raise @mcap.io_error(signature)
   }
   let position = [0UL]
-  @mcap.new_write_sink(fn(bytes) {
+  @mcap.new_write_sink(bytes => {
     let error = append_bytes(path, signature, position[0].to_string(), bytes)
     if error != "" {
       raise @mcap.io_error(error)

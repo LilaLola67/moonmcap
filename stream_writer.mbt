@@ -517,3 +517,21 @@ pub fn StreamWriter::progress(self : StreamWriter) -> WriteProgress {
     retained_summary_bytes: self.retained,
   }
 }
+
+///|
+pub extend StreamOptions with @debug.Debug::{to_repr}
+
+///|
+pub extend StreamOptions with Eq::{not_equal, equal}
+
+///|
+pub extend WriteProgress with @debug.Debug::{to_repr}
+
+///|
+pub extend WriteProgress with Eq::{not_equal, equal}
+
+///|
+pub extend WriterState with @debug.Debug::{to_repr}
+
+///|
+pub extend WriterState with Eq::{not_equal, equal}

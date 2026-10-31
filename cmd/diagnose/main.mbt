@@ -1,6 +1,11 @@
 ///|
-extern "js" fn arguments() -> Array[String] =
+extern "js" fn host_arguments() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn arguments() -> Array[String] {
+  Array::from_fixed_array(host_arguments())
+}
 
 ///|
 extern "js" fn exit_code(code : Int32) -> Unit =
@@ -86,22 +91,17 @@ fn run(
       )
     }
     let transaction = @nodeio.output_transaction(options["--output"])
-    try {
-      let report = @mcap.recover_blocks_detailed(
-        source,
-        transaction.sink(),
-        limits~,
-        summary_bytes~,
-        max_ranges=integer(options.get("--max-ranges").unwrap_or("10000")),
-      )
-      transaction.publish()
-      println(report.stringify())
-    } catch {
-      error => {
-        transaction.abort()
-        raise error
-      }
-    }
+    errdefer transaction.abort()
+
+    let report = @mcap.recover_blocks_detailed(
+      source,
+      transaction.sink(),
+      limits~,
+      summary_bytes~,
+      max_ranges=integer(options.get("--max-ranges").unwrap_or("10000")),
+    )
+    transaction.publish()
+    println(report.stringify())
   }
 }
 

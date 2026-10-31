@@ -1,3 +1,5 @@
+supported_targets = "js"
+
 import {
   "LilaLola67/moonmcap" @mcap,
   "LilaLola67/moonmcap/nodeio",
@@ -7,5 +9,5 @@ import {
 pkgtype(kind: "executable")
 
 options(
-  targets: { "main.mbt": [ "js" ], "unsupported.mbt": [ "not", "js" ] },
+  targets: { "main.mbt": [ "js" ] },
 )

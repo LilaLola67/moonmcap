@@ -53,7 +53,7 @@ pub fn diagnose_source(
   let mut bytes = 0UL
   let mut peak_read = 0
   let mut peak_record = 0
-  let bounded = new_read_source(source.size(), fn(offset, length) {
+  let bounded = new_read_source(source.size(), (offset, length) => {
     if cancelled() {
       raise Invalid("source diagnosis cancelled")
     }
@@ -167,7 +167,7 @@ pub fn diagnose_source(
     issues.push({
       "code": source_issue_code(reason).name(),
       "message": if reason.length() > 1024 {
-        reason[0:1024].to_string()
+        reason[0:1024].to_owned()
       } else {
         reason
       },

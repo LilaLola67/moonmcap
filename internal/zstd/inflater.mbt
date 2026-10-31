@@ -34,7 +34,7 @@ struct Inflater(InflaterState)
 
 ///|
 pub fn Inflater::new(
-  dict~ : Bytes = Bytes::default(),
+  dict~ : Bytes = Default::default(),
   output_limit~ : Int32 = 64 * 1024 * 1024,
 ) -> Inflater {
   let parsed = Result::Ok(parse_dictionary_bytes(dict)) catch {
@@ -100,7 +100,7 @@ pub fn Inflater::enable_direct_output(
 pub fn Inflater::take_output(self : Inflater) -> Bytes {
   match self.0.sink {
     Some(sink) => sink.to_bytes()
-    None => Bytes::default()
+    None => Default::default()
   }
 }
 
@@ -274,6 +274,7 @@ pub fn Inflater::decode(self : Inflater) -> Decode {
 }
 
 ///|
+#warnings("-result_error_return")
 fn decode_raw_block(
   s : InflaterState,
   input : Bytes,
@@ -288,6 +289,7 @@ fn decode_raw_block(
 }
 
 ///|
+#warnings("-result_error_return")
 fn decode_rle_block(
   s : InflaterState,
   input : Bytes,
@@ -302,6 +304,7 @@ fn decode_rle_block(
 }
 
 ///|
+#warnings("-result_error_return")
 fn decode_compressed_block(
   s : InflaterState,
   input : Bytes,

@@ -23,7 +23,7 @@ pub fn Compression::name(self : Compression) -> String {
 ///|
 pub fn compress_payload(bytes : Bytes, compression : Compression) -> Bytes {
   match compression {
-    Uncompressed => bytes.copy()
+    Uncompressed => copy_payload(bytes)
     Lz4 => @lz4.compress(bytes)
     Zstd => @zstd.compress(bytes)
   }
@@ -49,7 +49,7 @@ pub fn decompress_payload(
       if bytes.length() != expected {
         raise Invalid("uncompressed chunk size mismatch")
       }
-      bytes.copy()
+      copy_payload(bytes)
     }
     "lz4" => decode_lz4_frame(bytes, expected)
     "zstd" => {
@@ -57,21 +57,23 @@ pub fn decompress_payload(
       let inflater = @zstd.Inflater::new(output_limit=expected)
       inflater.src(bytes[:])
       let out = @buffer.Buffer::Buffer()
-      loop inflater.decode() {
-        @zstd.Await => raise Invalid("truncated Zstd frame")
-        @zstd.Error(error) => raise Invalid("invalid Zstd frame: \{error}")
-        @zstd.Data(data) => {
-          if data.length() > expected - out.length() {
-            raise Invalid("Zstd output exceeds declared size")
+      for signal = inflater.decode() {
+        match signal {
+          @zstd.Await => raise Invalid("truncated Zstd frame")
+          @zstd.Error(error) => raise Invalid("invalid Zstd frame: \{error}")
+          @zstd.Data(data) => {
+            if data.length() > expected - out.length() {
+              raise Invalid("Zstd output exceeds declared size")
+            }
+            out.write_bytes(data)
+            continue inflater.decode()
           }
-          out.write_bytes(data)
-          continue inflater.decode()
-        }
-        @zstd.End => {
-          if out.length() != expected {
-            raise Invalid("Zstd output size mismatch")
+          @zstd.End => {
+            if out.length() != expected {
+              raise Invalid("Zstd output size mismatch")
+            }
+            break out.to_bytes()
           }
-          out.to_bytes()
         }
       }
     }

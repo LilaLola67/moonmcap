@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn error_exit(text : String) -> Unit =
@@ -63,7 +68,9 @@ fn run(
     }
     if values[0] == "build-paged" {
       let output = @nodeio.output_transaction(values[2])
-      try {
+      {
+        errdefer output.abort()
+
         let info = @mcap.build_paged_field_index(
           source,
           output.sink(),
@@ -76,11 +83,6 @@ fn run(
         )
         output.publish()
         println(info.stringify())
-      } catch {
-        error => {
-          output.abort()
-          raise error
-        }
       }
       return
     }
@@ -94,7 +96,7 @@ fn run(
   if values[0] != "query" {
     raise @mcap.io_error("unknown field command")
   }
-  let rest = values[3:].to_array()
+  let rest = values[3:].to_owned()
   let parsed = @mcap.parse_command(["dataset-query", values[1]] + rest)
   if parsed.full || !parsed.indexes.is_empty() || parsed.inputs.length() != 1 {
     raise @mcap.io_error("field query requires a single selective source")
@@ -122,28 +124,25 @@ fn run(
   } else {
     Some(@nodeio.output_transaction(parsed.output))
   }
-  try {
-    while cursor.next_record() is Some(record) {
-      let line = @mcap.json_query_record(record, dataset.channels(), filter).stringify() +
-        "\n"
-      match transaction {
-        None => println(line[0:line.length() - 1])
-        Some(output) => output.sink().write(@utf8.encode(line[:]))
-      }
-    }
+  errdefer {
+    cursor.cancel()
     if transaction is Some(output) {
-      output.publish()
-    }
-    report(plan.info().stringify())
-  } catch {
-    error => {
-      cursor.cancel()
-      if transaction is Some(output) {
-        output.abort()
-      }
-      raise error
+      output.abort()
     }
   }
+
+  while cursor.next_record() is Some(record) {
+    let line = @mcap.json_query_record(record, dataset.channels(), filter).stringify() +
+      "\n"
+    match transaction {
+      None => println(line[0:line.length() - 1])
+      Some(output) => output.sink().write(@utf8.encode(line[:]))
+    }
+  }
+  if transaction is Some(output) {
+    output.publish()
+  }
+  report(plan.info().stringify())
 }
 
 ///|

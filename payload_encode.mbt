@@ -74,7 +74,7 @@ fn payload_edit_paths(
   if edits.length() > 128 {
     raise Invalid("payload edit count exceeds 128")
   }
-  let paths = edits.map(fn(e) { json_pointer(e.path) })
+  let paths = edits.map(e => json_pointer(e.path))
   for i = 0; i < paths.length(); i = i + 1 {
     for j = 0; j < i; j = j + 1 {
       let a = paths[i]
@@ -129,7 +129,7 @@ fn payload_signed(value : Json, bits : Int32) -> UInt64 raise McapError {
   if bits < 64 && (number < -(1L << (bits - 1)) || number >= 1L << (bits - 1)) {
     raise Invalid("payload signed integer out of range")
   }
-  number.to_uint64()
+  number.reinterpret_as_uint64()
 }
 
 ///|
@@ -144,6 +144,7 @@ fn payload_float(value : Json) -> Double raise McapError {
 }
 
 ///|
+#warnings("-missing_priv")
 struct PayloadOutput {
   buffer : @buffer.Buffer
   maximum : Int32

@@ -33,6 +33,7 @@ pub(all) struct FileDiagnosis {
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-missing_priv")
 struct DataInspection {
   log : Log
   chunks : Int32
@@ -419,3 +420,21 @@ pub fn diagnosis_json(report : FileDiagnosis) -> Json {
     }),
   }
 }
+
+///|
+pub extend Diagnostic with @debug.Debug::{to_repr}
+
+///|
+pub extend Diagnostic with Eq::{not_equal, equal}
+
+///|
+pub extend DiagnosticCode with @debug.Debug::{to_repr}
+
+///|
+pub extend DiagnosticCode with Eq::{not_equal, equal}
+
+///|
+pub extend FileDiagnosis with @debug.Debug::{to_repr}
+
+///|
+pub extend FileDiagnosis with Eq::{not_equal, equal}

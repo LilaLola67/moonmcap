@@ -118,6 +118,8 @@ async fn RotatingWriter::close_segment(self : RotatingWriter) -> Unit {
 }
 
 ///|
+// Catch classifies legacy cancellation errors; errdefer performs all cleanup.
+#warnings("-fragile_catch_all")
 pub async fn RotatingWriter::append(
   self : RotatingWriter,
   message : @mcap.Message,
@@ -132,6 +134,15 @@ pub async fn RotatingWriter::append(
   self.busy = true
   defer {
     self.busy = false
+  }
+  let cancelled = [true]
+  errdefer {
+    if self.state == AsyncOpen {
+      self.state = if cancelled[0] { AsyncCancelled } else { AsyncFailed }
+    }
+    if self.current is Some(writer) {
+      writer.cancel()
+    }
   }
   try {
     if self.current is Some(writer) {
@@ -167,16 +178,7 @@ pub async fn RotatingWriter::append(
     }
   } catch {
     error => {
-      if self.state == AsyncOpen {
-        self.state = if @async.is_cancellation_error(error) {
-          AsyncCancelled
-        } else {
-          AsyncFailed
-        }
-      }
-      if self.current is Some(writer) {
-        writer.cancel()
-      }
+      cancelled[0] = @async.is_cancellation_error(error)
       raise error
     }
   }
@@ -193,16 +195,11 @@ pub async fn RotatingWriter::finish(
   defer {
     self.busy = false
   }
-  try {
+  {
+    errdefer (if self.state == AsyncOpen { self.state = AsyncFailed })
+
     self.close_segment()
     self.state = AsyncFinished
-  } catch {
-    error => {
-      if self.state == AsyncOpen {
-        self.state = AsyncFailed
-      }
-      raise error
-    }
   }
   self.reports.copy()
 }

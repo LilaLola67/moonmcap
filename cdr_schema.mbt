@@ -41,18 +41,18 @@ pub struct CdrDecoder {
 }
 
 ///|
-fn cdr_name(name : String, package : String) -> String raise McapError {
+fn cdr_name(name : String, package_name : String) -> String raise McapError {
   let parts = name.split("/").to_array()
-  let normalized = if parts.length() == 1 && package != "" {
-    package + "/" + name
+  let normalized = if parts.length() == 1 && package_name != "" {
+    package_name + "/" + name
   } else if parts.length() == 2 {
     name
   } else if parts.length() == 3 && parts[1] == "msg" {
-    parts[0].to_string() + "/" + parts[2].to_string()
+    parts[0].to_owned() + "/" + parts[2].to_owned()
   } else {
     raise Invalid("CDR type requires a ROS message resource name")
   }
-  if !normalized.split("/").all(fn(part) { proto_identifier(part.to_string()) }) {
+  if !normalized.split("/").all(fn(part) { proto_identifier(part.to_owned()) }) {
     raise Invalid("invalid CDR resource name")
   }
   normalized
@@ -79,7 +79,7 @@ fn cdr_bound(text : String, maximum : Int32) -> Int32 raise McapError {
 fn cdr_field(
   token : String,
   name : String,
-  package : String,
+  package_name : String,
   options : CdrOptions,
   ros1 : Bool,
 ) -> CdrField raise McapError {
@@ -94,13 +94,13 @@ fn cdr_field(
     if !right.has_suffix("]") {
       raise Invalid("malformed CDR array type")
     }
-    let count = right[0:right.length() - 1].to_string()
-    base = left.to_string()
+    let count = right[0:right.length() - 1].to_owned()
+    base = left.to_owned()
     if count == "" {
       array = Some(-1)
     } else if count.has_prefix("<=") {
       array = Some(-1)
-      bound = Some(cdr_bound(count[2:].to_string(), options.items))
+      bound = Some(cdr_bound(count[2:].to_owned(), options.items))
     } else {
       array = Some(cdr_bound(count, options.items))
     }
@@ -109,7 +109,7 @@ fn cdr_field(
     }
   }
   if base.has_prefix("string<=") {
-    string_bound = Some(cdr_bound(base[8:].to_string(), options.string_bytes))
+    string_bound = Some(cdr_bound(base[8:].to_owned(), options.string_bytes))
     base = "string"
   }
   if !cdr_primitive(base) {
@@ -121,7 +121,7 @@ fn cdr_field(
     } else if base == "duration" {
       "builtin_interfaces/Duration"
     } else {
-      cdr_name(base, package)
+      cdr_name(base, package_name)
     }
   }
   { name, base, array, bound, string_bound, }
@@ -200,7 +200,7 @@ fn cdr_decoder_internal(
   let mut separator = false
   let mut count = 0
   for raw in text.split("\n") {
-    let line = raw.split("#").next().unwrap().trim().to_string()
+    let line = raw.split("#").next().unwrap().trim().to_owned()
     if line == "" {
       continue
     }
@@ -216,7 +216,7 @@ fn cdr_decoder_internal(
       if !separator {
         raise Invalid("ros2msg dependency requires a separator")
       }
-      current = cdr_name(line[5:].trim().to_string(), "")
+      current = cdr_name(line[5:].trim().to_owned(), "")
       if definitions.contains(current) {
         raise Invalid("duplicate CDR type definition")
       }
@@ -240,11 +240,11 @@ fn cdr_decoder_internal(
       (pieces.length() > 2 && pieces[2].has_prefix("=")) {
       continue
     }
-    let package = current.split("/").next().unwrap().to_string()
+    let package_name = current.split("/").next().unwrap().to_owned()
     let field = cdr_field(
-      pieces[0].to_string(),
-      pieces[1].to_string(),
-      package,
+      pieces[0].to_owned(),
+      pieces[1].to_owned(),
+      package_name,
       options,
       ros1,
     )

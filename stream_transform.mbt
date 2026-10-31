@@ -77,11 +77,9 @@ pub fn stream_transform(
       raise Invalid("invalid streaming transform query")
     }
     let normalized_sink = work.create(-1)
-    let nested = sort_storage(
-      fn(id) { work.create(id) },
-      fn(id) { (storage.open)(id) },
-      fn(id) { work.remove(id) },
-    )
+    let nested = sort_storage(id => work.create(id), id => (storage.open)(id), id => {
+      work.remove(id)
+    })
     let sorted = external_merge(
       [source],
       nested,
@@ -246,7 +244,7 @@ pub fn stream_transform(
       scan_source(
         normalized,
         source_visitor(
-          attachment=fn(value) {
+          attachment=value => {
             if cancelled() {
               raise Invalid("stream transform cancelled")
             }
@@ -277,7 +275,7 @@ pub fn stream_transform(
             }
             writer.add_attachment(mapped)
           },
-          metadata=fn(value) {
+          metadata=value => {
             if (
                 options.metadata_names.is_empty() ||
                 options.metadata_names.contains(value.name)
@@ -338,7 +336,7 @@ pub fn FileCursor::write_ndjson(
   while self.next() is Some(message) {
     let text = messages_json([message], self.reader.declarations.channels).stringify()
     // Remove the one-element array wrapper, retaining one JSON object per line.
-    sink.write(@utf8.encode((text[1:text.length() - 1].to_string() + "\n")[:]))
+    sink.write(@utf8.encode((text[1:text.length() - 1].to_owned() + "\n")[:]))
     count += 1
   }
   count

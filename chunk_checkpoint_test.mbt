@@ -30,7 +30,7 @@ test "chunk checkpoints reuse committed parts and match stable merge reference" 
       memory_sort_storage(Map([]), closed),
       @moonmcap.new_write_sink(fn(_) { () }),
       index_test_fingerprint,
-      fn(data) {
+      data => {
         saved[0] = data
         if parts.length() == 2 {
           raise @moonmcap.io_error("simulated stop after committed Chunk")

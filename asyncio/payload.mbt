@@ -16,34 +16,27 @@ pub fn AsyncQuerySource::decode_payload(
   }
   async_query_source(
     declarations,
-    fn(query, budget) {
+    (query, budget) => {
       let stream = (self.open)(query, budget)
       async_message_stream(
         async fn() {
-          try {
-            match (stream.next)() {
-              None => {
-                (stream.stop)()
-                None
-              }
-              Some(message) => {
-                let decoded = decoder.decode_message(
-                  message,
-                  self.declarations,
-                  max_bytes~,
-                )
-                if budget < 31 || decoded.data.length() > budget - 31 {
-                  raise @mcap.io_error(
-                    "decoded message exceeds provider budget",
-                  )
-                }
-                Some(decoded)
-              }
-            }
-          } catch {
-            error => {
+          errdefer (stream.stop)()
+
+          match (stream.next)() {
+            None => {
               (stream.stop)()
-              raise error
+              None
+            }
+            Some(message) => {
+              let decoded = decoder.decode_message(
+                message,
+                self.declarations,
+                max_bytes~,
+              )
+              if budget < 31 || decoded.data.length() > budget - 31 {
+                raise @mcap.io_error("decoded message exceeds provider budget")
+              }
+              Some(decoded)
             }
           }
         },

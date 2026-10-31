@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn clock_text() -> String =
@@ -40,8 +45,8 @@ async fn main {
           Some(pair) => pair
           None => raise @mcap.io_error("rate uses N/D")
         }
-        let n = @mcap.parse_decimal(a.to_string())
-        let d = @mcap.parse_decimal(b.to_string())
+        let n = @mcap.parse_decimal(a.to_owned())
+        let d = @mcap.parse_decimal(b.to_owned())
         if n < 1UL || d < 1UL || n > 1000000UL || d > 1000000UL {
           raise @mcap.io_error("rate outside range")
         }

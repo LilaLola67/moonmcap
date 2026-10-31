@@ -30,11 +30,11 @@ fn json_pointer(text : String) -> Array[String] raise McapError {
   if !text.has_prefix("/") || text.length() > 1024 {
     raise Invalid("invalid JSON Pointer")
   }
-  let segments = text[1:].split("/").map(fn(s) { s.to_string() }).to_array()
+  let segments = text[1:].split("/").map(fn(s) { s.to_owned() }).to_array()
   if segments.length() > 64 {
     raise Invalid("JSON Pointer depth exceeded")
   }
-  segments.map(fn(segment) {
+  segments.map(segment => {
     let mut i = 0
     while i < segment.length() {
       if segment[i].to_int() == 126 {
@@ -101,7 +101,7 @@ fn compile_condition(
           guard child is Array(children) && !children.is_empty() else {
             raise Invalid("all/any needs a nonempty array")
           }
-          let conditions = children.map(fn(c) {
+          let conditions = children.map(c => {
             compile_condition(c, depth + 1, nodes)
           })
           return if name == "all" { All(conditions) } else { Any(conditions) }
@@ -178,8 +178,8 @@ fn JsonCondition::matches(
 ) -> Bool raise McapError {
   match self {
     Constant(value) => value
-    All(children) => children.all(fn(child) { child.matches(document) })
-    Any(children) => children.any(fn(child) { child.matches(document) })
+    All(children) => children.all(child => child.matches(document))
+    Any(children) => children.any(child => child.matches(document))
     Not(child) => !child.matches(document)
     Compare(path, op, expected) => {
       let value = match pointer_value(document, path) {
@@ -231,7 +231,7 @@ pub fn json_filter(
   }
   let value = parse_json_document(@utf8.encode(expression[:]), 32768, 32)
   let seen : Map[String, Bool] = Map([])
-  let projections = select.map(fn(path) {
+  let projections = select.map(path => {
     if seen.contains(path) {
       raise Invalid("duplicate JSON projection")
     }
@@ -300,7 +300,7 @@ pub fn QueryIndex::query_source(
 ) -> QuerySource raise McapError {
   query_source(
     { ..self.log, messages: [], attachments: [], metadata: [], },
-    fn(query, _) {
+    (query, _) => {
       let cursor = self.cursor(query)
       message_stream(fn() { cursor.next() }, fn() { cursor.cancel() })
     },
@@ -315,7 +315,7 @@ pub fn QuerySource::filter_json(
 ) -> QuerySource raise McapError {
   query_source(
     self.declarations,
-    fn(query, budget) {
+    (query, budget) => {
       let inner = (self.open)(
         { ..query, offset: 0, limit: 2147483647, },
         budget,
@@ -324,42 +324,39 @@ pub fn QuerySource::filter_json(
       let skipped = [query.offset]
       let closed = [false]
       message_stream(
-        fn() {
+        () => {
           if closed[0] || remaining[0] == 0 {
             (inner.stop)()
             closed[0] = true
             return None
           }
-          try {
-            while (inner.next_message)() is Some(message) {
-              if !matches_json_message(
-                  message,
-                  self.declarations.channels,
-                  filter,
-                ) {
-                continue
-              }
-              if skipped[0] > 0 {
-                skipped[0] -= 1
-                continue
-              }
-              remaining[0] -= 1
-              if remaining[0] == 0 {
-                (inner.stop)()
-                closed[0] = true
-              }
-              return Some(message)
-            }
+          errdefer {
             (inner.stop)()
             closed[0] = true
-            None
-          } catch {
-            error => {
+          }
+
+          while (inner.next_message)() is Some(message) {
+            if !matches_json_message(
+                message,
+                self.declarations.channels,
+                filter,
+              ) {
+              continue
+            }
+            if skipped[0] > 0 {
+              skipped[0] -= 1
+              continue
+            }
+            remaining[0] -= 1
+            if remaining[0] == 0 {
               (inner.stop)()
               closed[0] = true
-              raise error
             }
+            return Some(message)
           }
+          (inner.stop)()
+          closed[0] = true
+          None
         },
         fn() {
           closed[0] = true
@@ -384,3 +381,6 @@ pub fn json_query_record(
   }
   value
 }
+
+///|
+pub extend JsonInvalidPolicy with Eq::{not_equal, equal}

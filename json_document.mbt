@@ -1,4 +1,5 @@
 ///|
+#warnings("-missing_priv")
 struct JsonDocumentParser {
   bytes : Bytes
   depth : Int32
@@ -58,6 +59,7 @@ fn JsonDocumentParser::string(
 }
 
 ///|
+#warnings("-missing_priv")
 struct ExactDecimal {
   negative : Bool
   digits : String
@@ -90,7 +92,7 @@ fn decimal_parts(text : String) -> ExactDecimal raise McapError {
     }
   }
   let digits = StringBuilder::StringBuilder()
-  digits.write_string(text[mantissa:i].to_string())
+  digits.write_string(text[mantissa:i].to_owned())
   let mut fraction = 0
   if i < bytes.length() && bytes[i] == b'.' {
     i += 1
@@ -102,7 +104,7 @@ fn decimal_parts(text : String) -> ExactDecimal raise McapError {
     if fraction == 0 {
       raise Invalid("invalid JSON fraction")
     }
-    digits.write_string(text[start:i].to_string())
+    digits.write_string(text[start:i].to_owned())
   }
   let mut exponent = 0
   if i < bytes.length() && [b'e', b'E'].contains(bytes[i]) {
@@ -143,7 +145,7 @@ fn decimal_parts(text : String) -> ExactDecimal raise McapError {
   }
   {
     negative,
-    digits: raw[start:end].to_string(),
+    digits: raw[start:end].to_owned(),
     exponent: exponent - fraction + raw.length() - end,
   }
 }

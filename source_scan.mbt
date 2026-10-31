@@ -60,8 +60,8 @@ pub fn scan_source(
     fallback_bytes=0,
   )
   let storage = sort_storage(
-    fn(_) { raise Invalid("scan cannot create sort runs") },
-    fn(_) { raise Invalid("scan cannot read sort runs") },
+    _ => raise Invalid("scan cannot create sort runs"),
+    _ => raise Invalid("scan cannot read sort runs"),
     fn(_) { () },
   )
   let options = { ..external_options(), limits, declaration_bytes, }
@@ -93,3 +93,9 @@ pub fn scan_source(
   session.ingest(source, global, writer, [])
   session.ordinal
 }
+
+///|
+pub extend MessageLocation with @debug.Debug::{to_repr}
+
+///|
+pub extend MessageLocation with Eq::{not_equal, equal}

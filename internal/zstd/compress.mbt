@@ -6,7 +6,7 @@
 pub fn compress(
   data : Bytes,
   level~ : CompressionLevel = Default,
-  dict~ : Bytes = Bytes::default(),
+  dict~ : Bytes = Default::default(),
 ) -> Bytes {
   ignore(level)
   // This MCAP adapter emits dictionary-free blocks with explicit offsets.

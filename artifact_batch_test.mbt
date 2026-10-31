@@ -26,14 +26,14 @@ fn ArtifactMemory::storage(
 ) -> @moonmcap.ArtifactBatchStorage {
   @moonmcap.artifact_batch_storage(
     fn() { self.checkpoint },
-    fn(bytes) {
+    bytes => {
       self.checkpoint = Some(bytes)
       self.saves += 1
       if self.saves == self.fail_save {
         raise @moonmcap.io_error("simulated crash after durable save")
       }
     },
-    fn(id) {
+    id => {
       if self.data.contains(id) {
         raise @moonmcap.io_error("artifact already exists")
       }
@@ -43,7 +43,7 @@ fn ArtifactMemory::storage(
       })
     },
     fn(_) { () },
-    fn(id) {
+    id => {
       guard self.data.get(id) is Some(bytes) else {
         raise @moonmcap.io_error("missing artifact")
       }
@@ -55,7 +55,7 @@ fn ArtifactMemory::storage(
       }
       padded
     },
-    fn(id) {
+    id => {
       self.published[id] = true
       if self.fail_publish {
         self.fail_publish = false
@@ -101,7 +101,7 @@ test "artifact batches resume complete outputs and reject changed plans or conte
     "source+recipe+version",
     3,
     memory.storage(),
-    fn(_, _) { raise @moonmcap.io_error("completed batch re-executed") },
+    (_, _) => raise @moonmcap.io_error("completed batch re-executed"),
   )
   try
     @moonmcap.run_artifact_batch(
@@ -152,7 +152,7 @@ test "artifact batches recover prepared receipts on either side of publication" 
       _ => fail("fault injection did not interrupt")
     }
     assert_eq(memory.data.length(), 1)
-    let _ = @moonmcap.run_artifact_batch("plan", 1, memory.storage(), fn(_, _) {
+    let _ = @moonmcap.run_artifact_batch("plan", 1, memory.storage(), (_, _) => {
       raise @moonmcap.io_error("prepared artifact was re-executed")
     })
     assert_true(memory.published[0])
@@ -163,7 +163,7 @@ test "artifact batches recover prepared receipts on either side of publication" 
 test "artifact batches restart incomplete writes and fail closed on orphan finals" {
   let memory = artifact_memory()
   try
-    @moonmcap.run_artifact_batch("plan", 1, memory.storage(), fn(_, sink) {
+    @moonmcap.run_artifact_batch("plan", 1, memory.storage(), (_, sink) => {
       sink.write(b"partial")
       raise @moonmcap.io_error("interrupted writer")
     })

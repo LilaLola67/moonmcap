@@ -1,4 +1,5 @@
 ///|
+#warnings("-missing_priv")
 struct SchemaComparison {
   mut old_reads_new : Bool
   mut new_reads_old : Bool
@@ -43,7 +44,7 @@ fn SchemaComparison::visit(
   if depth > 64 || self.visited.length() > 4096 {
     raise Invalid("schema comparison traversal budget exceeded")
   }
-  let key = a + "\x00" + b
+  let key = a + "\u0000" + b
   if self.visited.contains(key) {
     return false
   }
@@ -308,12 +309,12 @@ pub fn compare_payload_schemas(
           protobuf_decoder(old.data),
           protobuf_decoder(new.data),
           if old.name.has_prefix(".") {
-            old.name[1:].to_string()
+            old.name[1:].to_owned()
           } else {
             old.name
           },
           if new.name.has_prefix(".") {
-            new.name[1:].to_string()
+            new.name[1:].to_owned()
           } else {
             new.name
           },

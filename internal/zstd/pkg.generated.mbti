@@ -14,6 +14,8 @@ pub(all) suberror ZstdError {
   WindowTooLarge(String)
   UnexpectedEOF
 } derive(Show)
+pub fn ZstdError::output(Self, &Logger) -> Unit
+pub fn ZstdError::to_string(Self) -> String
 
 // Types and methods
 pub(all) enum CompressionLevel {
@@ -22,6 +24,10 @@ pub(all) enum CompressionLevel {
   Best
   Level(Int32)
 } derive(Eq, Show)
+pub fn CompressionLevel::equal(Self, Self) -> Bool
+pub fn CompressionLevel::not_equal(Self, Self) -> Bool
+pub fn CompressionLevel::output(Self, &Logger) -> Unit
+pub fn CompressionLevel::to_string(Self) -> String
 
 pub(all) enum Decode {
   Await
@@ -29,6 +35,8 @@ pub(all) enum Decode {
   End
   Error(ZstdError)
 } derive(Show)
+pub fn Decode::output(Self, &Logger) -> Unit
+pub fn Decode::to_string(Self) -> String
 
 type Deflater
 pub fn Deflater::encode(Self, BytesView?) -> Encode
@@ -40,6 +48,8 @@ pub(all) enum Encode {
   End
   Error(ZstdError)
 } derive(Show)
+pub fn Encode::output(Self, &Logger) -> Unit
+pub fn Encode::to_string(Self) -> String
 
 type Inflater
 pub fn Inflater::decode(Self) -> Decode

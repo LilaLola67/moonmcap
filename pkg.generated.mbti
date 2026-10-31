@@ -450,6 +450,9 @@ pub(all) struct BinaryField {
   little_endian : Bool
   aligned : Bool
 } derive(Eq, @debug.Debug)
+pub fn BinaryField::equal(Self, Self) -> Bool
+pub fn BinaryField::not_equal(Self, Self) -> Bool
+pub fn BinaryField::to_repr(Self) -> @debug.Repr
 
 pub(all) struct BlockRecoveryEvidence {
   start : UInt64
@@ -657,6 +660,9 @@ pub(all) struct DatasetMessage {
   source_index : Int32
   message : Message
 } derive(Eq, @debug.Debug)
+pub fn DatasetMessage::equal(Self, Self) -> Bool
+pub fn DatasetMessage::not_equal(Self, Self) -> Bool
+pub fn DatasetMessage::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DatasetProgress {
   state : FileCursorState
@@ -668,12 +674,18 @@ pub(all) struct DatasetProgress {
   pending_bytes : Int32
   peak_pending_bytes : Int32
 } derive(Eq, @debug.Debug)
+pub fn DatasetProgress::equal(Self, Self) -> Bool
+pub fn DatasetProgress::not_equal(Self, Self) -> Bool
+pub fn DatasetProgress::to_repr(Self) -> @debug.Repr
 
 pub(all) struct DecodeSelection {
   paths : Array[String]
   inline_array_items : Int32
   scan_items : Int32
 } derive(Eq, @debug.Debug)
+pub fn DecodeSelection::equal(Self, Self) -> Bool
+pub fn DecodeSelection::not_equal(Self, Self) -> Bool
+pub fn DecodeSelection::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Diagnostic {
   code : DiagnosticCode
@@ -683,6 +695,9 @@ pub(all) struct Diagnostic {
   expected : UInt64?
   actual : UInt64?
 } derive(Eq, @debug.Debug)
+pub fn Diagnostic::equal(Self, Self) -> Bool
+pub fn Diagnostic::not_equal(Self, Self) -> Bool
+pub fn Diagnostic::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DiagnosticCode {
   BadEnvelope
@@ -695,7 +710,10 @@ pub(all) enum DiagnosticCode {
   TruncatedInput
   LimitExceeded
 } derive(Eq, @debug.Debug)
+pub fn DiagnosticCode::equal(Self, Self) -> Bool
 pub fn DiagnosticCode::name(Self) -> String
+pub fn DiagnosticCode::not_equal(Self, Self) -> Bool
+pub fn DiagnosticCode::to_repr(Self) -> @debug.Repr
 
 type DiffBag
 
@@ -825,6 +843,9 @@ pub(all) struct EventSpan {
   end : UInt64
   closed : Bool
 } derive(Eq, @debug.Debug)
+pub fn EventSpan::equal(Self, Self) -> Bool
+pub fn EventSpan::not_equal(Self, Self) -> Bool
+pub fn EventSpan::to_repr(Self) -> @debug.Repr
 
 pub(all) struct EventWindow {
   start : UInt64
@@ -884,6 +905,9 @@ pub(all) struct FieldPageLayout {
   page_bytes : Int32
   pages : Int32
 } derive(Eq, @debug.Debug)
+pub fn FieldPageLayout::equal(Self, Self) -> Bool
+pub fn FieldPageLayout::not_equal(Self, Self) -> Bool
+pub fn FieldPageLayout::to_repr(Self) -> @debug.Repr
 
 pub struct FieldQueryPlan {
   reader : RangeReader
@@ -938,6 +962,9 @@ pub(all) enum FileCursorState {
   FileCancelled
   FileFailed
 } derive(Eq, @debug.Debug)
+pub fn FileCursorState::equal(Self, Self) -> Bool
+pub fn FileCursorState::not_equal(Self, Self) -> Bool
+pub fn FileCursorState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct FileDiagnosis {
   valid : Bool
@@ -948,6 +975,9 @@ pub(all) struct FileDiagnosis {
   data_end : UInt64?
   issues : Array[Diagnostic]
 } derive(Eq, @debug.Debug)
+pub fn FileDiagnosis::equal(Self, Self) -> Bool
+pub fn FileDiagnosis::not_equal(Self, Self) -> Bool
+pub fn FileDiagnosis::to_repr(Self) -> @debug.Repr
 
 type FileItem
 
@@ -968,6 +998,9 @@ pub(all) struct FileProgress {
   peak_pending_bytes : Int32
   used_fallback : Bool
 } derive(Eq, @debug.Debug)
+pub fn FileProgress::equal(Self, Self) -> Bool
+pub fn FileProgress::not_equal(Self, Self) -> Bool
+pub fn FileProgress::to_repr(Self) -> @debug.Repr
 
 pub(all) struct FileStatistics {
   message_count : UInt64
@@ -1031,6 +1064,9 @@ pub(all) enum JoinMode {
   JoinAsOf
   JoinNearest
 } derive(Eq, @debug.Debug)
+pub fn JoinMode::equal(Self, Self) -> Bool
+pub fn JoinMode::not_equal(Self, Self) -> Bool
+pub fn JoinMode::to_repr(Self) -> @debug.Repr
 
 pub(all) struct JoinOptions {
   mode : JoinMode
@@ -1039,6 +1075,9 @@ pub(all) struct JoinOptions {
   buffer_bytes : Int32
   buffer_messages : Int32
 } derive(Eq, @debug.Debug)
+pub fn JoinOptions::equal(Self, Self) -> Bool
+pub fn JoinOptions::not_equal(Self, Self) -> Bool
+pub fn JoinOptions::to_repr(Self) -> @debug.Repr
 
 pub(all) enum JoinPoll {
   JoinReadLeft
@@ -1067,6 +1106,8 @@ pub(all) enum JsonInvalidPolicy {
   JsonError
   JsonSkip
 } derive(Eq)
+pub fn JsonInvalidPolicy::equal(Self, Self) -> Bool
+pub fn JsonInvalidPolicy::not_equal(Self, Self) -> Bool
 
 pub(all) struct Limits {
   max_record_bytes : Int32
@@ -1165,6 +1206,9 @@ pub(all) struct MessageLocation {
   span : Int32
   inner : Int32?
 } derive(Eq, @debug.Debug)
+pub fn MessageLocation::equal(Self, Self) -> Bool
+pub fn MessageLocation::not_equal(Self, Self) -> Bool
+pub fn MessageLocation::to_repr(Self) -> @debug.Repr
 
 pub struct MessageStream {
   next_message : () -> Message? raise McapError
@@ -1192,6 +1236,9 @@ pub(all) enum MissingMatch {
   JoinKeep
   JoinDrop
 } derive(Eq, @debug.Debug)
+pub fn MissingMatch::equal(Self, Self) -> Bool
+pub fn MissingMatch::not_equal(Self, Self) -> Bool
+pub fn MissingMatch::to_repr(Self) -> @debug.Repr
 
 pub(all) enum NormalizedConversion {
   KeepValue
@@ -1340,6 +1387,9 @@ pub(all) enum QueryCursorState {
   Exhausted
   Cancelled
 } derive(Eq, @debug.Debug)
+pub fn QueryCursorState::equal(Self, Self) -> Bool
+pub fn QueryCursorState::not_equal(Self, Self) -> Bool
+pub fn QueryCursorState::to_repr(Self) -> @debug.Repr
 
 pub(all) struct QueryDiagnostics {
   total_chunks : Int32
@@ -1365,6 +1415,9 @@ pub(all) struct QueryProgress {
   remaining_messages : Int32
   buffered_heads : Int32
 } derive(Eq, @debug.Debug)
+pub fn QueryProgress::equal(Self, Self) -> Bool
+pub fn QueryProgress::not_equal(Self, Self) -> Bool
+pub fn QueryProgress::to_repr(Self) -> @debug.Repr
 
 pub(all) struct QueryResult {
   messages : Array[Message]
@@ -1419,6 +1472,9 @@ pub(all) struct ReadDiagnostics {
   indexed : Bool
   full_validation : Bool
 } derive(Eq, @debug.Debug)
+pub fn ReadDiagnostics::equal(Self, Self) -> Bool
+pub fn ReadDiagnostics::not_equal(Self, Self) -> Bool
+pub fn ReadDiagnostics::to_repr(Self) -> @debug.Repr
 
 pub struct ReadSource {
   size : UInt64
@@ -1433,6 +1489,9 @@ pub(all) struct ReadSpan {
   offset : UInt64
   length : Int32
 } derive(Eq, @debug.Debug)
+pub fn ReadSpan::equal(Self, Self) -> Bool
+pub fn ReadSpan::not_equal(Self, Self) -> Bool
+pub fn ReadSpan::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Record {
   opcode : Byte
@@ -1452,6 +1511,9 @@ pub(all) struct RecordingOptions {
   sequences : SequencePolicy
   source_identity : String
 } derive(Eq, @debug.Debug)
+pub fn RecordingOptions::equal(Self, Self) -> Bool
+pub fn RecordingOptions::not_equal(Self, Self) -> Bool
+pub fn RecordingOptions::to_repr(Self) -> @debug.Repr
 
 pub struct RecordingSession {
   template : Log
@@ -1501,6 +1563,9 @@ pub(all) struct RecoveredBlock {
   end : UInt64
   messages : Int32
 } derive(Eq, @debug.Debug)
+pub fn RecoveredBlock::equal(Self, Self) -> Bool
+pub fn RecoveredBlock::not_equal(Self, Self) -> Bool
+pub fn RecoveredBlock::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RecoveryReport {
   log : Log
@@ -1530,7 +1595,8 @@ pub fn Replay::cancel(Self) -> Unit
 pub fn Replay::pause(Self, UInt64) -> Unit raise McapError
 pub fn Replay::poll(Self, UInt64) -> ReplayPoll raise McapError
 pub fn Replay::progress(Self, UInt64) -> ReplayProgress raise McapError
-pub fn Replay::resume(Self, UInt64) -> Unit raise McapError
+#alias(resume)
+pub fn Replay::resume_playback(Self, UInt64) -> Unit raise McapError
 pub fn Replay::seek(Self, UInt64, UInt64) -> Unit raise McapError
 pub fn Replay::set_rate(Self, Int32, Int32, UInt64) -> Unit raise McapError
 pub fn Replay::step(Self, UInt64) -> Message? raise McapError
@@ -1559,6 +1625,9 @@ pub(all) enum ReplayState {
   ReplayCancelled
   ReplayFailed
 } derive(Eq, @debug.Debug)
+pub fn ReplayState::equal(Self, Self) -> Bool
+pub fn ReplayState::not_equal(Self, Self) -> Bool
+pub fn ReplayState::to_repr(Self) -> @debug.Repr
 
 pub struct Ros1Decoder {
   layout : CdrDecoder
@@ -1589,6 +1658,9 @@ pub(all) enum SequencePolicy {
   PreserveSequence
   ContinueSequence
 } derive(Eq, @debug.Debug)
+pub fn SequencePolicy::equal(Self, Self) -> Bool
+pub fn SequencePolicy::not_equal(Self, Self) -> Bool
+pub fn SequencePolicy::to_repr(Self) -> @debug.Repr
 
 pub struct SidecarCursor {
   reader : SidecarReader
@@ -1644,6 +1716,9 @@ pub(all) struct SkippedBlock {
   end : UInt64
   reason : String
 } derive(Eq, @debug.Debug)
+pub fn SkippedBlock::equal(Self, Self) -> Bool
+pub fn SkippedBlock::not_equal(Self, Self) -> Bool
+pub fn SkippedBlock::to_repr(Self) -> @debug.Repr
 
 type SortRow
 
@@ -1697,6 +1772,9 @@ pub(all) struct StreamOptions {
   chunk_span : UInt64
   summary_bytes : Int32
 } derive(Eq, @debug.Debug)
+pub fn StreamOptions::equal(Self, Self) -> Bool
+pub fn StreamOptions::not_equal(Self, Self) -> Bool
+pub fn StreamOptions::to_repr(Self) -> @debug.Repr
 
 pub struct StreamWriter {
   sink : WriteSink
@@ -1773,6 +1851,8 @@ pub(all) enum SyncMode {
   SyncNext
   SyncLinear
 } derive(Eq)
+pub fn SyncMode::equal(Self, Self) -> Bool
+pub fn SyncMode::not_equal(Self, Self) -> Bool
 
 pub(all) struct SyncOptions {
   mode : SyncMode
@@ -1790,6 +1870,8 @@ pub(all) enum SyncReuse {
   SyncAllowReuse
   SyncConsume
 } derive(Eq)
+pub fn SyncReuse::equal(Self, Self) -> Bool
+pub fn SyncReuse::not_equal(Self, Self) -> Bool
 
 pub(all) struct SyncRow {
   time : UInt64
@@ -1851,6 +1933,9 @@ pub(all) struct TemporalMatch {
   distance : UInt64?
   right_is_earlier : Bool
 } derive(Eq, @debug.Debug)
+pub fn TemporalMatch::equal(Self, Self) -> Bool
+pub fn TemporalMatch::not_equal(Self, Self) -> Bool
+pub fn TemporalMatch::to_repr(Self) -> @debug.Repr
 
 type TemporaryWorkspace
 
@@ -1868,6 +1953,9 @@ pub(all) struct TfQuaternion {
   z : Double
   w : Double
 } derive(Eq, @debug.Debug)
+pub fn TfQuaternion::equal(Self, Self) -> Bool
+pub fn TfQuaternion::not_equal(Self, Self) -> Bool
+pub fn TfQuaternion::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TfStamped {
   parent : String
@@ -1882,6 +1970,9 @@ pub(all) struct TfTransform {
   translation : TfVector
   rotation : TfQuaternion
 } derive(Eq, @debug.Debug)
+pub fn TfTransform::equal(Self, Self) -> Bool
+pub fn TfTransform::not_equal(Self, Self) -> Bool
+pub fn TfTransform::to_repr(Self) -> @debug.Repr
 
 pub struct TfTree {
   edges : Map[String, TfEdge]
@@ -1899,6 +1990,9 @@ pub(all) struct TfVector {
   y : Double
   z : Double
 } derive(Eq, @debug.Debug)
+pub fn TfVector::equal(Self, Self) -> Bool
+pub fn TfVector::not_equal(Self, Self) -> Bool
+pub fn TfVector::to_repr(Self) -> @debug.Repr
 
 type TimedSyncMessage
 
@@ -1986,6 +2080,9 @@ pub(all) struct WriteProgress {
   peak_buffered_bytes : Int32
   retained_summary_bytes : Int32
 } derive(Eq, @debug.Debug)
+pub fn WriteProgress::equal(Self, Self) -> Bool
+pub fn WriteProgress::not_equal(Self, Self) -> Bool
+pub fn WriteProgress::to_repr(Self) -> @debug.Repr
 
 pub struct WriteSink {
   write_all : (Bytes) -> Unit raise McapError
@@ -2000,6 +2097,9 @@ pub(all) enum WriterState {
   WriterFailed
   WriterCancelled
 } derive(Eq, @debug.Debug)
+pub fn WriterState::equal(Self, Self) -> Bool
+pub fn WriterState::not_equal(Self, Self) -> Bool
+pub fn WriterState::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

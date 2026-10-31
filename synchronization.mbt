@@ -177,7 +177,7 @@ pub fn synchronize(
     }
     names[input.name] = true
   }
-  let lanes = inputs.mapi(fn(i, input) {
+  let lanes = inputs.mapi((i, input) => {
     let paths = input.interpolation_paths.unwrap_or(options.interpolation_paths)
     if i > 0 && options.mode == SyncLinear && paths.is_empty() {
       raise Invalid(
@@ -376,110 +376,105 @@ pub fn SyncStream::next(self : SyncStream) -> SyncRow? raise McapError {
   if self.state != FileActive {
     return None
   }
-  try {
-    if self.emitted >= self.options.output_rows {
+  errdefer self.close(FileFailed)
+
+  if self.emitted >= self.options.output_rows {
+    self.close(FileExhausted)
+    return None
+  }
+  while true {
+    guard self.pull(self.lanes[0]) is Some(anchor) else {
       self.close(FileExhausted)
       return None
     }
-    while true {
-      guard self.pull(self.lanes[0]) is Some(anchor) else {
-        self.close(FileExhausted)
-        return None
+    self.anchor = Some(anchor)
+    self.check_buffer()
+    self.examined += 1UL
+    let cells = [
+      sync_cell(
+        self.lanes[0].input.name,
+        Some(anchor),
+        anchor.time,
+        synthetic=self.lanes[0].input.synthetic,
+      ),
+    ]
+    let chosen : Array[Int32] = [0]
+    let mut complete = true
+    for i = 1; i < self.lanes.length(); i = i + 1 {
+      let lane = self.lanes[i]
+      if lane.after is None && !lane.done {
+        lane.after = self.pull(lane)
+        self.check_buffer()
       }
-      self.anchor = Some(anchor)
-      self.check_buffer()
-      self.examined += 1UL
-      let cells = [
-        sync_cell(
-          self.lanes[0].input.name,
-          Some(anchor),
-          anchor.time,
-          synthetic=self.lanes[0].input.synthetic,
-        ),
-      ]
-      let chosen : Array[Int32] = [0]
-      let mut complete = true
+      while lane.after is Some(a) && a.time <= anchor.time {
+        lane.before = Some(a)
+        lane.after = None
+        self.check_buffer()
+        lane.after = self.pull(lane)
+        self.check_buffer()
+      }
+      let selected = if self.options.mode == SyncLinear {
+        None
+      } else {
+        match (self.options.mode, lane.before, lane.after) {
+          (SyncPrevious, b, _) => b
+          (SyncNext, Some(b), _) if b.time == anchor.time => Some(b)
+          (SyncNext, _, a) => a
+          (_, None, a) => a
+          (_, b, None) => b
+          (_, Some(b), Some(a)) =>
+            if anchor.time - b.time <= a.time - anchor.time {
+              Some(b)
+            } else {
+              Some(a)
+            }
+        }
+      }
+      let accepted = selected.filter(fn(s) {
+        sync_distance(s.time, anchor.time) <= self.options.tolerance
+      })
+      let cell = if self.options.mode == SyncLinear {
+        self.interpolate(lane, anchor.time)
+      } else {
+        sync_cell(lane.input.name, accepted, anchor.time)
+      }
+      if cell.message is None && cell.interpolated is None {
+        complete = false
+      }
+      chosen.push(
+        match accepted {
+          None => 0
+          Some(s) =>
+            if lane.before is Some(b) && b.time == s.time {
+              1
+            } else {
+              2
+            }
+        },
+      )
+      cells.push(cell)
+    }
+    self.anchor = None
+    if !complete {
+      self.missing += 1UL
+    }
+    if !complete && !self.options.keep_missing {
+      continue
+    }
+    if self.options.reuse == SyncConsume {
       for i = 1; i < self.lanes.length(); i = i + 1 {
-        let lane = self.lanes[i]
-        if lane.after is None && !lane.done {
-          lane.after = self.pull(lane)
-          self.check_buffer()
-        }
-        while lane.after is Some(a) && a.time <= anchor.time {
-          lane.before = Some(a)
-          lane.after = None
-          self.check_buffer()
-          lane.after = self.pull(lane)
-          self.check_buffer()
-        }
-        let selected = if self.options.mode == SyncLinear {
-          None
-        } else {
-          match (self.options.mode, lane.before, lane.after) {
-            (SyncPrevious, b, _) => b
-            (SyncNext, Some(b), _) if b.time == anchor.time => Some(b)
-            (SyncNext, _, a) => a
-            (_, None, a) => a
-            (_, b, None) => b
-            (_, Some(b), Some(a)) =>
-              if anchor.time - b.time <= a.time - anchor.time {
-                Some(b)
-              } else {
-                Some(a)
-              }
-          }
-        }
-        let accepted = selected.filter(fn(s) {
-          sync_distance(s.time, anchor.time) <= self.options.tolerance
-        })
-        let cell = if self.options.mode == SyncLinear {
-          self.interpolate(lane, anchor.time)
-        } else {
-          sync_cell(lane.input.name, accepted, anchor.time)
-        }
-        if cell.message is None && cell.interpolated is None {
-          complete = false
-        }
-        chosen.push(
-          match accepted {
-            None => 0
-            Some(s) =>
-              if lane.before is Some(b) && b.time == s.time {
-                1
-              } else {
-                2
-              }
-          },
-        )
-        cells.push(cell)
-      }
-      self.anchor = None
-      if !complete {
-        self.missing += 1UL
-      }
-      if !complete && !self.options.keep_missing {
-        continue
-      }
-      if self.options.reuse == SyncConsume {
-        for i = 1; i < self.lanes.length(); i = i + 1 {
-          if chosen[i] == 1 {
-            self.lanes[i].before = None
-          } else if chosen[i] == 2 {
-            self.lanes[i].before = None
-            self.lanes[i].after = None
-          }
+        if chosen[i] == 1 {
+          self.lanes[i].before = None
+        } else if chosen[i] == 2 {
+          self.lanes[i].before = None
+          self.lanes[i].after = None
         }
       }
-      self.emitted += 1UL
-      return Some({ time: anchor.time, cells, })
     }
-    None
-  } catch {
-    error => {
-      self.close(FileFailed)
-      raise error
-    }
+    self.emitted += 1UL
+    return Some({ time: anchor.time, cells, })
   }
+  None
 }
 
 ///|
@@ -562,7 +557,7 @@ pub fn sync_row_json(
 ) -> Json raise McapError {
   {
     "time": row.time.to_string(),
-    "cells": row.cells.map(fn(cell) {
+    "cells": row.cells.map(cell => {
       let sample = match cell.message {
         None => Json::null()
         Some(message) =>
@@ -602,3 +597,9 @@ pub fn sync_row_json(
     }),
   }
 }
+
+///|
+pub extend SyncMode with Eq::{not_equal, equal}
+
+///|
+pub extend SyncReuse with Eq::{not_equal, equal}

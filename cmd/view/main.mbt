@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn fail_exit(text : String) -> Unit =
@@ -91,35 +96,30 @@ fn run(values : Array[String]) -> Unit raise @mcap.McapError {
   } else {
     @mcap.cdr_decoder(values[2], schema).view(bytes, selection~)
   }
-  let output = []
+  let output : Array[@nodeio.OutputTransaction] = []
   // Validate every export/window before producing any destination.
-  let window_values = windows.map(fn(w) { view.read_elements(w.0, w.1, w.2) })
+  let window_values = windows.map(w => view.read_elements(w.0, w.1, w.2))
   for (path, _) in exports {
     ignore(view.read_binary(path, 0, 0))
   }
-  try {
-    for (path, target) in exports {
-      let transaction = @nodeio.output_transaction(target)
-      output.push(transaction)
-      ignore(view.write_binary(path, transaction.sink()))
-    }
-    for transaction in output {
-      transaction.publish()
-    }
-    let result : Json = {
-      "data": view.json(),
-      "windows": Json::array(window_values),
-      "metrics": view.info(),
-    }
-    println(result.stringify())
-  } catch {
-    error => {
-      for transaction in output {
-        transaction.abort()
-      }
-      raise error
-    }
+  errdefer (for transaction in output {
+    transaction.abort()
+  })
+
+  for (path, target) in exports {
+    let transaction = @nodeio.output_transaction(target)
+    output.push(transaction)
+    ignore(view.write_binary(path, transaction.sink()))
   }
+  for transaction in output {
+    transaction.publish()
+  }
+  let result : Json = {
+    "data": view.json(),
+    "windows": Json::array(window_values),
+    "metrics": view.info(),
+  }
+  println(result.stringify())
 }
 
 ///|

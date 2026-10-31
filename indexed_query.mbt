@@ -39,7 +39,7 @@ pub fn query_file(
     }
   }
   let records = scan_file(bytes, limits~)
-  let by_offset : Map[UInt64, Record] = {}
+  let by_offset : Map[UInt64, Record] = Map([])
   let declarations = empty_log()
   for record in records {
     by_offset[record.offset.to_uint64()] = record
@@ -49,7 +49,7 @@ pub fn query_file(
       _ => ()
     }
   }
-  let allowed : Map[Int32, Bool] = {}
+  let allowed : Map[Int32, Bool] = Map([])
   for channel in declarations.channels {
     if query.topics.is_empty() || query.topics.contains(channel.topic) {
       allowed[channel.id] = true
@@ -105,7 +105,7 @@ pub fn query_file(
   for i = begin; i < begin + count; i = i + 1 {
     let index = if query.descending { selected.length() - 1 - i } else { i }
     let value = selected[index].0
-    messages.push({ ..value, data: value.data.copy(), })
+    messages.push({ ..value, data: copy_payload(value.data), })
   }
   {
     messages,

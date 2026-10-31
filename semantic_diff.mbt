@@ -63,6 +63,7 @@ fn semantic_channel(
 }
 
 ///|
+#warnings("-missing_priv")
 struct DiffBag {
   counts : Map[String, Int32]
   maximum : Int32
@@ -103,12 +104,12 @@ fn diff_catalog(
     scan_source(
       source,
       source_visitor(
-        schema=fn(value) { add_schema(declarations, value) },
-        channel=fn(value) { add_channel(declarations, value) },
-        attachment=fn(value) {
+        schema=value => add_schema(declarations, value),
+        channel=value => add_channel(declarations, value),
+        attachment=value => {
           bag.add("attachment:" + encode_hex(encode_attachment(value)))
         },
-        metadata=fn(value) {
+        metadata=value => {
           bag.add(
             "metadata:" +
             encode_hex(
@@ -140,6 +141,7 @@ fn diff_catalog(
 }
 
 ///|
+#warnings("-missing_priv")
 struct DiffResult {
   details : Array[Json]
   options : DiffOptions
@@ -183,7 +185,7 @@ fn DiffResult::compare(
       self.omitted += 1
       continue
     }
-    let preview = if key.length() > 256 { key[0:256].to_string() } else { key }
+    let preview = if key.length() > 256 { key[0:256].to_owned() } else { key }
     let entry : Json = {
       "kind": if time is Some(_) {
         "message"
@@ -264,60 +266,57 @@ pub fn diff_sources(
     matching: 0,
     auxiliary_changes: 0,
   }
-  try {
-    result.compare(left_aux, right_aux, None)
-    let mut ma = ca.next()
-    let mut mb = cb.next()
-    while ma is Some(_) || mb is Some(_) {
-      let time = match (ma, mb) {
-        (Some(a), Some(b)) =>
-          if a.log_time < b.log_time {
-            a.log_time
-          } else {
-            b.log_time
-          }
-        (Some(a), _) => a.log_time
-        (_, Some(b)) => b.log_time
-        _ => abort("unreachable")
-      }
-      let ba : DiffBag = {
-        counts: Map([]),
-        maximum: options.bucket_bytes,
-        bytes: 0,
-      }
-      let bb : DiffBag = {
-        counts: Map([]),
-        maximum: options.bucket_bytes,
-        bytes: 0,
-      }
-      while ma is Some(message) && message.log_time == time {
-        ba.add(diff_message_signature(message, a, options))
-        ma = ca.next()
-      }
-      while mb is Some(message) && message.log_time == time {
-        bb.add(diff_message_signature(message, b, options))
-        mb = cb.next()
-      }
-      result.compare(ba, bb, Some(time))
+  errdefer {
+    ca.cancel()
+    cb.cancel()
+  }
+
+  result.compare(left_aux, right_aux, None)
+  let mut ma = ca.next()
+  let mut mb = cb.next()
+  while ma is Some(_) || mb is Some(_) {
+    let time = match (ma, mb) {
+      (Some(a), Some(b)) =>
+        if a.log_time < b.log_time {
+          a.log_time
+        } else {
+          b.log_time
+        }
+      (Some(a), _) => a.log_time
+      (_, Some(b)) => b.log_time
+      _ => abort("unreachable")
     }
-    {
-      "equal": result.left_only == 0 &&
-      result.right_only == 0 &&
-      result.auxiliary_changes == 0,
-      "matching_messages": result.matching,
-      "left_only_messages": result.left_only,
-      "right_only_messages": result.right_only,
-      "auxiliary_changes": result.auxiliary_changes,
-      "details": result.details,
-      "omitted_details": result.omitted,
-      "json_payloads": options.json_payloads,
-      "full_validation": true,
+    let ba : DiffBag = {
+      counts: Map([]),
+      maximum: options.bucket_bytes,
+      bytes: 0,
     }
-  } catch {
-    error => {
-      ca.cancel()
-      cb.cancel()
-      raise error
+    let bb : DiffBag = {
+      counts: Map([]),
+      maximum: options.bucket_bytes,
+      bytes: 0,
     }
+    while ma is Some(message) && message.log_time == time {
+      ba.add(diff_message_signature(message, a, options))
+      ma = ca.next()
+    }
+    while mb is Some(message) && message.log_time == time {
+      bb.add(diff_message_signature(message, b, options))
+      mb = cb.next()
+    }
+    result.compare(ba, bb, Some(time))
+  }
+  {
+    "equal": result.left_only == 0 &&
+    result.right_only == 0 &&
+    result.auxiliary_changes == 0,
+    "matching_messages": result.matching,
+    "left_only_messages": result.left_only,
+    "right_only_messages": result.right_only,
+    "auxiliary_changes": result.auxiliary_changes,
+    "details": result.details,
+    "omitted_details": result.omitted,
+    "json_payloads": options.json_payloads,
+    "full_validation": true,
   }
 }

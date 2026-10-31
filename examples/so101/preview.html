@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SO-101 日志处理结果 · MoonMCAP</title>
+<style>
+body{margin:0;background:#f3f6fa;color:#162536;font:16px/1.65 system-ui,"Segoe UI","Microsoft YaHei",sans-serif}
+main{max-width:1040px;margin:auto;padding:40px 24px}h1{font-size:32px;margin:8px 0}h2{font-size:21px}
+.eyebrow{color:#306cab;font-weight:700}.muted{color:#506278}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:28px 0}
+.card,section{background:white;border:1px solid #dce4ee;border-radius:12px;padding:22px}.number{font-size:36px;font-weight:750;color:#185d91}
+section{margin:18px 0}code{word-break:break-all;background:#eff4fa;padding:2px 5px;border-radius:4px}a{color:#185d91}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;border-bottom:1px solid #e3e9f0;padding:10px 8px;font-variant-numeric:tabular-nums}
+.scroll{overflow:auto}.pass{color:#17654b;font-weight:650}.notice{border-left:4px solid #bd8127;padding-left:16px}ul{padding-left:22px}
+@media(max-width:650px){.cards{grid-template-columns:1fr}main{padding:24px 16px}h1{font-size:26px}}
+</style><main>
+<p class="notice">固定验证结果的展示预览；执行复现命令后，可在本地报告中打开实际输出文件。</p><div class="eyebrow">MoonMCAP · 公开录制操作案例</div>
+<h1>从 SO-101 日志导出关节状态片段</h1>
+<p class="muted">完整校验 → 按主题和时间查询 → 对照侧车索引 → 裁剪并读回 → 验证截断副本的恢复前缀</p>
+<p class="pass">本次操作全部通过，原始录制 SHA-256 保持不变。</p>
+<div class="cards"><div class="card">原始录制<div class="number">4,719</div>条消息，已完成结构及可用 CRC 校验</div>
+<div class="card">目标时间窗<div class="number">14</div>条 /joint_states 消息，索引与完整查询一致</div>
+<div class="card">可恢复前缀<div class="number">2,999</div>条消息，已写出有效 MCAP 并重新校验</div></div>
+<section><h2>选择与结果</h2><p>主题 <code>/joint_states</code>；时间为 UInt64 纳秒闭区间：</p>
+<p><code>1791983428732915000</code> 至 <code>1791983428992984000</code></p>
+<p>片段使用 LZ4 编码，保留对应消息的原始 payload、序号与时间。完整查询和索引查询的消息逐项一致。</p>
+<div class="scroll"><table><thead><tr><th>序号</th><th>log_time / ns</th><th>publish_time / ns</th></tr></thead><tbody><tr><td>0</td><td>1791983428732915000</td><td>1791983428732745000</td></tr><tr><td>0</td><td>1791983428753435000</td><td>1791983428753321000</td></tr><tr><td>0</td><td>1791983428773476000</td><td>1791983428773352000</td></tr><tr><td>0</td><td>1791983428792482000</td><td>1791983428792370000</td></tr><tr><td>0</td><td>1791983428813486000</td><td>1791983428813327000</td></tr><tr><td>0</td><td>1791983428833377000</td><td>1791983428833270000</td></tr><tr><td>0</td><td>1791983428852795000</td><td>1791983428852691000</td></tr><tr><td>0</td><td>1791983428872836000</td><td>1791983428872729000</td></tr><tr><td>0</td><td>1791983428893607000</td><td>1791983428893382000</td></tr><tr><td>0</td><td>1791983428912895000</td><td>1791983428912751000</td></tr><tr><td>0</td><td>1791983428932853000</td><td>1791983428932730000</td></tr><tr><td>0</td><td>1791983428953526000</td><td>1791983428953377000</td></tr><tr><td>0</td><td>1791983428973657000</td><td>1791983428973389000</td></tr><tr><td>0</td><td>1791983428992984000</td><td>1791983428992791000</td></tr></tbody></table></div></section>
+<section><h2>输出文件</h2><ul><li><code>clip.mcap</code>：目标时间窗的完整 MCAP</li>
+<li><code>source.midx</code>：绑定原始录制指纹的侧车索引</li>
+<li><code>recovered.mcap</code>：截断副本中的连续有效前缀</li>
+<li><code>summary.json</code>：来源、参数、校验值与执行结果</li>
+<li><code>recovery.json</code>：部分恢复的停止偏移和原因</li></ul></section>
+<section><h2>恢复结果如何判读</h2><div class="notice">截断由本示例主动制作，原录制没有被改写。本次恢复只证明输出是有效前缀，不能推断输入完整，也不估算丢失消息总量。</div>
+<p>截断字节偏移：<code>2015608</code>；恢复报告 complete：<code>false</code>。</p></section>
+<section><h2>来源与复现</h2><p><a href="https://foxglove.dev/blog/record-and-replay-with-a-ros-2-powered-so-101">发布方 SO-101 案例</a>；原文件大小 2,592,733 字节。</p>
+<p>固定 SHA-256：<code>e11ebd97b793b101b91237dcb4ceac32540aa2adb515df97650ad22116f6ac84</code></p>
+<p>在仓库根目录执行 <code>python examples/so101/run.py</code>。本报告和数据均保存在本地；仓库不重新分发原始录制。</p>
+<p class="muted">这是公开录制文件的离线处理案例，不表示已连接实体机械臂，也不包含相机画面。没有提供值的 CRC 不计作已验证校验和。</p></section>
+</main></html>

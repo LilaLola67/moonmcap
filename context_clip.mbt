@@ -42,7 +42,7 @@ pub fn extract_context_clip(
   let template = source.declaration_log()
   let messages : Array[Message] = []
   let mut bytes = 0
-  let names : Map[String, Bool] = {}
+  let names : Map[String, Bool] = Map([])
   let evidence : Array[Json] = []
   fn retain(message : Message) -> Unit raise McapError {
     if messages.length() >= message_limit ||

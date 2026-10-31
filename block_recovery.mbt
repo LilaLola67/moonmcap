@@ -185,9 +185,7 @@ pub fn recover_blocks_detailed(
     raise Invalid("invalid recovery range or record budget")
   }
   let evidence : Array[Json] = []
-  let report = recover_blocks(source, sink, limits~, options~, summary_bytes~, on_block=fn(
-    block,
-  ) {
+  let report = recover_blocks(source, sink, limits~, options~, summary_bytes~, on_block=block => {
     if evidence.length() >= max_ranges {
       raise Invalid("recovery evidence range budget exceeded")
     }
@@ -244,3 +242,15 @@ pub fn block_recovery_json(report : BlockRecoveryReport) -> Json {
     "gap_time_and_message_counts": "unknown; summary time bounds are not proof of lost content",
   }
 }
+
+///|
+pub extend RecoveredBlock with @debug.Debug::{to_repr}
+
+///|
+pub extend RecoveredBlock with Eq::{not_equal, equal}
+
+///|
+pub extend SkippedBlock with @debug.Debug::{to_repr}
+
+///|
+pub extend SkippedBlock with Eq::{not_equal, equal}

@@ -11,7 +11,7 @@ test "combined chunk checkpoints resume committed final merge groups" {
   let files : Map[Int32, @buffer.Buffer] = Map([])
   let created : Map[Int32, Int32] = Map([])
   let storage = @moonmcap.sort_storage(
-    fn(id) {
+    id => {
       if files.contains(id) {
         raise @moonmcap.io_error("committed pipeline file recreated")
       }
@@ -36,7 +36,7 @@ test "combined chunk checkpoints resume committed final merge groups" {
       storage,
       @moonmcap.new_write_sink(fn(_) { () }),
       index_test_fingerprint,
-      fn(bytes) {
+      bytes => {
         saved[0] = bytes
         if @moonmcap.checkpoint_progress(bytes)
           is { "final_sort": { "merge_groups": 1, .. }, .. } {

@@ -16,7 +16,7 @@ from mcap.writer import Writer, CompressionType
 def main():
     work = ROOT / '_interop/reliability' / uuid.uuid4().hex
     work.mkdir(parents=True)
-    subprocess.run([os.environ.get('MOON', 'moon'), 'build', '--target', 'js', '--warn-list', '-a'], cwd=ROOT, capture_output=True, check=True)
+    subprocess.run([os.environ.get('MOON', 'moon'), 'build', '--target', 'js', '--deny-warn'], cwd=ROOT, capture_output=True, check=True)
     cli = ROOT / '_build/js/debug/build/cmd/mcap/mcap.js'
     count = 0
     def run(*args, code=0):

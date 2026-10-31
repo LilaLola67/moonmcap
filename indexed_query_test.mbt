@@ -10,8 +10,7 @@ test "indexed queries agree with logical index across filters and ordering" {
   let bytes = builder.finish(messages_per_chunk=2)
   for descending in [false, true] {
     for topics in [[], ["/a"], ["missing"]] {
-      let query = {
-        ..@moonmcap.all_query(),
+      let query : @moonmcap.Query = {
         topics,
         descending,
         start_time: 5UL,

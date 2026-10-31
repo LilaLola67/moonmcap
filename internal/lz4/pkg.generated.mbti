@@ -12,6 +12,8 @@ pub(all) suberror Lz4Error {
   ContentSizeMismatch
   UnexpectedEOF
 } derive(Show)
+pub fn Lz4Error::output(Self, &Logger) -> Unit
+pub fn Lz4Error::to_string(Self) -> String
 
 // Types and methods
 pub(all) enum Decode {
@@ -20,6 +22,8 @@ pub(all) enum Decode {
   End
   Error(Lz4Error)
 } derive(Show)
+pub fn Decode::output(Self, &Logger) -> Unit
+pub fn Decode::to_string(Self) -> String
 
 pub(all) enum Encode {
   Ok
@@ -27,6 +31,8 @@ pub(all) enum Encode {
   End
   Error(Lz4Error)
 } derive(Show)
+pub fn Encode::output(Self, &Logger) -> Unit
+pub fn Encode::to_string(Self) -> String
 
 // Type aliases
 

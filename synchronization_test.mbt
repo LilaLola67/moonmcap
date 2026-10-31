@@ -14,7 +14,7 @@ fn sync_test_stream(
       next[0] += 1
       Some({
         channel_id: 1,
-        sequence: n.to_uint(),
+        sequence: n.reinterpret_as_uint(),
         log_time: times[n],
         publish_time: times[n],
         data: if values.is_empty() {

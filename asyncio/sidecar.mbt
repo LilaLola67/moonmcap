@@ -31,7 +31,7 @@ pub async fn open_sidecar(
       @mcap.VerifyContent(fn(_) { digest })
     }
   }
-  let mirror = @mcap.new_read_source(source.size, fn(offset, length) {
+  let mirror = @mcap.new_read_source(source.size, (offset, length) => {
     if offset == 0UL && length == 8 {
       leading
     } else if offset == source.size - 8UL && length == 8 {
@@ -91,26 +91,21 @@ pub async fn AsyncSidecarCursor::next(
   defer {
     self.busy = false
   }
-  try {
-    while true {
-      match self.cursor.poll() {
-        @mcap.FileDone => return None
-        @mcap.FileMessage(message) => return Some(message)
-        @mcap.FileRead(span) => {
-          if span.length > self.budget {
-            raise @mcap.io_error("async sidecar span exceeds budget")
-          }
-          self.cursor.feed(self.source.read_exact(span.offset, span.length))
+  errdefer self.cursor.cancel()
+
+  while true {
+    match self.cursor.poll() {
+      @mcap.FileDone => return None
+      @mcap.FileMessage(message) => return Some(message)
+      @mcap.FileRead(span) => {
+        if span.length > self.budget {
+          raise @mcap.io_error("async sidecar span exceeds budget")
         }
+        self.cursor.feed(self.source.read_exact(span.offset, span.length))
       }
     }
-    None
-  } catch {
-    error => {
-      self.cursor.cancel()
-      raise error
-    }
   }
+  None
 }
 
 ///|

@@ -21,12 +21,12 @@ async fn main {
     if mode == "remote-cancel" {
       let source = @aio.open_http(argument(1), timeout_ms=5000, retries=0)
       let observed = [false]
-      @async.with_task_group(async fn(group) {
+      @runtime.with_task_group(async fn(group) {
         let task = group.spawn(
           async fn() { ignore(source.read_exact(0UL, 8)) },
           allow_failure=true,
         )
-        @async.sleep(10)
+        @runtime.sleep(10)
         source.cancel()
         task.wait() catch {
           _ => observed[0] = true

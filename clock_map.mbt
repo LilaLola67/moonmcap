@@ -91,7 +91,7 @@ pub fn ClockMap::residuals(
   if probes.length() > 10000 {
     raise Invalid("too many clock probes")
   }
-  let rows : Array[Json] = probes.map(fn(probe) {
+  let rows : Array[Json] = probes.map(probe => {
     let predicted = self.map(probe.source)
     let residual = @bigint.BigInt::from_uint64(predicted) -
       @bigint.BigInt::from_uint64(probe.target)
@@ -115,7 +115,7 @@ pub fn QuerySource::calibrate_time(
 ) -> QuerySource raise McapError {
   query_source(
     self.declarations,
-    fn(query, budget) {
+    (query, budget) => {
       if query.start_time > query.end_time ||
         query.offset < 0 ||
         query.limit < 0 {
@@ -149,40 +149,35 @@ pub fn QuerySource::calibrate_time(
         }
       }
       message_stream(
-        fn() {
+        () => {
           if closed[0] || remaining[0] == 0 {
             stop()
             return None
           }
-          try {
-            while (inner.next_message)() is Some(message) {
-              let log_time = mapping.map(message.log_time)
-              if log_time < query.start_time || log_time > query.end_time {
-                continue
-              }
-              if skipped[0] > 0 {
-                skipped[0] -= 1
-                continue
-              }
-              let publish_time = if same_publish_clock {
-                mapping.map(message.publish_time)
-              } else {
-                message.publish_time
-              }
-              remaining[0] -= 1
-              if remaining[0] == 0 {
-                stop()
-              }
-              return Some({ ..message, log_time, publish_time, })
+          errdefer stop()
+
+          while (inner.next_message)() is Some(message) {
+            let log_time = mapping.map(message.log_time)
+            if log_time < query.start_time || log_time > query.end_time {
+              continue
             }
-            stop()
-            None
-          } catch {
-            error => {
+            if skipped[0] > 0 {
+              skipped[0] -= 1
+              continue
+            }
+            let publish_time = if same_publish_clock {
+              mapping.map(message.publish_time)
+            } else {
+              message.publish_time
+            }
+            remaining[0] -= 1
+            if remaining[0] == 0 {
               stop()
-              raise error
             }
+            return Some({ ..message, log_time, publish_time, })
           }
+          stop()
+          None
         },
         stop,
         pending_bytes=inner.pending,
@@ -203,27 +198,23 @@ pub fn calibrate_log(
   validate_log(log)
   let messages = build_query_index(log)
     .query(all_query())
-    .map(fn(m) {
-      {
-        ..m,
-        log_time: mapping.map(m.log_time),
-        publish_time: if same_publish_clock {
-          mapping.map(m.publish_time)
-        } else {
-          m.publish_time
-        },
-      }
-    })
-  let attachments = log.attachments.map(fn(a) {
-    {
-      ..a,
-      log_time: mapping.map(a.log_time),
-      create_time: if same_publish_clock {
-        mapping.map(a.create_time)
+    .map(m => {
+      ..m,
+      log_time: mapping.map(m.log_time),
+      publish_time: if same_publish_clock {
+        mapping.map(m.publish_time)
       } else {
-        a.create_time
+        m.publish_time
       },
-    }
+    })
+  let attachments = log.attachments.map(a => {
+    ..a,
+    log_time: mapping.map(a.log_time),
+    create_time: if same_publish_clock {
+      mapping.map(a.create_time)
+    } else {
+      a.create_time
+    },
   })
   let manifest : Json = {
     "mapping": mapping.json(),

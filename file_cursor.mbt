@@ -514,3 +514,21 @@ pub fn FileCursor::progress(self : FileCursor) -> FileProgress {
     used_fallback: self.fallback is Some(_),
   }
 }
+
+///|
+pub extend FileCursorState with @debug.Debug::{to_repr}
+
+///|
+pub extend FileCursorState with Eq::{not_equal, equal}
+
+///|
+pub extend FileProgress with @debug.Debug::{to_repr}
+
+///|
+pub extend FileProgress with Eq::{not_equal, equal}
+
+///|
+pub extend ReadSpan with @debug.Debug::{to_repr}
+
+///|
+pub extend ReadSpan with Eq::{not_equal, equal}

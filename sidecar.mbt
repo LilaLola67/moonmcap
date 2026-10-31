@@ -71,15 +71,15 @@ pub fn build_sidecar(
     scan_source(
       source,
       source_visitor(
-        schema=fn(value) {
+        schema=value => {
           reserve(encode_schema(value).length() + 9)
           add_schema(declarations, value)
         },
-        channel=fn(value) {
+        channel=value => {
           reserve(encode_channel(value).length() + 9)
           add_channel(declarations, value)
         },
-        message=fn(message, location) {
+        message=(message, location) => {
           reserve(26)
           entries.push({
             time: message.log_time,
@@ -103,14 +103,16 @@ pub fn build_sidecar(
   put_text(body, digest)
   put_text(body, identity)
   put_blob(body, write_log(declarations, limits~))
-  body.write_uint_le(entries.length().to_uint())
+  body.write_uint_le(entries.length().reinterpret_as_uint())
   for entry in entries {
     body.write_uint64_le(entry.time)
     put_u16(body, entry.channel)
     body.write_uint64_le(entry.location.offset)
-    body.write_uint_le(entry.location.span.to_uint())
+    body.write_uint_le(entry.location.span.reinterpret_as_uint())
     body.write_uint_le(
-      entry.location.inner.map(fn(n) { n.to_uint() }).unwrap_or(4294967295U),
+      entry.location.inner
+      .map(fn(n) { n.reinterpret_as_uint() })
+      .unwrap_or(4294967295U),
     )
   }
   let framed = b"MIDX1\r\n\x00" + body.to_bytes()
@@ -517,61 +519,54 @@ pub fn SidecarCursor::feed(
   self : SidecarCursor,
   bytes : Bytes,
 ) -> Unit raise McapError {
-  try {
-    guard self.state == FileActive &&
-      self.waiting is Some(span) &&
-      bytes.length() == span.length else {
-      raise Invalid("unexpected sidecar feed")
-    }
-    let entry = self.reader.entries[self.reader.positions[self.position]]
-    let mirror = new_read_source(self.reader.source.size, fn(offset, length) {
-      if offset < span.offset ||
-        offset - span.offset > bytes.length().to_uint64() {
-        raise Invalid("sidecar feed range mismatch")
-      }
-      let start = (offset - span.offset).to_int()
-      if length > bytes.length() - start {
-        raise Invalid("sidecar feed length mismatch")
-      }
-      bytes[start:start + length].to_owned()
-    })
-    let staged = { ..self.reader, source: mirror, }
-    self.ready = Some(staged.load(entry))
-    self.reader.cached = staged.cached
-    self.reader.cached_offset = staged.cached_offset
-    self.reader.cached_span = staged.cached_span
-    self.reader.cached_bytes = staged.cached_bytes
+  errdefer {
+    self.state = FileFailed
     self.waiting = None
-  } catch {
-    error => {
-      self.state = FileFailed
-      self.waiting = None
-      self.ready = None
-      raise error
-    }
+    self.ready = None
   }
+
+  guard self.state == FileActive &&
+    self.waiting is Some(span) &&
+    bytes.length() == span.length else {
+    raise Invalid("unexpected sidecar feed")
+  }
+  let entry = self.reader.entries[self.reader.positions[self.position]]
+  let mirror = new_read_source(self.reader.source.size, (offset, length) => {
+    if offset < span.offset || offset - span.offset > bytes.length().to_uint64() {
+      raise Invalid("sidecar feed range mismatch")
+    }
+    let start = (offset - span.offset).to_int()
+    if length > bytes.length() - start {
+      raise Invalid("sidecar feed length mismatch")
+    }
+    bytes[start:start + length].to_owned()
+  })
+  let staged = { ..self.reader, source: mirror, }
+  self.ready = Some(staged.load(entry))
+  self.reader.cached = staged.cached
+  self.reader.cached_offset = staged.cached_offset
+  self.reader.cached_span = staged.cached_span
+  self.reader.cached_bytes = staged.cached_bytes
+  self.waiting = None
 }
 
 ///|
 pub fn SidecarCursor::next(self : SidecarCursor) -> Message? raise McapError {
-  try {
-    while true {
-      match self.poll() {
-        FileDone => return None
-        FileMessage(message) => return Some(message)
-        FileRead(span) =>
-          self.feed(self.reader.source.read_exact(span.offset, span.length))
-      }
-    }
-    None
-  } catch {
-    error => {
-      self.state = FileFailed
-      self.waiting = None
-      self.ready = None
-      raise error
+  errdefer {
+    self.state = FileFailed
+    self.waiting = None
+    self.ready = None
+  }
+
+  while true {
+    match self.poll() {
+      FileDone => return None
+      FileMessage(message) => return Some(message)
+      FileRead(span) =>
+        self.feed(self.reader.source.read_exact(span.offset, span.length))
     }
   }
+  None
 }
 
 ///|
@@ -657,9 +652,9 @@ pub fn SidecarCursor::progress(self : SidecarCursor) -> Json {
 pub fn SidecarReader::query_source(
   self : SidecarReader,
 ) -> QuerySource raise McapError {
-  query_source(self.declarations, fn(query, _) {
+  query_source(self.declarations, (query, _) => {
     let cursor = self.cursor(query)
-    message_stream(fn() { cursor.next() }, fn() { cursor.cancel() })
+    message_stream(() => cursor.next(), fn() { cursor.cancel() })
   })
 }
 
@@ -671,7 +666,7 @@ pub fn SidecarCursor::write_ndjson(
   let mut count = 0
   while self.next() is Some(message) {
     let text = messages_json([message], self.reader.declarations.channels).stringify()
-    sink.write(@utf8.encode((text[1:text.length() - 1].to_string() + "\n")[:]))
+    sink.write(@utf8.encode((text[1:text.length() - 1].to_owned() + "\n")[:]))
     count += 1
   }
   count

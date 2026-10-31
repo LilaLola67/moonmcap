@@ -134,7 +134,9 @@ pub fn inspect_recording_manifest(bytes : Bytes) -> Json raise McapError {
     bytes[0:8].to_owned() != b"MRSC1\r\n\x00" {
     raise Invalid("invalid recording manifest envelope")
   }
-  let length = cursor(bytes[8:12].to_owned(), default_limits()).u32().to_int()
+  let length = cursor(bytes[8:12].to_owned(), default_limits())
+    .u32()
+    .reinterpret_as_int()
   if length < 0 || length != bytes.length() - 16 {
     raise Invalid("recording manifest length mismatch")
   }
@@ -173,7 +175,7 @@ fn RecordingSession::save(
     raise Invalid("recording manifest byte budget exceeded")
   }
   let envelope = b"MRSC1\r\n\x00" +
-    bytes.length().to_uint().mcap_le_bytes() +
+    bytes.length().reinterpret_as_uint().mcap_le_bytes() +
     bytes +
     crc32(bytes).mcap_le_bytes()
   ignore(inspect_recording_manifest(envelope))
@@ -212,19 +214,19 @@ fn RecordingSession::summarize(
     scan_source(
       source,
       source_visitor(
-        schema=fn(s) {
+        schema=s => {
           if !self.template.schemas.contains(s) {
             raise Invalid("recording segment schema changed")
           }
           schemas[s.id] = true
         },
-        channel=fn(c) {
+        channel=c => {
           if !self.template.channels.contains(c) {
             raise Invalid("recording segment channel changed")
           }
           channels[c.id] = true
         },
-        message=fn(m, _) {
+        message=(m, _) => {
           let sequence = next.get(m.channel_id).unwrap_or(0UL)
           if self.options.sequences == ContinueSequence &&
             (sequence > 4294967295UL || m.sequence.to_uint64() != sequence) {
@@ -248,12 +250,10 @@ fn RecordingSession::summarize(
           }
           count[0] += 1UL
         },
-        attachment=fn(_) {
+        attachment=_ => {
           raise Invalid("recording segment has unexpected attachments")
         },
-        metadata=fn(_) {
-          raise Invalid("recording segment has unexpected metadata")
-        },
+        metadata=_ => raise Invalid("recording segment has unexpected metadata"),
       ),
     ),
   )
@@ -444,16 +444,14 @@ fn RecordingSession::seal(self : RecordingSession) -> Unit raise McapError {
     let prior_active = self.active
     self.accept_segment(row, next)
     self.writer = None
-    self.save(false) catch {
-      error => {
-        ignore(self.completed.pop())
-        self.total = prior_total
-        self.committed_next = prior_next
-        self.next_sequence = prior_next.copy()
-        self.active = prior_active
-        raise error
-      }
+    errdefer {
+      ignore(self.completed.pop())
+      self.total = prior_total
+      self.committed_next = prior_next
+      self.next_sequence = prior_next.copy()
+      self.active = prior_active
     }
+    self.save(false)
   }
 }
 
@@ -465,70 +463,67 @@ pub fn RecordingSession::append(
   if self.state != WriterOpen {
     raise Invalid("recording session is closed")
   }
-  try {
-    if !self.template.channels.any(fn(c) { c.id == message.channel_id }) ||
-      message.data.length() > self.options.stream.chunk_bytes - 31 {
-      raise Invalid("recording message channel or size invalid")
+  errdefer {
+    self.state = WriterFailed
+    if self.writer is Some(w) {
+      w.cancel()
     }
-    if self.writer is Some(writer) {
-      let p = writer.progress()
-      let first = if message.log_time < self.start_time {
-        message.log_time
-      } else {
-        self.start_time
-      }
-      let last = if message.log_time > self.end_time {
-        message.log_time
-      } else {
-        self.end_time
-      }
-      if p.messages >= self.options.segment_messages.to_uint64() ||
-        (
-          self.options.segment_bytes_target != 0UL &&
-          p.bytes_written >= self.options.segment_bytes_target
-        ) ||
-        (
-          self.options.segment_span != 0UL &&
-          last - first > self.options.segment_span
-        ) {
-        self.seal()
-      }
-    }
-    if self.writer is None {
-      self.start()
-      self.start_time = message.log_time
-      self.end_time = message.log_time
-    }
-    let next = self.next_sequence.get(message.channel_id).unwrap_or(0UL)
-    let message = if self.options.sequences == ContinueSequence {
-      if next > 4294967295UL {
-        raise Invalid("recording channel sequence overflow")
-      }
-      { ..message, sequence: next.to_uint(), }
+  }
+
+  if !self.template.channels.any(fn(c) { c.id == message.channel_id }) ||
+    message.data.length() > self.options.stream.chunk_bytes - 31 {
+    raise Invalid("recording message channel or size invalid")
+  }
+  if self.writer is Some(writer) {
+    let p = writer.progress()
+    let first = if message.log_time < self.start_time {
+      message.log_time
     } else {
-      message
+      self.start_time
     }
-    self.writer.unwrap().append(message)
-    let following = message.sequence.to_uint64() + 1UL
-    self.next_sequence[message.channel_id] = if following > next {
-      following
+    let last = if message.log_time > self.end_time {
+      message.log_time
     } else {
-      next
+      self.end_time
     }
-    if message.log_time < self.start_time {
-      self.start_time = message.log_time
+    if p.messages >= self.options.segment_messages.to_uint64() ||
+      (
+        self.options.segment_bytes_target != 0UL &&
+        p.bytes_written >= self.options.segment_bytes_target
+      ) ||
+      (
+        self.options.segment_span != 0UL &&
+        last - first > self.options.segment_span
+      ) {
+      self.seal()
     }
-    if message.log_time > self.end_time {
-      self.end_time = message.log_time
+  }
+  if self.writer is None {
+    self.start()
+    self.start_time = message.log_time
+    self.end_time = message.log_time
+  }
+  let next = self.next_sequence.get(message.channel_id).unwrap_or(0UL)
+  let message = if self.options.sequences == ContinueSequence {
+    if next > 4294967295UL {
+      raise Invalid("recording channel sequence overflow")
     }
-  } catch {
-    error => {
-      self.state = WriterFailed
-      if self.writer is Some(w) {
-        w.cancel()
-      }
-      raise error
-    }
+    { ..message, sequence: next.to_uint(), }
+  } else {
+    message
+  }
+  self.writer.unwrap().append(message)
+  let following = message.sequence.to_uint64() + 1UL
+  self.next_sequence[message.channel_id] = if following > next {
+    following
+  } else {
+    next
+  }
+  if message.log_time < self.start_time {
+    self.start_time = message.log_time
+  }
+  if message.log_time > self.end_time {
+    self.end_time = message.log_time
   }
 }
 
@@ -539,17 +534,14 @@ pub fn RecordingSession::finish(
   if self.state != WriterOpen {
     raise Invalid("recording session is closed")
   }
-  try {
-    self.seal()
-    self.save(true)
-    self.state = WriterFinished
-    self.info()
-  } catch {
-    error => {
-      self.state = WriterFailed
-      raise error
-    }
+  errdefer {
+    self.state = WriterFailed
   }
+
+  self.seal()
+  self.save(true)
+  self.state = WriterFinished
+  self.info()
 }
 
 ///|
@@ -587,3 +579,15 @@ pub fn RecordingSession::info(self : RecordingSession) -> Json {
 pub fn RecordingSession::committed_messages(self : RecordingSession) -> UInt64 {
   self.total
 }
+
+///|
+pub extend RecordingOptions with @debug.Debug::{to_repr}
+
+///|
+pub extend RecordingOptions with Eq::{not_equal, equal}
+
+///|
+pub extend SequencePolicy with @debug.Debug::{to_repr}
+
+///|
+pub extend SequencePolicy with Eq::{not_equal, equal}

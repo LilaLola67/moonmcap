@@ -11,19 +11,19 @@ fn proto_integer(value : Json) -> Int64 raise McapError {
     _ => raise Invalid("invalid protobuf integer")
   }
   let negative = text.has_prefix("-")
-  let digits = if negative { text[1:].to_string() } else { text }
+  let digits = if negative { text[1:].to_owned() } else { text }
   let magnitude = parse_decimal(digits)
   if magnitude >
     (if negative { 9223372036854775808UL } else { 9223372036854775807UL }) {
     raise Invalid("protobuf integer exceeds Int64")
   }
-  (if negative { 0UL - magnitude } else { magnitude }).to_int64()
+  (if negative { 0UL - magnitude } else { magnitude }).reinterpret_as_int64()
 }
 
 ///|
 fn proto_pad(value : Int32, width : Int32) -> String {
   let text = value.to_string()
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   for i = text.length(); i < width; i = i + 1 {
     out.write_char('0')
   }
@@ -44,7 +44,7 @@ fn proto_fraction(nanos : Int32) -> String {
     6
   } else {
     9
-  }].to_string()
+  }].to_owned()
 }
 
 ///|
@@ -283,7 +283,7 @@ fn ProtobufDecoder::well_known(
       if parts.length() < 2 || parts[parts.length() - 1] == "" {
         raise Invalid("invalid protobuf Any type URL")
       }
-      let target = parts[parts.length() - 1].to_string()
+      let target = parts[parts.length() - 1].to_owned()
       let bytes = @base64.decode(data[:]) catch {
         _ => raise Invalid("invalid protobuf Any bytes")
       }

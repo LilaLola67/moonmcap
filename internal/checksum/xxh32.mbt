@@ -163,3 +163,6 @@ pub impl Hasher for XXH32 with fn checksum(self) -> UInt32 {
   }
   xxh32_avalanche(h)
 }
+
+///|
+pub extend XXH32 with Hasher::{reset, checksum, size, update}

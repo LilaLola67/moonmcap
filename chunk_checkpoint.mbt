@@ -1,4 +1,5 @@
 ///|
+#warnings("-missing_priv")
 struct ChunkPart {
   input : Int32
   chunk : Int32
@@ -8,6 +9,7 @@ struct ChunkPart {
 }
 
 ///|
+#warnings("-missing_priv")
 struct ChunkJobState {
   settings : Bytes
   inputs : Array[String]
@@ -22,18 +24,18 @@ fn encode_chunk_job(state : ChunkJobState) -> Bytes raise McapError {
   let out = @buffer.Buffer::Buffer()
   out.write_bytes(b"CJOB1\r\n\x00"[:])
   out.write_bytes(state.settings[:])
-  out.write_uint_le(state.inputs.length().to_uint())
+  out.write_uint_le(state.inputs.length().reinterpret_as_uint())
   for digest in state.inputs {
     checkpoint_text(out, digest)
   }
-  out.write_uint_le(state.completed.to_uint())
-  out.write_uint_le(state.next_chunk.to_uint())
+  out.write_uint_le(state.completed.reinterpret_as_uint())
+  out.write_uint_le(state.next_chunk.reinterpret_as_uint())
   for verified in state.crcs {
     out.write_byte(if verified { 0x01 } else { 0x00 })
   }
-  out.write_uint_le(state.parts.length().to_uint())
+  out.write_uint_le(state.parts.length().reinterpret_as_uint())
   for part in state.parts {
-    out.write_uint_le(part.input.to_uint())
+    out.write_uint_le(part.input.reinterpret_as_uint())
     out.write_int_le(part.chunk)
     out.write_uint64_le(part.messages)
     out.write_uint64_le(part.bytes)
@@ -73,7 +75,7 @@ fn decode_chunk_job(bytes : Bytes) -> ChunkJobState raise McapError {
   if count == 0 {
     raise Invalid("chunk checkpoint has no inputs")
   }
-  let inputs = Array::makei(count, fn(_) { checked_digest(value.text()) })
+  let inputs = Array::makei(count, _ => checked_digest(value.text()))
   let completed = bounded_length(
     value.u32().to_uint64(),
     count,
@@ -81,10 +83,10 @@ fn decode_chunk_job(bytes : Bytes) -> ChunkJobState raise McapError {
   )
   let next_chunk = bounded_length(
     value.u32().to_uint64(),
-    maximum.to_int(),
+    maximum.reinterpret_as_int(),
     "chunk checkpoint next chunk",
   )
-  let crcs = Array::makei(completed, fn(_) {
+  let crcs = Array::makei(completed, _ => {
     match value.take(1)[0] {
       0x00 => false
       0x01 => true
@@ -93,7 +95,7 @@ fn decode_chunk_job(bytes : Bytes) -> ChunkJobState raise McapError {
   })
   let size = bounded_length(
     value.u32().to_uint64(),
-    maximum.to_int(),
+    maximum.reinterpret_as_int(),
     "chunk checkpoint parts",
   )
   let parts = []
@@ -105,7 +107,7 @@ fn decode_chunk_job(bytes : Bytes) -> ChunkJobState raise McapError {
       count - 1,
       "chunk checkpoint input ID",
     )
-    let chunk = value.u32().to_int()
+    let chunk = value.u32().reinterpret_as_int()
     let messages = value.u64()
     let bytes = value.u64()
     let digest = checked_digest(value.text())
@@ -190,8 +192,8 @@ fn resumable_chunk_merge_internal(
     }
     validate_log(empty_log(), limits=options.limits)
     let settings = checkpoint_settings(options) +
-      max_parts.to_uint().mcap_le_bytes()
-    let inputs = sources.map(fn(source) {
+      max_parts.reinterpret_as_uint().mcap_le_bytes()
+    let inputs = sources.map(source => {
       if cancelled() {
         raise Invalid("chunk merge cancelled")
       }
@@ -245,7 +247,7 @@ fn resumable_chunk_merge_internal(
         raise Invalid("chunk part count budget exceeded")
       }
       let raw = (parts_storage.create)(id)
-      new_write_sink(fn(bytes) {
+      new_write_sink(bytes => {
         if cancelled() {
           raise Invalid("chunk merge cancelled")
         }
@@ -354,10 +356,10 @@ fn resumable_chunk_merge_internal(
       let count = scan_source(
         source,
         source_visitor(
-          schema=fn(value) { writer.add_schema(value) },
-          channel=fn(value) { writer.add_channel(value) },
-          attachment=fn(value) { writer.add_attachment(value) },
-          metadata=fn(value) { writer.add_metadata(value) },
+          schema=value => writer.add_schema(value),
+          channel=value => writer.add_channel(value),
+          attachment=value => writer.add_attachment(value),
+          metadata=value => writer.add_metadata(value),
         ),
         limits=options.limits,
         declaration_bytes=options.declaration_bytes,
@@ -399,7 +401,7 @@ fn resumable_chunk_merge_internal(
     if finalize is Some(callback) {
       Ok(callback(state, spool))
     } else {
-      let sources = Array::makei(state.parts.length(), fn(i) {
+      let sources = Array::makei(state.parts.length(), i => {
         (parts_storage.open)(i)
       })
       let temporary = sort_storage(

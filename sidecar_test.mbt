@@ -47,8 +47,7 @@ test "sidecar queries match memory references across indexed unindexed and seque
       reader.validate_entries()
       for descending in [false, true] {
         for topics in [[], ["/shared"], ["/missing"]] {
-          let query = {
-            ..@moonmcap.all_query(),
+          let query : @moonmcap.Query = {
             descending,
             topics,
             start_time: 2UL,
@@ -207,7 +206,7 @@ test "sidecar sources integrate with datasets without materialized fallback" {
     reader.query_source(),
     reader.query_source(),
   ])
-  let query = {
+  let query : @moonmcap.Query = {
     ..@moonmcap.all_query(),
     descending: true,
     offset: 3,

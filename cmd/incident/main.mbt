@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn exit_status(code : Int32) -> Unit =
@@ -98,7 +103,7 @@ fn array(
 fn context_rules(
   config : Map[String, Json],
 ) -> Array[@mcap.ContextRule] raise @mcap.McapError {
-  array(config, "context").map(fn(value) {
+  array(config, "context").map(value => {
     let fields = object(value, ["topic", "depth", "max_age", "required"])
     {
       topic: text(fields, "topic"),
@@ -111,7 +116,7 @@ fn context_rules(
 
 ///|
 fn topics(config : Map[String, Json]) -> Array[String] raise @mcap.McapError {
-  array(config, "topics").map(fn(value) {
+  array(config, "topics").map(value => {
     match value {
       String(value) if value != "" => value
       _ => raise @mcap.io_error("topics require nonempty strings")
@@ -209,32 +214,25 @@ fn stream_clip(
   let context = context_rules(config)
   let copy_auxiliary = boolean(config, "copy_auxiliary", false)
   let transaction = @nodeio.output_transaction(output)
-  try {
-    let report = @mcap.stream_context_clip(
-      provider,
-      transaction.sink(),
-      start,
-      end,
-      topics=selected_topics,
-      context~,
-      options~,
-      provenance~,
-      auxiliary=fn(writer) {
-        if copy_auxiliary {
-          ignore(
-            @mcap.copy_clip_auxiliary(source, writer, limits=options.limits),
-          )
-        }
-      },
-    )
-    transaction.publish()
-    { "output": output, "manifest": report }
-  } catch {
-    error => {
-      transaction.abort()
-      raise error
-    }
-  }
+  errdefer transaction.abort()
+
+  let report = @mcap.stream_context_clip(
+    provider,
+    transaction.sink(),
+    start,
+    end,
+    topics=selected_topics,
+    context~,
+    options~,
+    provenance~,
+    auxiliary=writer => {
+      if copy_auxiliary {
+        ignore(@mcap.copy_clip_auxiliary(source, writer, limits=options.limits))
+      }
+    },
+  )
+  transaction.publish()
+  { "output": output, "manifest": report }
 }
 
 ///|
@@ -307,7 +305,7 @@ fn run(
   let output = if values.length() == 4 { values[3] } else { "" }
   if mode == "clock" {
     fn anchors(key : String) -> Array[@mcap.ClockAnchor] raise @mcap.McapError {
-      array(config, key).map(fn(value) {
+      array(config, key).map(value => {
         let a = object(value, ["source", "target"])
         {
           source: @mcap.parse_decimal(text(a, "source")),
@@ -351,7 +349,7 @@ fn run(
   }
   let raw = @mcap.open_reader(source, limits~).query_source()
   if ["batch", "resume-batch"].contains(mode) {
-    let windows = array(config, "windows").map(fn(value) {
+    let windows = array(config, "windows").map(value => {
       let fields = object(value, ["start", "end"])
       let start = @mcap.parse_decimal(text(fields, "start"))
       let end = @mcap.parse_decimal(text(fields, "end"))
@@ -381,38 +379,34 @@ fn run(
     let copy_auxiliary = boolean(config, "copy_auxiliary", false)
     let directory = @nodeio.open_artifact_directory(
       output,
-      resume=mode == "resume-batch",
+      resume_name=mode == "resume-batch",
     )
-    let report = @mcap.run_artifact_batch(
-      plan.stringify(),
-      windows.length(),
-      directory.storage(),
-      fn(id, sink) {
-        let (start, end) = windows[id]
-        @mcap.stream_context_clip(
-          raw,
-          sink,
-          start,
-          end,
-          topics=selected_topics,
-          context~,
-          options~,
-          provenance={ "source_sha256": fingerprint, "batch_ordinal": id },
-          auxiliary=fn(writer) {
-            if copy_auxiliary {
-              ignore(@mcap.copy_clip_auxiliary(source, writer, limits~))
-            }
-          },
-        )
-      },
-      stop_after=count(config, "stop_after", 4096),
-    ) catch {
-      error => {
-        directory.close() catch {
-          _ => ()
-        }
-        raise error
-      }
+    let report = {
+      errdefer (directory.close() catch { _ => () })
+      @mcap.run_artifact_batch(
+        plan.stringify(),
+        windows.length(),
+        directory.storage(),
+        (id, sink) => {
+          let (start, end) = windows[id]
+          @mcap.stream_context_clip(
+            raw,
+            sink,
+            start,
+            end,
+            topics=selected_topics,
+            context~,
+            options~,
+            provenance={ "source_sha256": fingerprint, "batch_ordinal": id },
+            auxiliary=writer => {
+              if copy_auxiliary {
+                ignore(@mcap.copy_clip_auxiliary(source, writer, limits~))
+              }
+            },
+          )
+        },
+        stop_after=count(config, "stop_after", 4096),
+      )
     }
     directory.close()
     println(report.stringify())
@@ -429,9 +423,7 @@ fn run(
   if mode == "quality" {
     let start = @mcap.parse_decimal(text(config, "start"))
     let end = @mcap.parse_decimal(text(config, "end"))
-    let rules : Array[@mcap.QualityRule] = array(config, "rules").map(fn(
-      value,
-    ) {
+    let rules : Array[@mcap.QualityRule] = array(config, "rules").map(value => {
       let f = object(value, [
         "topic", "minimum_messages", "max_gap", "check_sequence", "condition", "warning",
       ])
@@ -455,7 +447,7 @@ fn run(
       end,
       detail_limit=count(config, "detail_limit", 64),
     )
-    let pairs : Array[Json] = array(config, "pairs").map(fn(value) {
+    let pairs : Array[Json] = array(config, "pairs").map(value => {
       let f = object(value, [
         "left", "right", "tolerance", "minimum_basis_points",
       ])
@@ -615,7 +607,7 @@ fn run(
   let captures : Array[Json] = []
   let recorder = @mcap.trigger_recorder(
     raw.declaration_log(),
-    fn(log, manifest) {
+    (log, manifest) => {
       captures.push(
         emit_clip(output, captures.length(), log, {
           "source_sha256": fingerprint,

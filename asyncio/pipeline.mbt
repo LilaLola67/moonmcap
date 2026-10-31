@@ -39,8 +39,8 @@ pub async fn plan_query(
   }
   let decisions : Map[UInt64, Bool] = Map([])
   let paged_fields : Array[AsyncPagedFields] = []
-  let raw_select = match fields {
-    None => async fn(_, _) { true }
+  let raw_select : async (UInt64, Int32) -> Bool = match fields {
+    None => fn(_, _) { true }
     Some(fields) => {
       if fields.size() < 16UL {
         raise @mcap.io_error("short field index")
@@ -60,7 +60,7 @@ pub async fn plan_query(
         if fields.size() > 16UL * 1024UL * 1024UL {
           raise @mcap.io_error("MFLD1 exceeds bounded field index budget")
         }
-        let mirror = @mcap.new_read_source(source.size(), fn(_, _) {
+        let mirror = @mcap.new_read_source(source.size(), (_, _) => {
           raise @mcap.io_error("unexpected field fingerprint source read")
         })
         let field = @mcap.open_field_index(
@@ -70,7 +70,7 @@ pub async fn plan_query(
           "moonmcap.std.json-protobuf-cdr.numeric.v1",
         )
         let select = field.location_filter(filter.unwrap())
-        async fn(offset, length) { select(offset, length) }
+        (offset, length) => select(offset, length)
       }
     }
   }
@@ -87,7 +87,7 @@ pub async fn plan_query(
       let reader = open_disk_sidecar(
         source,
         index,
-        AsyncVerifyContent(async fn(_) { digest }),
+        AsyncVerifyContent(fn(_) { digest }),
         pool?,
         select_region~,
         chunk_cache_bytes=cache_bytes,

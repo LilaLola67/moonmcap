@@ -151,7 +151,7 @@ pub async fn open_reader(
     (tail_start - summary_start).to_int(),
   )
   spans.push(({ offset: summary_start, length: summary.length(), }, summary))
-  let mirror = @mcap.new_read_source(source.size, fn(offset, length) {
+  let mirror = @mcap.new_read_source(source.size, (offset, length) => {
     for (span, bytes) in spans {
       if offset >= span.offset &&
         offset - span.offset <= span.length.to_uint64() {
@@ -195,7 +195,7 @@ pub fn AsyncReader::cursor(
   query : @mcap.Query,
   pending_bytes~ : Int32 = 64 * 1024 * 1024,
   span_bytes~ : Int32 = 32 * 1024 * 1024,
-  select_region~ : async (UInt64, Int32) -> Bool = async fn(_, _) { true },
+  select_region~ : async (UInt64, Int32) -> Bool = fn(_, _) { true },
 ) -> AsyncCursor raise @mcap.McapError {
   {
     source: self.source,
@@ -214,28 +214,23 @@ pub async fn AsyncCursor::next(self : AsyncCursor) -> @mcap.Message? {
   defer {
     self.busy = false
   }
-  try {
-    while true {
-      match self.cursor.poll() {
-        @mcap.FileDone => return None
-        @mcap.FileMessage(message) => return Some(message)
-        @mcap.FileRead(span) => {
-          let location = self.cursor.current_chunk_location()
-          if (self.select_region)(location.offset, location.span) {
-            self.cursor.feed(self.source.read_exact(span.offset, span.length))
-          } else {
-            self.cursor.skip_chunk()
-          }
+  errdefer self.cursor.cancel()
+
+  while true {
+    match self.cursor.poll() {
+      @mcap.FileDone => return None
+      @mcap.FileMessage(message) => return Some(message)
+      @mcap.FileRead(span) => {
+        let location = self.cursor.current_chunk_location()
+        if (self.select_region)(location.offset, location.span) {
+          self.cursor.feed(self.source.read_exact(span.offset, span.length))
+        } else {
+          self.cursor.skip_chunk()
         }
       }
     }
-    None
-  } catch {
-    error => {
-      self.cursor.cancel()
-      raise error
-    }
   }
+  None
 }
 
 ///|

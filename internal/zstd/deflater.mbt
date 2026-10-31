@@ -21,7 +21,7 @@ struct Deflater(EncoderState)
 ///|
 pub fn Deflater::new(
   level~ : CompressionLevel = Default,
-  dict~ : Bytes = Bytes::default(),
+  dict~ : Bytes = Default::default(),
 ) -> Deflater {
   ignore(level)
   let parsed_dict = parse_dictionary_for_encoder(dict)

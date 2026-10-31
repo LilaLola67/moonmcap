@@ -10,6 +10,7 @@ fn UInt32::mcap_le_bytes(self : UInt32) -> Bytes {
 }
 
 ///|
+#warnings("-missing_priv")
 struct Cursor {
   data : Bytes
   mut pos : Int32
@@ -101,7 +102,7 @@ fn Cursor::pairs(self : Cursor) -> Array[(String, String)] raise McapError {
   )
   let nested = cursor(self.take(size), self.limits)
   let pairs = []
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   while nested.pos < nested.data.length() {
     let key = nested.text()
     let value = nested.text()
@@ -132,13 +133,13 @@ fn put_u16(out : @buffer.Buffer, value : Int32) -> Unit raise McapError {
 ///|
 fn put_text(out : @buffer.Buffer, value : String) -> Unit {
   let bytes = @utf8.encode(value[:])
-  out.write_uint_le(bytes.length().to_uint())
+  out.write_uint_le(bytes.length().reinterpret_as_uint())
   out.write_bytes(bytes[:])
 }
 
 ///|
 fn put_blob(out : @buffer.Buffer, value : Bytes) -> Unit {
-  out.write_uint_le(value.length().to_uint())
+  out.write_uint_le(value.length().reinterpret_as_uint())
   out.write_bytes(value[:])
 }
 
@@ -148,7 +149,7 @@ fn put_pairs(
   pairs : Array[(String, String)],
 ) -> Unit raise McapError {
   let nested = @buffer.Buffer::Buffer()
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for pair in pairs {
     if seen.contains(pair.0) {
       raise Invalid("duplicate map key: \{pair.0}")

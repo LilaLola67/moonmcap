@@ -19,7 +19,7 @@ from mcap.reader import make_reader
 def main():
     work = ROOT / '_interop/regression' / uuid.uuid4().hex
     work.mkdir(parents=True)
-    subprocess.run([os.environ.get('MOON', 'moon'), 'build', '--target', 'js', '--warn-list', '-a'], cwd=ROOT, capture_output=True, check=True)
+    subprocess.run([os.environ.get('MOON', 'moon'), 'build', '--target', 'js', '--deny-warn'], cwd=ROOT, capture_output=True, check=True)
     runs = 0
     def execute(a, b, rules):
         nonlocal runs

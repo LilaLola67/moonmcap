@@ -43,7 +43,12 @@ async test "HTTP cache deduplicates tasks and isolates task cancellation from so
       cache_bytes: 65536,
     },
   )
-  try {
+  {
+    errdefer {
+      cache.close()
+      fixture_close(fixture).wait()
+    }
+
     @async.with_task_group(async fn(group) {
       let a = group.spawn(async fn() { cache.source().read_exact(0UL, 8) })
       let b = group.spawn(async fn() { cache.source().read_exact(0UL, 8) })
@@ -81,12 +86,6 @@ async test "HTTP cache deduplicates tasks and isolates task cancellation from so
         _ => fail("source cancellation ignored")
       }
     })
-  } catch {
-    error => {
-      cache.close()
-      fixture_close(fixture).wait()
-      raise error
-    }
   }
   cache.close()
   cache.close()

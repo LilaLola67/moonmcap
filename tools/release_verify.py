@@ -108,6 +108,8 @@ def main():
         "platform-ubuntu-latest-node-22.3.0",
         "platform-windows-latest-node-22.3.0",
         "platform-windows-latest-node-22",
+        "platform-macos-15-node-22.3.0",
+        "platform-macos-15-intel-node-22.3.0",
     }
     passed = {j["name"] for j in jobs if j["conclusion"] == "success"}
     assert required <= passed, "missing successful required CI jobs: " + str(

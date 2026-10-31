@@ -198,12 +198,12 @@ pub fn copy_clip_auxiliary(
   scan_source(
     source,
     source_visitor(
-      attachment=fn(a) {
+      attachment=a => {
         if attachment_names.is_empty() || attachment_names.contains(a.name) {
           writer.add_attachment(a)
         }
       },
-      metadata=fn(m) {
+      metadata=m => {
         if metadata_names.is_empty() || metadata_names.contains(m.name) {
           writer.add_metadata(m)
         }

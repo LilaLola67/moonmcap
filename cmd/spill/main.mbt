@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn report_error(message : String) -> Unit =
@@ -118,23 +123,18 @@ fn run(
   }
   let dataset = @mcap.open_dataset(providers, limits~)
   let transaction = @nodeio.output_transaction(parsed.output)
-  try {
-    let report = @mcap.aggregate_external(
-      dataset.cursor(parsed.query),
-      dataset.channels(),
-      @nodeio.sort_directory(budgets.temp_dir),
-      transaction.sink(),
-      aggregate=parsed.aggregate,
-      external={ ..budgets.external, limits, },
-    )
-    transaction.publish()
-    println(report.stringify())
-  } catch {
-    error => {
-      transaction.abort()
-      raise error
-    }
-  }
+  errdefer transaction.abort()
+
+  let report = @mcap.aggregate_external(
+    dataset.cursor(parsed.query),
+    dataset.channels(),
+    @nodeio.sort_directory(budgets.temp_dir),
+    transaction.sink(),
+    aggregate=parsed.aggregate,
+    external={ ..budgets.external, limits, },
+  )
+  transaction.publish()
+  println(report.stringify())
 }
 
 ///|

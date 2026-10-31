@@ -71,12 +71,8 @@ pub fn replay(
     raise Invalid("replay needs an ascending bounded query")
   }
   let stream = (source.open)(query, pending_bytes)
-  let pending = (stream.next_message)() catch {
-    error => {
-      (stream.stop)()
-      raise error
-    }
-  }
+  errdefer (stream.stop)()
+  let pending = (stream.next_message)()
   {
     source,
     query: { ..query, topics: query.topics.copy(), },
@@ -149,53 +145,48 @@ pub fn Replay::poll(self : Replay, now : UInt64) -> ReplayPoll raise McapError {
   if [ReplayCancelled, ReplayFailed, ReplayDone].contains(self.state) {
     return ReplayEnd
   }
-  try {
-    self.clock(now)
-    if self.state == ReplayPaused {
-      return ReplayIdle
-    }
-    if self.state == ReplayReady {
-      self.state = ReplayRunning
-      self.wall = now
-    }
-    if self.pending is None {
-      self.pending = (self.stream.next_message)()
-    }
-    guard self.pending is Some(message) else {
-      self.position = self.at(now)
-      self.state = ReplayDone
-      (self.stream.stop)()
-      return ReplayEnd
-    }
-    let position = self.at(now)
-    if message.log_time > position {
-      let distance = @bigint.BigInt::from_uint64(
-          message.log_time - self.position,
-        ) *
-        @bigint.BigInt::from_int(self.denominator) -
-        @bigint.BigInt::from_uint64(now - self.wall) *
-        @bigint.BigInt::from_int(self.numerator)
-      let divisor = @bigint.BigInt::from_int(self.numerator)
-      let delay = (distance + divisor - @bigint.BigInt::from_int(1)) / divisor
-      let maximum = @bigint.BigInt::from_uint64(18446744073709551615UL)
-      return ReplayWait(
-        if delay > maximum {
-          18446744073709551615UL
-        } else {
-          delay.to_uint64()
-        },
-      )
-    }
-    match self.take() {
-      Some(message) => ReplayEvent(message)
-      None => ReplayEnd
-    }
-  } catch {
-    error => {
-      self.state = ReplayFailed
-      (self.stream.stop)()
-      raise error
-    }
+  errdefer {
+    self.state = ReplayFailed
+    (self.stream.stop)()
+  }
+
+  self.clock(now)
+  if self.state == ReplayPaused {
+    return ReplayIdle
+  }
+  if self.state == ReplayReady {
+    self.state = ReplayRunning
+    self.wall = now
+  }
+  if self.pending is None {
+    self.pending = (self.stream.next_message)()
+  }
+  guard self.pending is Some(message) else {
+    self.position = self.at(now)
+    self.state = ReplayDone
+    (self.stream.stop)()
+    return ReplayEnd
+  }
+  let position = self.at(now)
+  if message.log_time > position {
+    let distance = @bigint.BigInt::from_uint64(message.log_time - self.position) *
+      @bigint.BigInt::from_int(self.denominator) -
+      @bigint.BigInt::from_uint64(now - self.wall) *
+      @bigint.BigInt::from_int(self.numerator)
+    let divisor = @bigint.BigInt::from_int(self.numerator)
+    let delay = (distance + divisor - @bigint.BigInt::from_int(1)) / divisor
+    let maximum = @bigint.BigInt::from_uint64(18446744073709551615UL)
+    return ReplayWait(
+      if delay > maximum {
+        18446744073709551615UL
+      } else {
+        delay.to_uint64()
+      },
+    )
+  }
+  match self.take() {
+    Some(message) => ReplayEvent(message)
+    None => ReplayEnd
   }
 }
 
@@ -211,7 +202,12 @@ pub fn Replay::pause(self : Replay, now : UInt64) -> Unit raise McapError {
 }
 
 ///|
-pub fn Replay::resume(self : Replay, now : UInt64) -> Unit raise McapError {
+// Retain the published method spelling as an alias.
+#alias(resume)
+pub fn Replay::resume_playback(
+  self : Replay,
+  now : UInt64,
+) -> Unit raise McapError {
   if self.state != ReplayPaused {
     raise Invalid("replay resume requires paused state")
   }
@@ -244,20 +240,17 @@ pub fn Replay::step(self : Replay, now : UInt64) -> Message? raise McapError {
     raise Invalid("single-step requires paused replay")
   }
   self.clock(now)
-  try {
-    let message = self.take()
-    if message is Some(m) {
-      self.position = m.log_time
-      self.wall = now
-    }
-    message
-  } catch {
-    error => {
-      self.state = ReplayFailed
-      (self.stream.stop)()
-      raise error
-    }
+  errdefer {
+    self.state = ReplayFailed
+    (self.stream.stop)()
   }
+
+  let message = self.take()
+  if message is Some(m) {
+    self.position = m.log_time
+    self.wall = now
+  }
+  message
 }
 
 ///|
@@ -274,24 +267,21 @@ pub fn Replay::seek(
   self.clock(now)
   let paused = self.state == ReplayPaused
   (self.stream.stop)()
-  try {
-    self.stream = (self.source.open)(
-      { ..self.query, start_time: time, offset: 0, },
-      self.budget,
-    )
-    self.pending = None
-    self.previous = None
-    self.position = time
-    self.wall = now
-    self.emitted = 0
-    self.generation += 1
-    self.state = if paused { ReplayPaused } else { ReplayRunning }
-  } catch {
-    error => {
-      self.state = ReplayFailed
-      raise error
-    }
+  errdefer {
+    self.state = ReplayFailed
   }
+
+  self.stream = (self.source.open)(
+    { ..self.query, start_time: time, offset: 0, },
+    self.budget,
+  )
+  self.pending = None
+  self.previous = None
+  self.position = time
+  self.wall = now
+  self.emitted = 0
+  self.generation += 1
+  self.state = if paused { ReplayPaused } else { ReplayRunning }
 }
 
 ///|
@@ -319,3 +309,9 @@ pub fn Replay::progress(
     generation: self.generation,
   }
 }
+
+///|
+pub extend ReplayState with @debug.Debug::{to_repr}
+
+///|
+pub extend ReplayState with Eq::{not_equal, equal}

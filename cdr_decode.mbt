@@ -1,4 +1,5 @@
 ///|
+#warnings("-missing_priv")
 struct CdrWire {
   bytes : Bytes
   little : Bool
@@ -71,11 +72,12 @@ fn CdrDecoder::value(
       )
     }
     "uint32" => Json::number(wire.unsigned(4).to_double())
-    "int32" => Json::number(wire.unsigned(4).to_uint().to_int().to_double())
+    "int32" =>
+      Json::number(wire.unsigned(4).to_uint().reinterpret_as_int().to_double())
     "uint64" | "int64" => {
       let value = wire.unsigned(8)
       let text = if field.base == "int64" {
-        value.to_int64().to_string()
+        value.reinterpret_as_int64().to_string()
       } else {
         value.to_string()
       }
@@ -84,7 +86,7 @@ fn CdrDecoder::value(
       } else {
         Json::number(
           if field.base == "int64" {
-            value.to_int64().to_double()
+            value.reinterpret_as_int64().to_double()
           } else {
             value.to_double()
           },

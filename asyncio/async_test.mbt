@@ -16,7 +16,7 @@ async test "async temporal join cancellation closes both input streams" {
     },
     fn() { stopped[0] += 1 },
   )
-  let right = @asyncio.async_message_stream(async fn() { None }, fn() {
+  let right = @asyncio.async_message_stream(fn() { None }, fn() {
     stopped[0] += 1
   })
   let join = @asyncio.temporal_join(left, right)
@@ -149,7 +149,7 @@ async test "asynchronous MIDX2 reads pages and participates in decoded dataset p
   let reader = @asyncio.open_disk_sidecar(
     source,
     pages,
-    @asyncio.AsyncVerifyContent(async fn(_) { fingerprint }),
+    @asyncio.AsyncVerifyContent(fn(_) { fingerprint }),
     cache_pages=0,
   )
   let filter = @mcap.json_filter("{\"path\":\"/n\",\"op\":\">\",\"value\":10}")
@@ -216,7 +216,7 @@ async test "custom payload decoder composes with async filtering before global p
     @async.pause()
     bytes[offset.to_int():offset.to_int() + length].to_owned()
   })
-  let decoder = @mcap.payload_decoder(fn(_, channel, data) {
+  let decoder = @mcap.payload_decoder((_, channel, data) => {
     if channel.message_encoding != "application/test" {
       raise @mcap.io_error("original encoding lost")
     }
@@ -405,7 +405,7 @@ async test "timed playback injects clock waits backpressure and cancellation" {
     replay,
     fn() { clock[0] },
     async fn(_) { @async.pause() },
-    async fn(_) { stopped[0] = true },
+    fn(_) { stopped[0] = true },
     cancelled=fn() { stopped[0] },
   )
   assert_eq(replay.progress(clock[0]).state, @mcap.ReplayCancelled)
@@ -498,7 +498,7 @@ async test "async source short reads cancellation and errors are explicit" {
   } noraise {
     _ => fail("cancelled source")
   }
-  let stalled = @asyncio.new_source(1UL, async fn(_, _) { b"" })
+  let stalled = @asyncio.new_source(1UL, fn(_, _) { b"" })
   try stalled.read_exact(0UL, 1) catch {
     _ => ()
   } noraise {
@@ -653,7 +653,7 @@ async test "rotation time and byte targets preserve complete message order" {
     let outputs : Array[@buffer.Buffer] = []
     let writer = @asyncio.rotating_writer(
       template,
-      async fn(_) {
+      fn(_) {
         let out = @buffer.Buffer::Buffer()
         outputs.push(out)
         @asyncio.new_sink(async fn(bytes) {

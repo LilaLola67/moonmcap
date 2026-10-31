@@ -24,7 +24,9 @@ fn field_bloom_positions(text : String) -> Array[Int32] {
   let bytes = @utf8.encode(text[:])
   let a = crc32(bytes)
   let b = crc32(b"MFLD2-string\x00" + bytes) | 1U
-  [0, 1, 2, 3].map(fn(i) { ((a + b * i.to_uint()) & 255U).to_int() })
+  [0, 1, 2, 3].map(fn(i) {
+    ((a + b * i.reinterpret_as_uint()) & 255U).reinterpret_as_int()
+  })
 }
 
 ///|
@@ -86,7 +88,7 @@ pub fn FieldPage::may_match(
   match (self.index.zones.get(offset), self.blooms.get(offset)) {
     (Some(zone), Some(blooms)) if !zone.unknown && zone.span == span =>
       filter.condition.may_match_bloom(
-        self.index.paths.map(fn(p) { json_pointer(p) }),
+        self.index.paths.map(p => json_pointer(p)),
         blooms,
       )
     _ => true
@@ -107,7 +109,9 @@ pub fn open_paged_field_header(
     bytes[0:8].to_owned() != b"MFLD2\r\n\x00" {
     raise Invalid("invalid paged field header")
   }
-  let length = cursor(bytes[8:12].to_owned(), default_limits()).u32().to_int()
+  let length = cursor(bytes[8:12].to_owned(), default_limits())
+    .u32()
+    .reinterpret_as_int()
   if length < 0 || length != bytes.length() - 16 {
     raise Invalid("paged field header length mismatch")
   }
@@ -134,9 +138,7 @@ pub fn open_paged_field_header(
   let size = parse_decimal(field_text(field_get(object, "source_size")))
   let identity = field_text(field_get(object, "decoder_identity"))
   let hash = checked_digest(field_text(field_get(object, "source_sha256")))
-  let paths = field_array(field_get(object, "paths")).map(fn(v) {
-    field_text(v)
-  })
+  let paths = field_array(field_get(object, "paths")).map(v => field_text(v))
   if size != source_size ||
     identity != decoder_identity ||
     identity == "" ||
@@ -190,7 +192,7 @@ pub fn PagedFieldHeader::decode_page(
     "field page bloom",
   )
   let template = self.template
-  let mirror = new_read_source(template.size, fn(_, _) {
+  let mirror = new_read_source(template.size, (_, _) => {
     raise Invalid("unexpected paged field source read")
   })
   let index = open_field_index(
@@ -220,7 +222,7 @@ pub fn PagedFieldHeader::decode_page(
     if row.length() != template.paths.length() {
       raise Invalid("field page bloom column mismatch")
     }
-    blooms[offsets[i]] = row.map(fn(v) {
+    blooms[offsets[i]] = row.map(v => {
       let bits = decode_hex(field_text(v), max_bytes=32)
       if bits.length() != 0 && bits.length() != 32 {
         raise Invalid("invalid field bloom size")
@@ -261,7 +263,7 @@ pub fn build_paged_field_index(
     decoder_identity.length() > 256 {
     raise Invalid("invalid paged field settings")
   }
-  let pointers = paths.map(fn(p) { json_pointer(p) })
+  let pointers = paths.map(p => json_pointer(p))
   let seen : Map[String, Bool] = Map([])
   for p in paths {
     if seen.contains(p) {
@@ -284,7 +286,7 @@ pub fn build_paged_field_index(
   }
   sink.write(
     b"MFLD2\r\n\x00" +
-    data.length().to_uint().mcap_le_bytes() +
+    data.length().reinterpret_as_uint().mcap_le_bytes() +
     data +
     crc32(data).mcap_le_bytes(),
   )
@@ -324,8 +326,8 @@ pub fn build_paged_field_index(
     buffer.write_uint64_le(offsets[0])
     let last = offsets[offsets.length() - 1]
     buffer.write_uint64_le(last + page_index.zones[last].span.to_uint64())
-    buffer.write_uint_le(bytes.length().to_uint())
-    buffer.write_uint_le(blooms.length().to_uint())
+    buffer.write_uint_le(bytes.length().reinterpret_as_uint())
+    buffer.write_uint_le(blooms.length().reinterpret_as_uint())
     buffer.write_bytes(bytes[:])
     buffer.write_bytes(blooms[:])
     while buffer.length() < page_bytes - 4 {
@@ -364,7 +366,7 @@ pub fn build_paged_field_index(
             declarations.channels.push(c)
           }
         },
-        message=fn(message, location) {
+        message=(message, location) => {
           if current[0] is Some((offset, _, _)) && offset != location.offset {
             flush_region()
           }
@@ -436,3 +438,9 @@ pub fn build_paged_field_index(
     "source_sha256": digest,
   }
 }
+
+///|
+pub extend FieldPageLayout with @debug.Debug::{to_repr}
+
+///|
+pub extend FieldPageLayout with Eq::{not_equal, equal}

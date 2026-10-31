@@ -46,37 +46,32 @@ pub async fn AsyncTemporalJoin::next(
   defer {
     self.busy = false
   }
-  try {
-    while true {
-      match self.cursor.poll() {
-        @mcap.JoinReadLeft => {
-          let value = (self.left.next)()
-          if self.closed {
-            return None
-          }
-          self.cursor.feed_left(value)
-        }
-        @mcap.JoinReadRight => {
-          let value = (self.right.next)()
-          if self.closed {
-            return None
-          }
-          self.cursor.feed_right(value)
-        }
-        @mcap.JoinRow(row) => return Some(row)
-        @mcap.JoinDone => {
-          self.cancel()
+  errdefer self.cancel()
+
+  while true {
+    match self.cursor.poll() {
+      @mcap.JoinReadLeft => {
+        let value = (self.left.next)()
+        if self.closed {
           return None
         }
+        self.cursor.feed_left(value)
+      }
+      @mcap.JoinReadRight => {
+        let value = (self.right.next)()
+        if self.closed {
+          return None
+        }
+        self.cursor.feed_right(value)
+      }
+      @mcap.JoinRow(row) => return Some(row)
+      @mcap.JoinDone => {
+        self.cancel()
+        return None
       }
     }
-    None
-  } catch {
-    error => {
-      self.cancel()
-      raise error
-    }
   }
+  None
 }
 
 ///|

@@ -5,7 +5,7 @@
     "upstream_file": "lz4/types.mbt",
     "upstream_sha256": "3fefb32881da68be3165d3ad9dd8b5714bc5f8efd9e2f43b624c417e20d93018",
     "license": "Apache-2.0",
-    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting. 0.17.4: explicit bit reinterpretation, current syntax and explicit public derived methods; remove unused private LZ4 header helper where applicable. Retain upstream diagnostics and incremental Result state with audited declaration-level warning exceptions."
   },
   {
     "file": "internal/lz4/compress.mbt",
@@ -29,7 +29,7 @@
     "upstream_file": "lz4/frame.mbt",
     "upstream_sha256": "6593c5ea3bc8cb0d887a2c55c0ef14d954954e1243565af725c81695453fe529",
     "license": "Apache-2.0",
-    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting. 0.17.4: explicit bit reinterpretation, current syntax and explicit public derived methods; remove unused private LZ4 header helper where applicable. Retain upstream diagnostics and incremental Result state with audited declaration-level warning exceptions."
   },
   {
     "file": "internal/checksum/hasher.mbt",
@@ -45,7 +45,7 @@
     "upstream_file": "checksum/xxh32.mbt",
     "upstream_sha256": "01f8267c2ba87ff4d146cf1e910a66579100d8a4e9601bb5e33efaaeae27f774",
     "license": "Apache-2.0",
-    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting."
+    "changes": "Internal package paths; portable MoonBit implementation on supported backends; formatting. 0.17.4: explicit bit reinterpretation, current syntax and explicit public derived methods; remove unused private LZ4 header helper where applicable. Retain upstream diagnostics and incremental Result state with audited declaration-level warning exceptions."
   },
   {
     "file": "internal/checksum/xxh64.mbt",

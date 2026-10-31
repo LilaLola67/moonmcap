@@ -1,4 +1,5 @@
 ///|
+#warnings("-missing_priv")
 struct TemporaryWorkspace {
   storage : SortStorage
   maximum : UInt64
@@ -17,7 +18,7 @@ fn TemporaryWorkspace::create(
   }
   self.live[id] = 0UL
   let target = (self.storage.create)(id)
-  new_write_sink(fn(bytes) {
+  new_write_sink(bytes => {
     if bytes.length().to_uint64() > self.maximum - self.bytes {
       raise Invalid("combined temporary disk budget exceeded")
     }

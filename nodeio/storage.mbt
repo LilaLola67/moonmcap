@@ -15,15 +15,15 @@ pub fn sort_directory(
     raise @mcap.io_error(job)
   }
   @mcap.sort_storage(
-    fn(id) { create_sink("\{job}/\{id}.run") },
-    fn(id) { open_file("\{job}/\{id}.run") },
-    fn(id) {
+    id => create_sink("\{job}/\{id}.run"),
+    id => open_file("\{job}/\{id}.run"),
+    id => {
       let error = remove_owned("\{job}/\{id}.run", false)
       if error != "" {
         raise @mcap.io_error(error)
       }
     },
-    finish=fn() {
+    finish=() => {
       let error = remove_owned(job, true)
       if error != "" {
         raise @mcap.io_error(error)

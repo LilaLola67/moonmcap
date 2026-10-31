@@ -2,12 +2,12 @@
 /// Select messages while pruning unreachable declarations and retaining metadata.
 pub fn slice_log(log : Log, query : Query) -> Log raise McapError {
   let messages = build_query_index(log).query(query)
-  let needed_channels : Map[Int32, Bool] = {}
+  let needed_channels : Map[Int32, Bool] = Map([])
   for message in messages {
     needed_channels[message.channel_id] = true
   }
   let channels = log.channels.filter(fn(c) { needed_channels.contains(c.id) })
-  let needed_schemas : Map[Int32, Bool] = {}
+  let needed_schemas : Map[Int32, Bool] = Map([])
   for channel in channels {
     if channel.schema_id != 0 {
       needed_schemas[channel.schema_id] = true
@@ -69,13 +69,13 @@ pub fn merge_logs(
           merged.schemas.push({
             ..schema,
             id: schema_id,
-            data: schema.data.copy(),
+            data: copy_payload(schema.data),
           })
           schema_remap[schema.id] = schema_id
         }
       }
     }
-    let channel_remap : Map[Int32, Int32] = {}
+    let channel_remap : Map[Int32, Int32] = Map([])
     for channel in log.channels {
       let remapped_schema = schema_remap[channel.schema_id]
       match
@@ -104,14 +104,17 @@ pub fn merge_logs(
       merged.messages.push({
         ..message,
         channel_id: channel_remap[message.channel_id],
-        data: message.data.copy(),
+        data: copy_payload(message.data),
       })
     }
     for metadata in log.metadata {
       merged.metadata.push({ ..metadata, entries: metadata.entries.copy(), })
     }
     for attachment in log.attachments {
-      merged.attachments.push({ ..attachment, data: attachment.data.copy(), })
+      merged.attachments.push({
+        ..attachment,
+        data: copy_payload(attachment.data),
+      })
     }
   }
   if chronological {

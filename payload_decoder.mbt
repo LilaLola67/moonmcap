@@ -11,6 +11,7 @@ pub fn payload_decoder(
 }
 
 ///|
+#warnings("-missing_priv")
 enum SchemaDecoder {
   Proto(ProtobufDecoder)
   Cdr(CdrDecoder)
@@ -44,6 +45,7 @@ fn SchemaDecoder::decode(
 }
 
 ///|
+#warnings("-missing_priv")
 struct ProtoCache {
   name : String
   data : Bytes
@@ -69,7 +71,7 @@ pub fn standard_payload_decoder(
     ignore(selection_paths(s))
   }
   let retained = [0]
-  payload_decoder(fn(schema, channel, bytes) {
+  payload_decoder((schema, channel, bytes) => {
     if channel.message_encoding == "json" {
       let value = parse_json_document(
         bytes,
@@ -191,32 +193,27 @@ pub fn QuerySource::decode_payload(
   }
   query_source(
     declarations,
-    fn(query, budget) {
+    (query, budget) => {
       let stream = (self.open)(query, budget)
       message_stream(
-        fn() {
-          try {
-            match (stream.next_message)() {
-              None => {
-                (stream.stop)()
-                None
-              }
-              Some(message) => {
-                let decoded = decoder.decode_message(
-                  message,
-                  self.declarations,
-                  max_bytes~,
-                )
-                if budget < 31 || decoded.data.length() > budget - 31 {
-                  raise Invalid("decoded message exceeds provider budget")
-                }
-                Some(decoded)
-              }
-            }
-          } catch {
-            error => {
+        () => {
+          errdefer (stream.stop)()
+
+          match (stream.next_message)() {
+            None => {
               (stream.stop)()
-              raise error
+              None
+            }
+            Some(message) => {
+              let decoded = decoder.decode_message(
+                message,
+                self.declarations,
+                max_bytes~,
+              )
+              if budget < 31 || decoded.data.length() > budget - 31 {
+                raise Invalid("decoded message exceeds provider budget")
+              }
+              Some(decoded)
             }
           }
         },

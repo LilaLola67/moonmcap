@@ -106,9 +106,9 @@ pub fn compute_file_statistics(
   {
     message_count: log.messages.length().to_uint64(),
     schema_count: log.schemas.length(),
-    channel_count: log.channels.length().to_uint(),
-    attachment_count: log.attachments.length().to_uint(),
-    metadata_count: log.metadata.length().to_uint(),
+    channel_count: log.channels.length().reinterpret_as_uint(),
+    attachment_count: log.attachments.length().reinterpret_as_uint(),
+    metadata_count: log.metadata.length().reinterpret_as_uint(),
     chunk_count,
     start_time,
     end_time,

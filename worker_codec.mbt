@@ -134,25 +134,18 @@ pub fn FileCursor::feed_expanded(
   if self.state != FileActive || !self.needed() {
     raise Invalid("file cursor has no pending worker read")
   }
-  try {
-    let index = self.candidates[self.loaded]
-    let length = bounded_length(
-      index.chunk_length + index.message_index_length,
-      self.span_budget,
-      "worker cursor span",
-    )
-    if original.length() != length {
-      raise Invalid("worker original span length mismatch")
-    }
-    self.accept(
-      self.reader.load_chunk(index, provided=Some(original), expanded~),
-    )
-  } catch {
-    error => {
-      self.fail()
-      raise error
-    }
+  errdefer self.fail()
+
+  let index = self.candidates[self.loaded]
+  let length = bounded_length(
+    index.chunk_length + index.message_index_length,
+    self.span_budget,
+    "worker cursor span",
+  )
+  if original.length() != length {
+    raise Invalid("worker original span length mismatch")
   }
+  self.accept(self.reader.load_chunk(index, provided=Some(original), expanded~))
 }
 
 ///|

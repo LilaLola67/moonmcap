@@ -25,6 +25,7 @@ pub fn protobuf_options() -> ProtobufOptions {
 }
 
 ///|
+#warnings("-missing_priv")
 enum ProtoValue {
   PVarint(UInt64)
   PFixed32(UInt32)
@@ -35,12 +36,14 @@ enum ProtoValue {
 }
 
 ///|
+#warnings("-missing_priv")
 struct ProtoItem {
   number : Int32
   value : ProtoValue
 }
 
 ///|
+#warnings("-missing_priv")
 struct ProtoWire {
   data : Bytes
   budget : Array[Int32]
@@ -157,7 +160,7 @@ fn ProtoItem::text(self : ProtoItem) -> String raise McapError {
 ///|
 fn ProtoItem::number(self : ProtoItem) -> Int32 raise McapError {
   match self.value {
-    PVarint(value) => value.to_uint().to_int()
+    PVarint(value) => value.to_uint().reinterpret_as_int()
     _ => raise Invalid("protobuf descriptor number mismatch")
   }
 }

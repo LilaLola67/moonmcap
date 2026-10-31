@@ -3,13 +3,18 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Exact published version, for example 0.17.2
+        description: Exact published version, for example 0.17.4
         required: true
         type: string
       commit:
         description: Full 40-character source commit SHA
         required: true
         type: string
+      github_release:
+        description: Also verify the public GitHub Release tag and assets
+        required: false
+        default: false
+        type: boolean
 permissions:
   contents: read
   actions: read
@@ -36,8 +41,16 @@ jobs:
           RELEASE_COMMIT: ${{ inputs.commit }}
           GITHUB_TOKEN: ${{ github.token }}
         run: python tools/verify.py --profile release --version "$RELEASE_VERSION" --commit "$RELEASE_COMMIT"
+      - name: Verify public GitHub Release assets
+        if: inputs.github_release
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_COMMIT: ${{ inputs.commit }}
+        run: python tools/github_release_verify.py --version "$RELEASE_VERSION" --commit "$RELEASE_COMMIT"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: published-release-evidence
-          path: _interop/verification/
+          path: |
+            _interop/verification/
+            _interop/github-release/report.json

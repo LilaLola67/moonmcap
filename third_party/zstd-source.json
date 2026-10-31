@@ -7,17 +7,20 @@
   {
     "file": "compress.mbt",
     "upstream_sha256": "b5c0035d562e8327f2c1de838892fec078ebb172a8ef13b7f73307a211ba9413",
-    "upstream": "bikallem/compress@0.3.4"
+    "upstream": "bikallem/compress@0.3.4",
+    "changes": "Internal portable implementation and package paths. 0.17.4: explicit bit reinterpretation, current syntax and explicit public derived methods; remove unused private LZ4 header helper where applicable. Retain upstream diagnostics and incremental Result state with audited declaration-level warning exceptions."
   },
   {
     "file": "decompress.mbt",
     "upstream_sha256": "04bddefdabe6fbb7c526c3edbd3bbe01aa3969981373b77082907f8d0cf3b9f0",
-    "upstream": "bikallem/compress@0.3.4"
+    "upstream": "bikallem/compress@0.3.4",
+    "changes": "Internal portable implementation and package paths. 0.17.4: explicit bit reinterpretation, current syntax and explicit public derived methods; remove unused private LZ4 header helper where applicable. Retain upstream diagnostics and incremental Result state with audited declaration-level warning exceptions."
   },
   {
     "file": "deflater.mbt",
     "upstream_sha256": "63eb2fed80565f90cc42e684348171ed45932891934a854d0733b4eba4731093",
-    "upstream": "bikallem/compress@0.3.4"
+    "upstream": "bikallem/compress@0.3.4",
+    "changes": "Internal portable implementation and package paths. 0.17.4: explicit bit reinterpretation, current syntax and explicit public derived methods; remove unused private LZ4 header helper where applicable. Retain upstream diagnostics and incremental Result state with audited declaration-level warning exceptions."
   },
   {
     "file": "dictionary.mbt",
@@ -42,11 +45,13 @@
   {
     "file": "inflater.mbt",
     "upstream_sha256": "e3c5564cfd955a7c04e0b63a2857673fd5240e1a12b35eb0e4e0e766362d9b75",
-    "upstream": "bikallem/compress@0.3.4"
+    "upstream": "bikallem/compress@0.3.4",
+    "changes": "Internal portable implementation and package paths. 0.17.4: explicit bit reinterpretation, current syntax and explicit public derived methods; remove unused private LZ4 header helper where applicable. Retain upstream diagnostics and incremental Result state with audited declaration-level warning exceptions."
   },
   {
     "file": "types.mbt",
     "upstream_sha256": "3cb07ef8d46ac98f44990f19159f651bdfc4fee15e885ead30204e8521b06dc7",
-    "upstream": "bikallem/compress@0.3.4"
+    "upstream": "bikallem/compress@0.3.4",
+    "changes": "Internal portable implementation and package paths. 0.17.4: explicit bit reinterpretation, current syntax and explicit public derived methods; remove unused private LZ4 header helper where applicable. Retain upstream diagnostics and incremental Result state with audited declaration-level warning exceptions."
   }
 ]

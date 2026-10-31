@@ -2,40 +2,58 @@
   "schema": 1,
   "source": [
     [
-      "moon",
-      "check",
-      "--target",
-      "wasm"
+      "python",
+      "tools/static_audit.py"
     ],
     [
-      "moon",
-      "build",
-      "--target",
-      "wasm"
+      "python",
+      "tools/api_audit.py"
     ],
     [
-      "moon",
-      "test",
-      "--target",
-      "wasm"
+      "python",
+      "tools/risk_audit.py"
     ],
     [
       "moon",
       "check",
       "--target",
-      "js"
+      "wasm",
+      "--deny-warn"
     ],
     [
       "moon",
       "build",
       "--target",
-      "js"
+      "wasm",
+      "--deny-warn"
     ],
     [
       "moon",
       "test",
       "--target",
-      "js"
+      "wasm",
+      "--deny-warn"
+    ],
+    [
+      "moon",
+      "check",
+      "--target",
+      "js",
+      "--deny-warn"
+    ],
+    [
+      "moon",
+      "build",
+      "--target",
+      "js",
+      "--deny-warn"
+    ],
+    [
+      "moon",
+      "test",
+      "--target",
+      "js",
+      "--deny-warn"
     ],
     [
       "python",
@@ -59,7 +77,7 @@
     ],
     [
       "python",
-      "tools/fs_fault_workflows.py"
+      "tools/host_coverage.py"
     ],
     [
       "python",
@@ -76,40 +94,58 @@
   ],
   "full": [
     [
-      "moon",
-      "check",
-      "--target",
-      "wasm"
+      "python",
+      "tools/static_audit.py"
     ],
     [
-      "moon",
-      "build",
-      "--target",
-      "wasm"
+      "python",
+      "tools/api_audit.py"
     ],
     [
-      "moon",
-      "test",
-      "--target",
-      "wasm"
+      "python",
+      "tools/risk_audit.py"
     ],
     [
       "moon",
       "check",
       "--target",
-      "js"
+      "wasm",
+      "--deny-warn"
     ],
     [
       "moon",
       "build",
       "--target",
-      "js"
+      "wasm",
+      "--deny-warn"
     ],
     [
       "moon",
       "test",
       "--target",
-      "js"
+      "wasm",
+      "--deny-warn"
+    ],
+    [
+      "moon",
+      "check",
+      "--target",
+      "js",
+      "--deny-warn"
+    ],
+    [
+      "moon",
+      "build",
+      "--target",
+      "js",
+      "--deny-warn"
+    ],
+    [
+      "moon",
+      "test",
+      "--target",
+      "js",
+      "--deny-warn"
     ],
     [
       "python",
@@ -133,7 +169,7 @@
     ],
     [
       "python",
-      "tools/fs_fault_workflows.py"
+      "tools/host_coverage.py"
     ],
     [
       "python",
@@ -190,10 +226,6 @@
     [
       "python",
       "tools/async_workflows.py"
-    ],
-    [
-      "python",
-      "tools/http_workflows.py"
     ],
     [
       "python",
@@ -333,15 +365,7 @@
     ],
     [
       "python",
-      "tools/worker_workflows.py"
-    ],
-    [
-      "python",
       "tools/worker_benchmark.py"
-    ],
-    [
-      "python",
-      "tools/cached_http_workflows.py"
     ],
     [
       "python",
@@ -416,6 +440,10 @@
     [
       "python",
       "tools/real_journey.py"
+    ],
+    [
+      "python",
+      "tools/so101_workflows.py"
     ]
   ],
   "release": [

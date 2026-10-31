@@ -12,6 +12,7 @@ import subprocess
 import sys
 import time
 import uuid
+from risk_audit import evaluate as evaluate_risks
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -180,6 +181,12 @@ def main():
                 "bytes": destination.stat().st_size,
             }
         )
+    if not failure:
+        try:
+            report["risk_test_execution"] = evaluate_risks(report)
+        except AssertionError as error:
+            report["result"] = "failed"
+            failure = "risk execution evidence: " + str(error)
     text = json.dumps(report, indent=2) + "\n"
     (work / "manifest.json").write_text(text, encoding="utf-8")
     (ROOT / "_interop/verification/latest.json").write_text(text, encoding="utf-8")

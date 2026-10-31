@@ -1,4 +1,5 @@
 ///|
+#warnings("-missing_priv")
 struct SourceTables {
   log : Log
   schemas : Map[Int32, Int32]

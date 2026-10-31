@@ -58,7 +58,7 @@ pub fn event_detector(rule : EventRule) -> EventDetector raise McapError {
   {
     rule,
     enter: json_filter(rule.enter),
-    leave: rule.leave.map(fn(text) { json_filter(text) }),
+    leave: rule.leave.map(text => json_filter(text)),
     previous: None,
     candidate: None,
     confirmed: None,
@@ -259,3 +259,9 @@ pub fn event_span_json(event : EventSpan) -> Json {
     "closed": event.closed,
   }
 }
+
+///|
+pub extend EventSpan with @debug.Debug::{to_repr}
+
+///|
+pub extend EventSpan with Eq::{not_equal, equal}

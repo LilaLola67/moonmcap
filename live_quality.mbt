@@ -36,8 +36,8 @@ pub fn live_quality(
     pending_limit > 16384 {
     raise Invalid("invalid live quality rules/buffer")
   }
-  let names : Map[String, Bool] = {}
-  let states = rules.map(fn(rule) {
+  let names : Map[String, Bool] = Map([])
+  let states = rules.map(rule => {
     if rule.topic == "" ||
       rule.minimum_messages < 0 ||
       names.contains(rule.topic) {
@@ -46,7 +46,7 @@ pub fn live_quality(
     names[rule.topic] = true
     QualityState::{
       rule,
-      predicate: rule.condition.map(fn(c) { json_filter(c) }),
+      predicate: rule.condition.map(c => json_filter(c)),
       count: 0UL,
       previous: None,
       sequences: {},
@@ -278,7 +278,7 @@ pub fn LiveQuality::feed(
     Some(predicate) => predicate.matches(message.data)
   }
   if self.states[index].rule.check_sequence {
-    let channels : Map[Int32, Bool] = {}
+    let channels : Map[Int32, Bool] = Map([])
     for channel in self.states[index].sequences.keys() {
       channels[channel] = true
     }

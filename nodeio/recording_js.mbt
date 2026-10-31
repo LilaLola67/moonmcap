@@ -1,7 +1,7 @@
 ///|
 extern "js" fn recording_host(
   path : String,
-  resume : Bool,
+  resume_name : Bool,
 ) -> (String, Int32, Bytes) -> String =
   #| (directory,resume)=>{
   #| const fs=process.getBuiltinModule('node:fs'),p=process.getBuiltinModule('node:path'),crypto=process.getBuiltinModule('node:crypto');
@@ -40,23 +40,16 @@ extern "js" fn recording_host(
   #| }
 
 ///|
+#label_migration(resume_name, alias=resume)
 pub fn open_recording_directory(
   path : String,
-  resume~ : Bool = false,
+  resume_name~ : Bool = false,
 ) -> RecordingDirectory raise @mcap.McapError {
   let directory : RecordingDirectory = {
-    operate: recording_host(path, resume),
+    operate: recording_host(path, resume_name),
     closed: false,
   }
-  ignore(
-    directory.operation("inspect") catch {
-      error => {
-        directory.close() catch {
-          _ => ()
-        }
-        raise error
-      }
-    },
-  )
+  errdefer (directory.close() catch { _ => () })
+  ignore(directory.operation("inspect"))
   directory
 }

@@ -12,7 +12,7 @@ python tools/verify.py --profile source
 `source` 执行 Wasm/JS 检查、构建、单元测试、运行时及文档核验、承诺追溯、干净导出树
 快速开始、CLI 失败合同、文件系统故障、旧产物读取、实际进程中断和批次恢复。
 需要 Python 3.12、Git、Node.js 22.3+ 和 moonc 0.10.17 基准或已验证的新版本。
-Windows 与 Linux 的最小 Node 22.3.0、Windows 维护版 Node 22 都在 CI 中执行此配置；
+CI 为 Windows、Linux 及 macOS 15 ARM64/Intel 配置 Node 22.3.0 验证，另有 Windows 维护版 Node 22；各平台是否通过以确切提交的 Actions 结果为准。
 主 Linux CI 另执行较完整的互操作工作流，当前编译器有独立任务。
 
 | 配置 | 命令 | 额外依赖和含义 |
@@ -52,7 +52,7 @@ Git 索引树、工作树是否干净、moon/Node/Python/系统版本、每条�
 冻结生产者与逐文件哈希。[文件系统故障注入](../tools/fs_fault_workflows.py) 检查实际注入
 发生、文件句柄关闭、输入不变、提交前目标不存在、提交后目标完整且不被覆盖，并检验 close 失败后复用的无关句柄仍有效、录制/批次同步失败后无错误提交。
 
-`python tools/coverage_audit.py` 生成六个风险文件的已覆盖/可执行行与未覆盖行号。
+`python tools/coverage_audit.py` 生成十五个风险文件的已覆盖/可执行行与未覆盖行号。
 仅统计 MoonBit JS 单元测试的行插桩；不是分支覆盖率，不统计内嵌 JS 宿主，也没有合并
 外部 CLI 工作流。未覆盖位置用于人工审阅、选择边界回归；不通过重复实现断言来追求数值。
 新增风险测试覆盖非法负预算在 IO 前拒绝和校验值合法但状态非法的批次恢复。
@@ -68,3 +68,5 @@ python tools/real_journey.py
 提取连续前缀并独立比较每条消息及可用 CRC，最后确认原件 SHA-256 不变。
 截断是测试主动制作的故障，报告记录字节偏移、哈希和方法，不声称原录制存在该故障。
 原始公开数据不随仓库或发布包分发；MIT 不改变其来源许可。
+
+新增严格诊断与旧 API 门禁见[静态检查](static-checks.md)。单元行插桩、V8 宿主执行与风险测试执行追溯分别记录，详见[风险覆盖](risk-coverage.md)。公开配置另执行可直接展示的 [SO-101 示例](../examples/so101/README.md)。

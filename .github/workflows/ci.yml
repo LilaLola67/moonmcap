@@ -40,10 +40,13 @@ jobs:
       - run: moon update
       - run: python tools/count_source.py
       - run: python tools/runtime_audit.py
+      - run: python tools/static_audit.py
+      - run: python tools/api_audit.py
+      - run: python tools/risk_audit.py
       - run: python tools/check_docs.py
-      - run: moon check --target ${{ matrix.target }}
-      - run: moon build --target ${{ matrix.target }}
-      - run: moon test --target ${{ matrix.target }}
+      - run: moon check --target ${{ matrix.target }} --deny-warn
+      - run: moon build --target ${{ matrix.target }} --deny-warn
+      - run: moon test --target ${{ matrix.target }} --deny-warn
       - run: moon run cmd/main --target ${{ matrix.target }}
       - run: moon run cmd/cursor --target ${{ matrix.target }}
       - name: Install official interoperability reference
@@ -85,9 +88,6 @@ jobs:
       - name: Verify asynchronous IO and recording rotation
         if: matrix.target == 'js'
         run: python tools/async_workflows.py
-      - name: Verify HTTP ranges retries and cancellation
-        if: matrix.target == 'js'
-        run: python tools/http_workflows.py
       - name: Verify bounded external disk sorting
         if: matrix.target == 'js'
         run: python tools/external_workflows.py
@@ -206,15 +206,9 @@ jobs:
       - name: Verify reproducible recipes and publication crash recovery
         if: matrix.target == 'js'
         run: python tools/recipe_workflows.py
-      - name: Verify real codec workers order cancellation budgets and faults
-        if: matrix.target == 'js'
-        run: python tools/worker_workflows.py
       - name: Measure codec worker overhead and process RSS
         if: matrix.target == 'js'
         run: python tools/worker_benchmark.py
-      - name: Verify persistent HTTP pages concurrency faults and crash recovery
-        if: matrix.target == 'js'
-        run: python tools/cached_http_workflows.py
       - name: Verify byte IO bridges bounded read ahead and measurements
         if: matrix.target == 'js'
         run: python tools/io_workflows.py
@@ -242,9 +236,9 @@ jobs:
       - name: Trace declared contracts
         if: matrix.target == 'js'
         run: python tools/contract_audit.py
-      - name: Inject filesystem publication faults
+      - name: Measure host bridges and verify filesystem HTTP worker cache faults
         if: matrix.target == 'js'
-        run: python tools/fs_fault_workflows.py
+        run: python tools/host_coverage.py
       - name: Read frozen historical formats
         if: matrix.target == 'js'
         run: python tools/compatibility_workflows.py
@@ -309,6 +303,10 @@ jobs:
             _interop/fs-faults/report.json
             _interop/compatibility/report.json
             _interop/coverage/report.json
+            _interop/host-coverage/report.json
+            _interop/static/report.json
+            _interop/api-audit/report.json
+            _interop/risks/report.json
             _interop/pipeline/report.json
             _interop/paged-fields/report.json
             _interop/payload-views/report.json
@@ -345,9 +343,9 @@ jobs:
       - run: moon version --all
       - run: moon update
       - run: python tools/runtime_audit.py
-      - run: moon check --target js
-      - run: moon build --target js
-      - run: moon test --target js
+      - run: moon check --target js --deny-warn
+      - run: moon build --target js --deny-warn
+      - run: moon test --target js --deny-warn
       - run: moon doc
   large-source:
     if: github.event_name == 'workflow_dispatch' && inputs.large_source
@@ -397,6 +395,7 @@ jobs:
       - run: python tools/ros1_workflows.py --public
       - run: python tools/incident_workflows.py --public
       - run: python tools/real_journey.py
+      - run: python tools/so101_workflows.py
       - uses: actions/upload-artifact@v4
         with:
           name: public-corpus-report
@@ -404,6 +403,7 @@ jobs:
             _interop/corpus/report-public.json
             _interop/incidents/report-public.json
             _interop/real-journey/report.json
+            _interop/so101-example/report.json
   platform-contracts:
     name: platform-${{ matrix.os }}-node-${{ matrix.node }}
     runs-on: ${{ matrix.os }}
@@ -417,6 +417,12 @@ jobs:
             node: '22.3.0'
           - os: windows-latest
             node: '22'
+          - os: macos-15
+            node: '22.3.0'
+            machine: arm64
+          - os: macos-15-intel
+            node: '22.3.0'
+            machine: x86_64
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4
@@ -425,8 +431,8 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - name: Install Linux toolchain
-        if: runner.os == 'Linux'
+      - name: Install Unix toolchain
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.17+d971670cd'
@@ -442,6 +448,12 @@ jobs:
           (Join-Path $HOME '.moon/bin') >> $env:GITHUB_PATH
       - run: moon update
       - run: python -m pip install mcap==1.3.0 lz4==4.4.5 zstandard==0.25.0
+      - name: Verify macOS architecture
+        if: runner.os == 'macOS'
+        env:
+          EXPECTED_MACHINE: ${{ matrix.machine }}
+        run: >-
+          python -c "import os,platform; print(platform.system(), platform.machine()); assert platform.system() == 'Darwin' and platform.machine() == os.environ['EXPECTED_MACHINE']"
       - run: python tools/verify.py --profile source
       - uses: actions/upload-artifact@v4
         if: always()

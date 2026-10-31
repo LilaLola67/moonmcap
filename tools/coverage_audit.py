@@ -1,6 +1,6 @@
 """Generate local coverage evidence and a risk-file inventory; no percentage quality gate."""
 
-import json, os, subprocess
+import json, os, subprocess, uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -11,6 +11,15 @@ RISK = [
     "stream_writer.mbt",
     "sidecar.mbt",
     "cli_options.mbt",
+    "source_scan.mbt",
+    "asyncio/dataset.mbt",
+    "asyncio/writer.mbt",
+    "asyncio/pipeline.mbt",
+    "asyncio/http.mbt",
+    "asyncio/worker_pool.mbt",
+    "asyncio/cached.mbt",
+    "nodeio/files.mbt",
+    "nodeio/storage.mbt",
 ]
 
 
@@ -18,13 +27,25 @@ def main():
     work = ROOT / "_interop/coverage"
     work.mkdir(parents=True, exist_ok=True)
     moon = os.environ.get("MOON", "moon")
+    # Each measurement must use matching instrumentation and counters, never
+    # stale outputs from an earlier source tree or compiler.
+    target = work / ("build-" + uuid.uuid4().hex)
     for name, args in [
-        ("test", ["test", "--target", "js", "--enable-coverage", "--warn-list", "-a"]),
+        ("test", ["test", "--target", "js", "--enable-coverage", '--deny-warn']),
         (
             "report",
             ["coverage", "report", "-f", "coveralls", "-o", str(work / "raw.json")],
         ),
     ]:
+        if name == "test":
+            args += ["--target-dir", str(target)]
+        else:
+            sources = sorted(target.rglob("*.trace.source"))
+            counters = sorted(target.glob("moonbit_coverage_*.txt"))
+            assert sources and counters, "fresh instrumentation or counters missing"
+            combined = work / "runtime.txt"
+            combined.write_bytes(b"\n".join(p.read_bytes() for p in counters))
+            args += ["--runtime-log", str(combined), *map(str, sources)]
         with (work / (name + ".log")).open("w", encoding="utf-8") as log:
             r = subprocess.run(
                 [moon, *args], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT
@@ -53,7 +74,7 @@ def main():
         "result": "passed",
         "measurement": "MoonBit JS unit-test line instrumentation only",
         "risk_files": rows,
-        "selected_regressions": "risk_paths_test.mbt",
+        "selected_regressions": ["risk_paths_test.mbt", "asyncio/cleanup_test.mbt"],
         "limitations": [
             "Not branch coverage.",
             "Does not measure embedded JavaScript host bodies.",

@@ -17,7 +17,7 @@ from mcap.writer import Writer, CompressionType
 def main():
     work = ROOT / '_interop/clip-batches' / uuid.uuid4().hex
     work.mkdir(parents=True)
-    subprocess.run([os.environ.get('MOON', 'moon'), 'build', '--target', 'js', '--warn-list', '-a'],
+    subprocess.run([os.environ.get('MOON', 'moon'), 'build', '--target', 'js', '--deny-warn'],
                    cwd=ROOT, capture_output=True, check=True)
     cli = ROOT / '_build/js/debug/build/cmd/incident/incident.js'
     source = work / 'source.mcap'

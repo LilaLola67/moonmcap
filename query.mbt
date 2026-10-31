@@ -48,11 +48,13 @@ fn sort_positions(log : Log, positions : Array[Int32]) -> Unit {
 pub fn copy_log(log : Log) -> Log {
   {
     header: log.header,
-    schemas: log.schemas.map(fn(s) { { ..s, data: s.data.copy(), } }),
+    schemas: log.schemas.map(fn(s) { { ..s, data: copy_payload(s.data), } }),
     channels: log.channels.map(fn(c) { { ..c, metadata: c.metadata.copy(), } }),
-    messages: log.messages.map(fn(m) { { ..m, data: m.data.copy(), } }),
+    messages: log.messages.map(fn(m) { { ..m, data: copy_payload(m.data), } }),
     metadata: log.metadata.map(fn(m) { { ..m, entries: m.entries.copy(), } }),
-    attachments: log.attachments.map(fn(a) { { ..a, data: a.data.copy(), } }),
+    attachments: log.attachments.map(fn(a) {
+      { ..a, data: copy_payload(a.data), }
+    }),
   }
 }
 
@@ -60,7 +62,7 @@ pub fn copy_log(log : Log) -> Log {
 pub fn build_query_index(log : Log) -> QueryIndex raise McapError {
   validate_log(log)
   let log = copy_log(log)
-  let by_channel : Map[Int32, Array[Int32]] = {}
+  let by_channel : Map[Int32, Array[Int32]] = Map([])
   let all_messages = []
   for i = 0; i < log.messages.length(); i = i + 1 {
     let id = log.messages[i].channel_id
@@ -153,7 +155,7 @@ pub fn QueryIndex::query(
       candidates[i]
     }
     let message = self.log.messages[position]
-    result.push({ ..message, data: message.data.copy(), })
+    result.push({ ..message, data: copy_payload(message.data), })
   }
   result
 }

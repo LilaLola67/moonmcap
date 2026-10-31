@@ -1,7 +1,7 @@
 ///|
 extern "js" fn artifact_host(
   directory : String,
-  resume : Bool,
+  resume_name : Bool,
 ) -> (String, Int32, Bytes) -> String =
   #| (directory,resume)=>{
   #| const fs=process.getBuiltinModule('node:fs'),p=process.getBuiltinModule('node:path'),crypto=process.getBuiltinModule('node:crypto');
@@ -42,23 +42,16 @@ extern "js" fn artifact_host(
   #| }
 
 ///|
+#label_migration(resume_name, alias=resume)
 pub fn open_artifact_directory(
   path : String,
-  resume~ : Bool = false,
+  resume_name~ : Bool = false,
 ) -> ArtifactDirectory raise @mcap.McapError {
   let directory : ArtifactDirectory = {
-    operate: artifact_host(path, resume),
+    operate: artifact_host(path, resume_name),
     closed: false,
   }
-  ignore(
-    directory.operation("list") catch {
-      error => {
-        directory.close() catch {
-          _ => ()
-        }
-        raise error
-      }
-    },
-  )
+  errdefer (directory.close() catch { _ => () })
+  ignore(directory.operation("list"))
   directory
 }

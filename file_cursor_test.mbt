@@ -24,8 +24,7 @@ test "file cursor matches full sorting with overlapping chunks and stable ties" 
     let bytes = @moonmcap.write_indexed(log, compression~, messages_per_chunk=7)
     for descending in [false, true] {
       for topics in [[], ["/shared", "/shared"], ["/missing"]] {
-        let query = {
-          ..@moonmcap.all_query(),
+        let query : @moonmcap.Query = {
           start_time: 3UL,
           end_time: 19UL,
           topics,
@@ -79,8 +78,7 @@ test "file cursor seek resets offset and state with inclusive boundaries" {
   )
   let reference = @moonmcap.build_query_index(log)
   for descending in [false, true] {
-    let query = {
-      ..@moonmcap.all_query(),
+    let query : @moonmcap.Query = {
       topics: ["/shared"],
       descending,
       start_time: 2UL,

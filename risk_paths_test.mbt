@@ -2,7 +2,7 @@
 // Selected after measuring uncovered validation paths, not for a coverage quota.
 test "reader rejects negative budgets before performing any source read" {
   let reads = [0]
-  let source = @moonmcap.new_read_source(100UL, fn(_, _) {
+  let source = @moonmcap.new_read_source(100UL, (_, _) => {
     reads[0] += 1
     raise @moonmcap.io_error("untrusted read must not start")
   })

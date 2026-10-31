@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn stdout_text(text : String) -> @js_async.Promise[Unit] =
@@ -171,7 +176,7 @@ async fn main {
     } else {
       let output = @nodeio.output_transaction(parsed.output)
       outputs.push(output)
-      @aio.new_sink(async fn(bytes) { output.sink().write(bytes) })
+      @aio.new_sink(bytes => output.sink().write(bytes))
     }
     ignore(cursor.write_ndjson(sink, content?=parsed.content))
     for output in outputs {
@@ -179,8 +184,8 @@ async fn main {
     }
     let value : Json = {
       "plans": Json::array(plans.map(fn(p) { p.info() })),
-      "pools": Json::array(pools.map(fn(p) { p.metrics() })),
-      "http_caches": Json::array(caches.map(fn(c) { c.metrics() })),
+      "pools": Json::array(pools.map(p => p.metrics())),
+      "http_caches": Json::array(caches.map(c => c.metrics())),
     }
     report(value.stringify())
   } catch {

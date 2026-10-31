@@ -44,7 +44,7 @@ pub fn ros1_decoder(
     name == "std_msgs/Header" ||
     name == "std_msgs/msg/Header"
   for raw in text.split("\n") {
-    let line = raw.split("#").next().unwrap().trim().to_string()
+    let line = raw.split("#").next().unwrap().trim().to_owned()
     if line == "" || line.has_prefix("MSG:") || line.has_prefix("====") {
       lines.push(line)
       continue
@@ -64,13 +64,13 @@ pub fn ros1_decoder(
     if pieces.length() != 2 {
       raise Invalid("ROS1 fields cannot have defaults")
     }
-    let token = pieces[0].to_string()
+    let token = pieces[0].to_owned()
     if token.contains("<=") {
       raise Invalid("ROS1 bounded sequence/string syntax is unsupported")
     }
     let (base, suffix) = match token.split_once("[") {
       None => (token, "")
-      Some((base, tail)) => (base.to_string(), "[" + tail.to_string())
+      Some((base, tail)) => (base.to_owned(), "[" + tail.to_owned())
     }
     let base = match base {
       "byte" => "int8"
@@ -89,7 +89,7 @@ pub fn ros1_decoder(
       }
       _ => base
     }
-    lines.push(base + suffix + " " + pieces[1].to_string())
+    lines.push(base + suffix + " " + pieces[1].to_owned())
   }
   let separator = "\n================================================================================\nMSG: "
   let mut normalized = lines.join("\n")

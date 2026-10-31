@@ -69,8 +69,8 @@ pub fn check_quality(
     pending_bytes < 1 {
     raise Invalid("invalid quality interval or budgets")
   }
-  let names : Map[String, Bool] = {}
-  let states = rules.map(fn(rule) {
+  let names : Map[String, Bool] = Map([])
+  let states = rules.map(rule => {
     if rule.topic == "" ||
       rule.minimum_messages < 0 ||
       names.contains(rule.topic) {
@@ -79,7 +79,7 @@ pub fn check_quality(
       )
     }
     names[rule.topic] = true
-    let predicate = rule.condition.map(fn(text) { json_filter(text) })
+    let predicate = rule.condition.map(text => json_filter(text))
     QualityState::{
       rule,
       predicate,
@@ -90,7 +90,7 @@ pub fn check_quality(
       details: [],
     }
   })
-  let channels : Map[Int32, String] = {}
+  let channels : Map[Int32, String] = Map([])
   for channel in source.declarations.channels {
     channels[channel.id] = channel.topic
   }

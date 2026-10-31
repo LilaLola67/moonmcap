@@ -95,7 +95,7 @@ pub fn find_attachments(
     (name == "" || a.name == name) &&
     (media_type == "" || a.media_type == media_type)
   })
-  .map(fn(a) { { ..a, data: a.data.copy(), } })
+  .map(fn(a) { { ..a, data: copy_payload(a.data), } })
 }
 
 ///|
@@ -104,11 +104,11 @@ pub fn validate_attachment_indexes(
   limits~ : Limits = default_limits(),
 ) -> Int32 raise McapError {
   let records = scan_file(bytes, limits~)
-  let physical : Map[UInt64, Record] = {}
+  let physical : Map[UInt64, Record] = Map([])
   for record in records {
     physical[record.offset.to_uint64()] = record
   }
-  let seen : Map[UInt64, Bool] = {}
+  let seen : Map[UInt64, Bool] = Map([])
   let mut count = 0
   for record in records {
     if record.opcode != 0x0a {

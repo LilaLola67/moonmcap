@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn report_error(message : String) -> Unit =
@@ -160,26 +165,23 @@ fn run(
   } else {
     Some(@nodeio.output_transaction(parsed.output))
   }
-  try {
-    while cursor.next_record() is Some(record) {
-      let line = @mcap.json_query_record(record, dataset.channels(), projection).stringify() +
-        "\n"
-      match transaction {
-        None => println(line[0:line.length() - 1])
-        Some(output) => output.sink().write(@utf8.encode(line[:]))
-      }
-    }
+  errdefer {
+    cursor.cancel()
     if transaction is Some(output) {
-      output.publish()
+      output.abort()
     }
-  } catch {
-    error => {
-      cursor.cancel()
-      if transaction is Some(output) {
-        output.abort()
-      }
-      raise error
+  }
+
+  while cursor.next_record() is Some(record) {
+    let line = @mcap.json_query_record(record, dataset.channels(), projection).stringify() +
+      "\n"
+    match transaction {
+      None => println(line[0:line.length() - 1])
+      Some(output) => output.sink().write(@utf8.encode(line[:]))
     }
+  }
+  if transaction is Some(output) {
+    output.publish()
   }
 }
 

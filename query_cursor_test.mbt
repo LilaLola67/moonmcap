@@ -58,8 +58,7 @@ test "cursor pages agree with batch query across ordering topics and limits" {
     for descending in [false, true] {
       for offset in [0, 1, 13, 300] {
         for limit in [0, 1, 31, 1000] {
-          let query = {
-            ..@moonmcap.all_query(),
+          let query : @moonmcap.Query = {
             topics,
             start_time: 3UL,
             end_time: 19UL,
@@ -117,7 +116,7 @@ test "equal timestamps preserve physical order across channels and pages" {
 ///|
 test "cursor progress reports matched skipped emitted and bounded heads" {
   let index = @moonmcap.build_query_index(cursor_fixture())
-  let query = {
+  let query : @moonmcap.Query = {
     ..@moonmcap.all_query(),
     topics: ["/shared"],
     offset: 2,
@@ -186,7 +185,11 @@ test "seek restarts inclusively in direction without reapplying offset" {
 ///|
 test "invalid seek and page size are atomic and cancellation is terminal" {
   let index = @moonmcap.build_query_index(cursor_fixture())
-  let query = { ..@moonmcap.all_query(), start_time: 5UL, end_time: 17UL, }
+  let query : @moonmcap.Query = {
+    ..@moonmcap.all_query(),
+    start_time: 5UL,
+    end_time: 17UL,
+  }
   let cursor = index.cursor(query)
   let before = cursor.progress()
   try cursor.next_page(0) catch {
@@ -232,7 +235,7 @@ test "cursor shares stable index snapshot and copies topic filters" {
   let log = cursor_fixture()
   let index = @moonmcap.build_query_index(log)
   let topics = ["/shared"]
-  let query = { ..@moonmcap.all_query(), topics, }
+  let query : @moonmcap.Query = { ..@moonmcap.all_query(), topics, }
   let expected = index.query(query)
   let first = index.cursor(query)
   let second = index.cursor(query)
@@ -287,7 +290,7 @@ test "invalid cursor query rejected before traversal" {
 ///|
 test "cursor results survive round trips through all compression modes" {
   let log = cursor_fixture()
-  let query = {
+  let query : @moonmcap.Query = {
     ..@moonmcap.all_query(),
     topics: ["/shared"],
     descending: true,

@@ -63,7 +63,7 @@ test "semantic diff preserves duplicates and optionally normalizes JSON" {
     fail("json diff")
   }
   assert_eq(normal["equal"], Json::boolean(true))
-  let fewer = { ..changed, messages: changed.messages[0:1].to_array(), }
+  let fewer = { ..changed, messages: changed.messages[0:1].to_owned(), }
   guard @moonmcap.diff_sources(
       a,
       @moonmcap.memory_source(@moonmcap.write_indexed(fewer)),

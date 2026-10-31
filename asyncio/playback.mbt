@@ -8,24 +8,19 @@ pub async fn playback(
   emit : async (@mcap.Message) -> Unit,
   cancelled~ : () -> Bool = fn() { false },
 ) -> Unit {
-  try {
-    while true {
-      if cancelled() {
-        replay.cancel()
-        return
-      }
-      match replay.poll(clock()) {
-        @mcap.ReplayEnd => return
-        @mcap.ReplayIdle => wait(10000000UL)
-        @mcap.ReplayWait(delay) =>
-          wait(if delay > 50000000UL { 50000000UL } else { delay })
-        @mcap.ReplayEvent(message) => emit(message)
-      }
-    }
-  } catch {
-    error => {
+  errdefer replay.cancel()
+
+  while true {
+    if cancelled() {
       replay.cancel()
-      raise error
+      return
+    }
+    match replay.poll(clock()) {
+      @mcap.ReplayEnd => return
+      @mcap.ReplayIdle => wait(10000000UL)
+      @mcap.ReplayWait(delay) =>
+        wait(if delay > 50000000UL { 50000000UL } else { delay })
+      @mcap.ReplayEvent(message) => emit(message)
     }
   }
 }

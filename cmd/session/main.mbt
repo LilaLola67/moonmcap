@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn pause(milliseconds : Int32) -> Unit =
@@ -23,7 +28,10 @@ fn run(
     return
   }
   if values[0] == "inspect" && values.length() == 2 {
-    let directory = @nodeio.open_recording_directory(values[1], resume=true)
+    let directory = @nodeio.open_recording_directory(
+      values[1],
+      resume_name=true,
+    )
     opened.push(directory)
     println(directory.inspect().stringify())
     return
@@ -90,7 +98,7 @@ fn run(
   options = { ..options, source_identity: @nodeio.source_sha256(source), }
   let directory = @nodeio.open_recording_directory(
     values[1],
-    resume=values[0] == "resume",
+    resume_name=values[0] == "resume",
   )
   opened.push(directory)
   let session = @mcap.open_recording_session(
@@ -101,29 +109,24 @@ fn run(
   )
   let committed = session.committed_messages()
   let position = [0UL]
-  try {
-    ignore(
-      @mcap.scan_source(
-        source,
-        @mcap.source_visitor(message=fn(message, _) {
-          if position[0] >= committed {
-            session.append(message)
-            pause(pace)
-          }
-          position[0] += 1UL
-        }),
-      ),
-    )
-    if position[0] < committed {
-      raise @mcap.io_error("recording source shorter than committed prefix")
-    }
-    println(session.finish().stringify())
-  } catch {
-    error => {
-      session.cancel()
-      raise error
-    }
+  errdefer session.cancel()
+
+  ignore(
+    @mcap.scan_source(
+      source,
+      @mcap.source_visitor(message=(message, _) => {
+        if position[0] >= committed {
+          session.append(message)
+          pause(pace)
+        }
+        position[0] += 1UL
+      }),
+    ),
+  )
+  if position[0] < committed {
+    raise @mcap.io_error("recording source shorter than committed prefix")
   }
+  println(session.finish().stringify())
 }
 
 ///|

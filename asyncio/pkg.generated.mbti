@@ -270,6 +270,10 @@ pub(all) enum AsyncWriterState {
   AsyncFailed
   AsyncCancelled
 } derive(Eq)
+pub fn AsyncWriterState::equal(Self, Self) -> Bool
+pub fn AsyncWriterState::not_equal(Self, Self) -> Bool
+
+type CacheHost
 
 pub struct CachedHttpSource {
   source : AsyncSource
@@ -279,6 +283,8 @@ pub struct CachedHttpSource {
 pub async fn CachedHttpSource::close(Self) -> Unit
 pub fn CachedHttpSource::metrics(Self) -> Json raise @moonmcap.McapError
 pub fn CachedHttpSource::source(Self) -> AsyncSource
+
+type FileRead
 
 pub(all) struct HttpCacheOptions {
   page_bytes : Int32
@@ -346,6 +352,10 @@ pub(all) struct SegmentInfo {
   start_time : UInt64
   end_time : UInt64
 }
+
+type SourceDigest
+
+type WorkerHost
 
 pub(all) struct WorkerOptions {
   workers : Int32

@@ -148,6 +148,7 @@ fn aggregate_encode(key : String, state : AggregateState) -> Bytes {
 }
 
 ///|
+#warnings("-missing_priv")
 struct AggregateRow {
   key : String
   state : AggregateState
@@ -195,7 +196,7 @@ fn aggregate_decode(
     raise Invalid("invalid aggregate coefficient")
   }
   ignore(decimal_parts(coefficient))
-  let exponent = input.u32().to_int()
+  let exponent = input.u32().reinterpret_as_int()
   if exponent < -1024 || exponent > 1024 {
     raise Invalid("invalid aggregate exponent")
   }
@@ -244,6 +245,7 @@ fn aggregate_decode(
 }
 
 ///|
+#warnings("-missing_priv")
 struct AggregateRun {
   source : ReadSource
   limits : Limits
@@ -277,6 +279,7 @@ fn AggregateRun::next(self : AggregateRun) -> AggregateRow? raise McapError {
 }
 
 ///|
+#warnings("-missing_priv")
 struct AggregateSpill {
   storage : SortStorage
   options : ExternalOptions
@@ -299,7 +302,7 @@ fn AggregateSpill::create(
   self.next_id += 1
   let sink = (self.storage.create)(id)
   self.live[id] = 0UL
-  let output = new_write_sink(fn(bytes) {
+  let output = new_write_sink(bytes => {
     if (self.cancelled)() {
       raise Invalid("external aggregation cancelled")
     }
@@ -508,9 +511,9 @@ pub fn aggregate_external(
     flush()
     let mut passes = 0
     while runs.length() > external.fan_in {
-      let ids = runs[0:external.fan_in].to_array()
+      let ids = runs[0:external.fan_in].to_owned()
       let (id, sink) = session.create()
-      session.merge(ids, fn(key, state) { session.write_row(sink, key, state) })
+      session.merge(ids, (key, state) => session.write_row(sink, key, state))
       for old in ids {
         session.remove(old)
       }
@@ -521,7 +524,7 @@ pub fn aggregate_external(
       passes += 1
     }
     let mut count = 0
-    session.merge(runs, fn(_, state) {
+    session.merge(runs, (_, state) => {
       output.write(@utf8.encode((state.report().stringify() + "\n")[:]))
       count += 1
     })

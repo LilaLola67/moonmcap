@@ -244,7 +244,7 @@ fn RangeReader::load_chunk(
   let source = match provided {
     None => self.source
     Some(span) =>
-      new_read_source(self.source.size, fn(offset, length) {
+      new_read_source(self.source.size, (offset, length) => {
         if offset < index.chunk_start ||
           offset - index.chunk_start > span.length().to_uint64() {
           raise Invalid("provided chunk span does not cover requested offset")
@@ -479,3 +479,9 @@ pub fn RangeReader::clear_cache(self : RangeReader) -> Unit {
 pub fn RangeReader::channels(self : RangeReader) -> Array[Channel] {
   self.declarations.channels.map(fn(c) { { ..c, metadata: c.metadata.copy(), } })
 }
+
+///|
+pub extend ReadDiagnostics with @debug.Debug::{to_repr}
+
+///|
+pub extend ReadDiagnostics with Eq::{not_equal, equal}

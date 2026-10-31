@@ -25,7 +25,7 @@ def main():
             for channel in ids:
                 writer.add_message(channel, n, b'{"x":1}', n, n)
         writer.finish()
-    subprocess.run([os.environ.get('MOON', 'moon'), 'build', '--target', 'js', '--warn-list', '-a'], cwd=ROOT, capture_output=True, check=True)
+    subprocess.run([os.environ.get('MOON', 'moon'), 'build', '--target', 'js', '--deny-warn'], cwd=ROOT, capture_output=True, check=True)
     def run(package, command, config, output):
         path = work / 'rules.json'
         path.write_text(json.dumps(config))

@@ -191,8 +191,8 @@ pub fn PayloadDecoder::require_filter_fields(
   self : PayloadDecoder,
   filter : JsonFilter,
 ) -> PayloadDecoder raise McapError {
-  let paths = filter.required_paths().map(fn(p) { json_pointer(p) })
-  payload_decoder(fn(schema, channel, bytes) {
+  let paths = filter.required_paths().map(p => json_pointer(p))
+  payload_decoder((schema, channel, bytes) => {
     let value = (self.decode_payload)(schema, channel, bytes)
     if channel.message_encoding != "cdr" && channel.message_encoding != "ros1" {
       return value
@@ -217,7 +217,7 @@ fn selected_json(
 ) -> Json {
   if pointers.is_empty() ||
     pointers.any(fn(p) {
-      p.length() <= path.length() && p == path[0:p.length()].to_array()
+      p.length() <= path.length() && p == path[0:p.length()].to_owned()
     }) {
     return value
   }
@@ -257,7 +257,7 @@ fn selection_paths(
     selection.scan_items < 1 {
     raise Invalid("invalid decode selection limits")
   }
-  selection.paths.map(fn(p) { json_pointer(p) })
+  selection.paths.map(p => json_pointer(p))
 }
 
 ///|
@@ -315,6 +315,7 @@ fn CdrWire::skip(self : CdrWire, length : Int32) -> Unit raise McapError {
 }
 
 ///|
+#warnings("-missing_priv")
 struct CdrProjection {
   decoder : CdrDecoder
   paths : Array[Array[String]]
@@ -374,7 +375,7 @@ fn CdrProjection::message(
           count > self.selection.inline_array_items &&
           self.paths.any(fn(p) {
             p.length() > child.length() &&
-            p[0:child.length()].to_array() == child
+            p[0:child.length()].to_owned() == child
           }) {
           raise Invalid(
             "array element selection exceeds inline limit; use bounded read_elements",
@@ -510,3 +511,15 @@ pub fn CdrDecoder::view(
     visited: selection.scan_items - wire.budget[0],
   }
 }
+
+///|
+pub extend BinaryField with @debug.Debug::{to_repr}
+
+///|
+pub extend BinaryField with Eq::{not_equal, equal}
+
+///|
+pub extend DecodeSelection with @debug.Debug::{to_repr}
+
+///|
+pub extend DecodeSelection with Eq::{not_equal, equal}

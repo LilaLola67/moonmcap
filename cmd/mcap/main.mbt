@@ -1,6 +1,11 @@
 ///|
-extern "js" fn arguments() -> Array[String] =
+extern "js" fn host_arguments() -> FixedArray[String] =
   #| () => process.argv.slice(2)
+
+///|
+fn arguments() -> Array[String] {
+  Array::from_fixed_array(host_arguments())
+}
 
 ///|
 extern "js" fn error_exit(message : String, code : Int32) -> Unit =
@@ -15,7 +20,7 @@ extern "js" fn stdout_text(text : String) -> Unit =
   #| text=>{process.stdout.write(text);}
 
 ///|
-fn text_output(path : String, text : String) -> Unit raise @mcap.McapError {
+fn text_output(path : String, text : String) -> Unit raise @core.McapError {
   if path == "" {
     println(text)
   } else {
@@ -27,16 +32,16 @@ fn text_output(path : String, text : String) -> Unit raise @mcap.McapError {
 fn indexed_reader(
   path : String,
   index : String,
-  options : @mcap.CommandOptions,
+  options : @core.CommandOptions,
   scope : @nodeio.FileScope,
-) -> @mcap.SidecarReader raise @mcap.McapError {
+) -> @core.SidecarReader raise @core.McapError {
   let source = scope.open(path)
   let verification = if options.fast_index {
-    @mcap.TrustIdentity(@nodeio.file_identity_token(path))
+    @core.TrustIdentity(@nodeio.file_identity_token(path))
   } else {
-    @mcap.VerifyContent(@nodeio.source_sha256)
+    @core.VerifyContent(@nodeio.source_sha256)
   }
-  let reader = @mcap.open_sidecar(
+  let reader = @core.open_sidecar(
     source,
     @nodeio.read_file(index, maximum=options.index_bytes),
     verification,
@@ -44,19 +49,19 @@ fn indexed_reader(
     cache_bytes=options.cache_bytes,
   )
   if options.full {
-    ignore(@mcap.scan_source(source, @mcap.source_visitor()))
+    ignore(@core.scan_source(source, @core.source_visitor()))
   }
   reader
 }
 
 ///|
 fn query_dataset(
-  options : @mcap.CommandOptions,
+  options : @core.CommandOptions,
   scope : @nodeio.FileScope,
-) -> @mcap.Dataset raise @mcap.McapError {
-  let sources = Array::makei(options.inputs.length(), fn(i) {
+) -> @core.Dataset raise @core.McapError {
+  let sources = Array::makei(options.inputs.length(), i => {
     let provider = if options.indexes.is_empty() {
-      let reader = @mcap.open_reader(
+      let reader = @core.open_reader(
         scope.open(options.inputs[i]),
         cache_bytes=options.cache_bytes,
         fallback_bytes=options.max_file_bytes,
@@ -73,14 +78,14 @@ fn query_dataset(
       None => provider
     }
   })
-  @mcap.open_dataset(sources)
+  @core.open_dataset(sources)
 }
 
 ///|
 fn run(
-  options : @mcap.CommandOptions,
+  options : @core.CommandOptions,
   scope : @nodeio.FileScope,
-) -> Unit raise @mcap.McapError {
+) -> Unit raise @core.McapError {
   if options.command == "help" {
     println(
       "diff LEFT RIGHT [--json-payloads --bucket-bytes N --aux-bytes N --max-details N --detail-bytes N]; exit 0 equal, 1 different, 2 invalid",
@@ -121,7 +126,7 @@ fn run(
     let dataset = query_dataset(options, scope)
     text_output(
       options.output,
-      @mcap.aggregate_json(
+      @core.aggregate_json(
         dataset.cursor(options.query),
         dataset.channels(),
         options=options.aggregate,
@@ -130,7 +135,7 @@ fn run(
     return
   }
   if options.command == "diff" {
-    let report = @mcap.diff_sources(
+    let report = @core.diff_sources(
       scope.open(options.inputs[0]),
       scope.open(options.inputs[1]),
       options=options.diff,
@@ -142,8 +147,10 @@ fn run(
     return
   }
   if ["job-inspect", "job-clean"].contains(options.command) {
-    let job = @nodeio.open_merge_job(options.inputs[0], resume=true)
-    try {
+    let job = @nodeio.open_merge_job(options.inputs[0], resume_name=true)
+    {
+      errdefer (job.close() catch { _ => () })
+
       if options.command == "job-clean" {
         job.clean()
         println("{\"cleaned\":true}")
@@ -151,60 +158,48 @@ fn run(
         text_output(options.output, job.inspect())
         job.close()
       }
-    } catch {
-      error => {
-        job.close() catch {
-          _ => ()
-        }
-        raise error
-      }
     }
     return
   }
   if options.command == "external-merge" && options.job_dir != "" {
-    let job = @nodeio.open_merge_job(options.job_dir, resume=options.resume_job)
-    try {
+    let job = @nodeio.open_merge_job(
+      options.job_dir,
+      resume_name=options.resume_job,
+    )
+    {
+      errdefer (job.close() catch { _ => () })
+
       let checkpoint = job.checkpoint()
-      let sources = options.inputs.map(fn(path) { scope.open(path) })
+      let sources = options.inputs.map(path => scope.open(path))
       let transaction = job.output(options.output)
-      try {
-        let report = @mcap.resumable_merge(
+      {
+        errdefer transaction.abort()
+
+        let report = @core.resumable_merge(
           sources,
           job.storage(),
           transaction.sink(),
           @nodeio.source_sha256,
-          fn(bytes) { job.save(bytes) },
+          bytes => job.save(bytes),
           checkpoint?,
           options=options.external,
         )
         transaction.publish()
-        let json = @mcap.external_report_json(report)
+        let json = @core.external_report_json(report)
         job.complete(json)
         println(json.stringify())
-      } catch {
-        error => {
-          transaction.abort()
-          raise error
-        }
       }
       job.close()
-    } catch {
-      error => {
-        job.close() catch {
-          _ => ()
-        }
-        raise error
-      }
     }
     return
   }
   if options.content is Some(filter) &&
     ["query", "index-query", "dataset-query"].contains(options.command) {
-    let sources = Array::makei(options.inputs.length(), fn(i) {
+    let sources = Array::makei(options.inputs.length(), i => {
       let provider = if !options.indexes.is_empty() {
         indexed_reader(options.inputs[i], options.indexes[i], options, scope).query_source()
       } else {
-        let reader = @mcap.open_reader(
+        let reader = @core.open_reader(
           scope.open(options.inputs[i]),
           cache_bytes=options.cache_bytes,
           fallback_bytes=options.max_file_bytes,
@@ -216,7 +211,7 @@ fn run(
       }
       provider.filter_json(filter)
     })
-    let dataset = @mcap.open_dataset(sources)
+    let dataset = @core.open_dataset(sources)
     let cursor = dataset.cursor(options.query)
     if options.format == "ndjson" {
       let transaction = if options.output == "" {
@@ -224,32 +219,29 @@ fn run(
       } else {
         Some(@nodeio.output_transaction(options.output))
       }
-      try {
-        while cursor.next_record() is Some(record) {
-          let text = @mcap.json_query_record(record, dataset.channels(), filter).stringify() +
-            "\n"
-          match transaction {
-            Some(value) => value.sink().write(@utf8.encode(text[:]))
-            None => stdout_text(text)
-          }
-        }
+      errdefer {
+        cursor.cancel()
         if transaction is Some(value) {
-          value.publish()
+          value.abort()
         }
-      } catch {
-        error => {
-          cursor.cancel()
-          if transaction is Some(value) {
-            value.abort()
-          }
-          raise error
+      }
+
+      while cursor.next_record() is Some(record) {
+        let text = @core.json_query_record(record, dataset.channels(), filter).stringify() +
+          "\n"
+        match transaction {
+          Some(value) => value.sink().write(@utf8.encode(text[:]))
+          None => stdout_text(text)
         }
+      }
+      if transaction is Some(value) {
+        value.publish()
       }
     } else {
       let records = cursor.next_page(options.query.limit.max(1))
       let report : Json = {
-        "messages": records.map(fn(record) {
-          @mcap.json_query_record(record, dataset.channels(), filter)
+        "messages": records.map(record => {
+          @core.json_query_record(record, dataset.channels(), filter)
         }),
         "source_count": sources.length(),
       }
@@ -258,7 +250,7 @@ fn run(
     return
   }
   if options.command == "query" {
-    let reader = @mcap.open_reader(
+    let reader = @core.open_reader(
       scope.open(options.inputs[0]),
       cache_bytes=options.cache_bytes,
       fallback_bytes=options.max_file_bytes,
@@ -271,10 +263,10 @@ fn run(
       if options.output == "" {
         ignore(
           cursor.write_ndjson(
-            @mcap.new_write_sink(fn(bytes) {
+            @core.new_write_sink(bytes => {
               stdout_text(
                 @utf8.decode(bytes[:]) catch {
-                  _ => raise @mcap.io_error("invalid NDJSON UTF-8")
+                  _ => raise @core.io_error("invalid NDJSON UTF-8")
                 },
               )
             }),
@@ -282,15 +274,10 @@ fn run(
         )
       } else {
         let transaction = @nodeio.output_transaction(options.output)
-        try {
-          ignore(cursor.write_ndjson(transaction.sink()))
-          transaction.publish()
-        } catch {
-          error => {
-            transaction.abort()
-            raise error
-          }
-        }
+        errdefer transaction.abort()
+
+        ignore(cursor.write_ndjson(transaction.sink()))
+        transaction.publish()
       }
       return
     }
@@ -298,12 +285,12 @@ fn run(
     if options.format == "csv" {
       text_output(
         options.output,
-        @mcap.messages_csv(messages, reader.channels()),
+        @core.messages_csv(messages, reader.channels()),
       )
     } else {
       let report : Json = {
-        "messages": @mcap.messages_json(messages, reader.channels()),
-        "diagnostics": @mcap.read_diagnostics_json(reader.diagnostics()),
+        "messages": @core.messages_json(messages, reader.channels()),
+        "diagnostics": @core.read_diagnostics_json(reader.diagnostics()),
       }
       text_output(options.output, report.stringify())
     }
@@ -312,19 +299,19 @@ fn run(
   if ["index-build", "index-rebuild"].contains(options.command) {
     let source = scope.open(options.inputs[0])
     let token = @nodeio.file_identity_token(options.inputs[0])
-    let bytes = @mcap.build_sidecar(
+    let bytes = @core.build_sidecar(
       source,
       @nodeio.source_sha256,
       identity=token,
       index_bytes=options.index_bytes,
     )
     if @nodeio.file_identity_token(options.inputs[0]) != token {
-      raise @mcap.io_error("source identity changed while indexing")
+      raise @core.io_error("source identity changed while indexing")
     }
-    let reader = @mcap.open_sidecar(
+    let reader = @core.open_sidecar(
       source,
       bytes,
-      @mcap.TrustIdentity(token),
+      @core.TrustIdentity(token),
       index_bytes=options.index_bytes,
     )
     @nodeio.write_atomic_new(options.output, bytes)
@@ -348,10 +335,10 @@ fn run(
         if options.output == "" {
           ignore(
             cursor.write_ndjson(
-              @mcap.new_write_sink(fn(bytes) {
+              @core.new_write_sink(bytes => {
                 stdout_text(
                   @utf8.decode(bytes[:]) catch {
-                    _ => raise @mcap.io_error("invalid NDJSON UTF-8")
+                    _ => raise @core.io_error("invalid NDJSON UTF-8")
                   },
                 )
               }),
@@ -359,20 +346,15 @@ fn run(
           )
         } else {
           let transaction = @nodeio.output_transaction(options.output)
-          try {
-            ignore(cursor.write_ndjson(transaction.sink()))
-            transaction.publish()
-          } catch {
-            error => {
-              transaction.abort()
-              raise error
-            }
-          }
+          errdefer transaction.abort()
+
+          ignore(cursor.write_ndjson(transaction.sink()))
+          transaction.publish()
         }
       } else {
         let messages = cursor.next_page(options.query.limit.max(1))
         let report : Json = {
-          "messages": @mcap.messages_json(messages, reader.channels()),
+          "messages": @core.messages_json(messages, reader.channels()),
           "index": reader.info(),
         }
         text_output(options.output, report.stringify())
@@ -381,12 +363,12 @@ fn run(
     return
   }
   if options.command == "dataset-query" {
-    let sources = Array::makei(options.inputs.length(), fn(i) {
+    let sources = Array::makei(options.inputs.length(), i => {
       let path = options.inputs[i]
       if !options.indexes.is_empty() {
         return indexed_reader(path, options.indexes[i], options, scope).query_source()
       }
-      let reader = @mcap.open_reader(
+      let reader = @core.open_reader(
         scope.open(path),
         cache_bytes=options.cache_bytes,
         fallback_bytes=options.max_file_bytes,
@@ -396,16 +378,16 @@ fn run(
       }
       reader.query_source()
     })
-    let dataset = @mcap.open_dataset(sources)
+    let dataset = @core.open_dataset(sources)
     let cursor = dataset.cursor(options.query)
     if options.format == "ndjson" {
       if options.output == "" {
         ignore(
           cursor.write_ndjson(
-            @mcap.new_write_sink(fn(bytes) {
+            @core.new_write_sink(bytes => {
               stdout_text(
                 @utf8.decode(bytes[:]) catch {
-                  _ => raise @mcap.io_error("invalid NDJSON UTF-8")
+                  _ => raise @core.io_error("invalid NDJSON UTF-8")
                 },
               )
             }),
@@ -413,21 +395,16 @@ fn run(
         )
       } else {
         let transaction = @nodeio.output_transaction(options.output)
-        try {
-          ignore(cursor.write_ndjson(transaction.sink()))
-          transaction.publish()
-        } catch {
-          error => {
-            transaction.abort()
-            raise error
-          }
-        }
+        errdefer transaction.abort()
+
+        ignore(cursor.write_ndjson(transaction.sink()))
+        transaction.publish()
       }
     } else {
       let messages = cursor.next_page(options.query.limit.max(1))
       let report : Json = {
         "messages": messages.map(fn(record) {
-          @mcap.dataset_message_json(record, dataset.channels())
+          @core.dataset_message_json(record, dataset.channels())
         }),
         "source_count": sources.length(),
         "materialized_sources": cursor.progress().materialized_sources,
@@ -439,27 +416,26 @@ fn run(
   if options.command == "recover-blocks" {
     let source = scope.open(options.inputs[0])
     let transaction = @nodeio.output_transaction(options.output)
-    try {
-      let report = @mcap.recover_blocks(source, transaction.sink(), options={
-        ..@mcap.stream_options(),
+    {
+      errdefer transaction.abort()
+
+      let report = @core.recover_blocks(source, transaction.sink(), options={
+        ..@core.stream_options(),
         compression: options.compression,
         chunk_messages: options.chunk_messages,
       })
       transaction.publish()
-      println(@mcap.block_recovery_json(report).stringify())
-    } catch {
-      error => {
-        transaction.abort()
-        raise error
-      }
+      println(@core.block_recovery_json(report).stringify())
     }
     return
   }
   if options.command == "stream-transform" {
     let source = scope.open(options.inputs[0])
     let transaction = @nodeio.output_transaction(options.output)
-    try {
-      let report = @mcap.stream_transform(
+    {
+      errdefer transaction.abort()
+
+      let report = @core.stream_transform(
         source,
         @nodeio.sort_directory(options.temp_dir),
         transaction.sink(),
@@ -468,36 +444,28 @@ fn run(
         content?=options.content,
       )
       transaction.publish()
-      println(@mcap.transform_report_json(report).stringify())
-    } catch {
-      error => {
-        transaction.abort()
-        raise error
-      }
+      println(@core.transform_report_json(report).stringify())
     }
     return
   }
   if options.command == "external-merge" {
-    let sources = options.inputs.map(fn(path) { scope.open(path) })
+    let sources = options.inputs.map(path => scope.open(path))
     let transaction = @nodeio.output_transaction(options.output)
-    try {
+    {
+      errdefer (transaction.abort() catch {
+        @core.Invalid(reason) =>
+          raise @core.io_error("external output cleanup failed: \{reason}")
+      })
+
       let storage = @nodeio.sort_directory(options.temp_dir)
-      let report = @mcap.external_merge(
+      let report = @core.external_merge(
         sources,
         storage,
         transaction.sink(),
         options=options.external,
       )
       transaction.publish()
-      println(@mcap.external_report_json(report).stringify())
-    } catch {
-      error => {
-        transaction.abort() catch {
-          @mcap.Invalid(reason) =>
-            raise @mcap.io_error("external output cleanup failed: \{reason}")
-        }
-        raise error
-      }
+      println(@core.external_report_json(report).stringify())
     }
     return
   }
@@ -506,48 +474,48 @@ fn run(
     maximum=options.max_file_bytes,
   )
   if options.command == "validate" {
-    let report = @mcap.diagnose_file(bytes)
-    text_output(options.output, @mcap.diagnosis_json(report).stringify())
+    let report = @core.diagnose_file(bytes)
+    text_output(options.output, @core.diagnosis_json(report).stringify())
     if !report.valid {
       set_exit_code(1)
     }
     return
   }
   if options.command == "reindex" {
-    let repair = @mcap.rebuild_indexes(
+    let repair = @core.rebuild_indexes(
       bytes,
       compression=options.compression,
       messages_per_chunk=options.chunk_messages,
     )
     @nodeio.write_atomic_new(options.output, repair.bytes)
     let report : Json = {
-      "original": @mcap.diagnosis_json(repair.original),
-      "result": @mcap.diagnosis_json(repair.result),
+      "original": @core.diagnosis_json(repair.original),
+      "result": @core.diagnosis_json(repair.result),
     }
     println(report.stringify())
     return
   }
   let log = if options.command == "recover" {
-    let report = @mcap.recover_prefix(bytes)
+    let report = @core.recover_prefix(bytes)
     let detail : Json = {
       "recovered_messages": report.log.messages.length(),
       "stop_offset": report.stop_offset,
       "complete": report.complete,
       "reason": report.reason,
-      "source_diagnosis": @mcap.diagnosis_json(@mcap.diagnose_file(bytes)),
+      "source_diagnosis": @core.diagnosis_json(@core.diagnose_file(bytes)),
     }
     error_exit(detail.stringify(), 0)
     report.log
   } else {
-    @mcap.read_log(bytes)
+    @core.read_log(bytes)
   }
   if options.command == "inspect" {
-    text_output(options.output, @mcap.inspect_json(log).stringify())
+    text_output(options.output, @core.inspect_json(log).stringify())
     return
   }
   let result = match options.command {
-    "transform" => @mcap.transform_log(log, options.transform)
-    "slice" => @mcap.slice_log(log, options.query)
+    "transform" => @core.transform_log(log, options.transform)
+    "slice" => @core.slice_log(log, options.query)
     "merge" => {
       let logs = [log]
       let mut loaded = bytes.length()
@@ -557,31 +525,31 @@ fn run(
           maximum=options.max_file_bytes - loaded,
         )
         loaded += next.length()
-        logs.push(@mcap.read_log(next))
+        logs.push(@core.read_log(next))
       }
-      @mcap.merge_logs(logs)
+      @core.merge_logs(logs)
     }
     _ => log
   }
-  let output = @mcap.write_indexed(
+  let output = @core.write_indexed(
     result,
     compression=options.compression,
     messages_per_chunk=options.chunk_messages,
   )
   @nodeio.write_atomic_new(options.output, output)
-  println(@mcap.inspect_json(result).stringify())
+  println(@core.inspect_json(result).stringify())
 }
 
 ///|
 fn main {
   let scope = @nodeio.file_scope(max_open=1024)
-  run(@mcap.parse_command(arguments()), scope) catch {
-    @mcap.Invalid(reason) => {
+  run(@core.parse_command(arguments()), scope) catch {
+    @core.Invalid(reason) => {
       let error : Json = { "error": reason }
       error_exit(error.stringify(), 2)
     }
   }
   scope.close() catch {
-    @mcap.Invalid(reason) => error_exit(reason, 2)
+    @core.Invalid(reason) => error_exit(reason, 2)
   }
 }

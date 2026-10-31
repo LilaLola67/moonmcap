@@ -30,7 +30,7 @@ fn encode_chunk_pipeline(chunk : Bytes, merge : Bytes) -> Bytes raise McapError 
   let buffer = @buffer.Buffer::Buffer()
   buffer.write_bytes(b"CJOB2\r\n\x00")
   for bytes in [chunk, merge] {
-    buffer.write_uint_le(bytes.length().to_uint())
+    buffer.write_uint_le(bytes.length().reinterpret_as_uint())
     buffer.write_bytes(bytes[:])
   }
   let body = buffer.to_bytes()
@@ -102,10 +102,10 @@ fn chunk_pipeline_ids(bytes : Bytes) -> Array[Int32] raise McapError {
   let state = decode_chunk_job(chunk)
   let maximum = cursor(state.settings[65:69].to_owned(), default_limits())
     .u32()
-    .to_int()
+    .reinterpret_as_int()
   let run_limit = cursor(state.settings[12:16].to_owned(), default_limits())
     .u32()
-    .to_int()
+    .reinterpret_as_int()
   if run_limit < 1 || run_limit > 32768 {
     raise Invalid("pipeline run limit outside configured bound")
   }
@@ -122,7 +122,7 @@ fn chunk_pipeline_ids(bytes : Bytes) -> Array[Int32] raise McapError {
 fn chunk_pipeline_progress(bytes : Bytes) -> Json raise McapError {
   let (chunk, merge) = decode_chunk_pipeline(bytes)
   let state = decode_chunk_job(chunk)
-  let final = if merge.is_empty() {
+  let final_name = if merge.is_empty() {
     Json::null()
   } else {
     checkpoint_progress(merge)
@@ -139,11 +139,12 @@ fn chunk_pipeline_progress(bytes : Bytes) -> Json raise McapError {
     "completed_inputs": state.completed,
     "committed_parts": state.parts.length(),
     "chunk": chunk_job_progress(chunk),
-    "final_sort": final,
+    "final_sort": final_name,
   }
 }
 
 ///|
+#warnings("-missing_priv")
 struct ChunkSegment {
   start : UInt64
   size : UInt64
@@ -238,7 +239,7 @@ fn chunk_virtual_source(
     offset: 0UL,
   })
   position += suffix.length().to_uint64()
-  new_read_source(position, fn(offset, length) {
+  new_read_source(position, (offset, length) => {
     let mut low = 0
     let mut high = segments.length()
     while low + 1 < high {
@@ -291,15 +292,9 @@ pub fn resumable_chunk_pipeline(
   }
   let saved = [chunk_checkpoint.unwrap_or(b"")]
   let final_storage = sort_storage(
-    fn(id) {
-      (storage.create)(chunk_pipeline_run(id, max_parts, options.run_limit))
-    },
-    fn(id) {
-      (storage.open)(chunk_pipeline_run(id, max_parts, options.run_limit))
-    },
-    fn(id) {
-      (storage.remove)(chunk_pipeline_run(id, max_parts, options.run_limit))
-    },
+    id => (storage.create)(chunk_pipeline_run(id, max_parts, options.run_limit)),
+    id => (storage.open)(chunk_pipeline_run(id, max_parts, options.run_limit)),
+    id => (storage.remove)(chunk_pipeline_run(id, max_parts, options.run_limit)),
   )
   resumable_chunk_merge_internal(
     sources,
@@ -307,7 +302,7 @@ pub fn resumable_chunk_pipeline(
     final_storage,
     output,
     fingerprint,
-    fn(bytes) {
+    bytes => {
       saved[0] = bytes
       save(encode_chunk_pipeline(bytes, b""))
     },
@@ -315,9 +310,9 @@ pub fn resumable_chunk_pipeline(
     options~,
     max_parts~,
     cancelled~,
-    finalize=fn(state, spool) {
+    finalize=(state, spool) => {
       saved[0] = encode_chunk_job(state)
-      let virtuals = Array::makei(state.inputs.length(), fn(input) {
+      let virtuals = Array::makei(state.inputs.length(), input => {
         let parts = []
         for i = 0; i < state.parts.length(); i = i + 1 {
           if state.parts[i].input == input {
@@ -331,7 +326,7 @@ pub fn resumable_chunk_pipeline(
         buffered_sort_storage(final_storage, 65536),
         output,
         fingerprint,
-        fn(bytes) { save(encode_chunk_pipeline(saved[0], bytes)) },
+        bytes => save(encode_chunk_pipeline(saved[0], bytes)),
         checkpoint?=if merge_checkpoint.is_empty() {
           None
         } else {

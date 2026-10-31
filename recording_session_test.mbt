@@ -16,7 +16,7 @@ fn recording_fixture() -> RecordingFixture {
   let fail_save = [false]
   let fail_after_seal = [false]
   let storage = @moonmcap.recording_storage(
-    fn(id) {
+    id => {
       if files.contains(id) {
         raise @moonmcap.io_error("segment already exists")
       }
@@ -24,7 +24,7 @@ fn recording_fixture() -> RecordingFixture {
       files[id] = out
       @moonmcap.new_write_sink(fn(bytes) { out.write_bytes(bytes[:]) })
     },
-    fn(id) {
+    id => {
       guard files.get(id) is Some(out) else {
         raise @moonmcap.io_error("missing segment")
       }
@@ -32,7 +32,7 @@ fn recording_fixture() -> RecordingFixture {
     },
     fn(id) { files.contains(id) },
     fn(_) { if fail_after_seal[0] { fail_save[0] = true } },
-    fn(bytes) {
+    bytes => {
       if fail_save[0] {
         raise @moonmcap.io_error("simulated manifest failure")
       }

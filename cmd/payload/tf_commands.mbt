@@ -24,7 +24,7 @@ fn tf_file(
     match config.get(key) {
       None => []
       Some(Array(items)) =>
-        items.map(fn(v) {
+        items.map(v => {
           match v {
             String(s) => s
             _ => raise @mcap.io_error("string array required")
@@ -74,7 +74,7 @@ fn tf_file(
       queries.length() <= 10000 else {
       raise @mcap.io_error("1..10000 TF queries required")
     }
-    let reports = queries.map(fn(value) {
+    let reports = queries.map(value => {
       let q = object(value, [
         "target", "source", "time", "max_gap", "interpolate",
       ])
@@ -117,7 +117,7 @@ fn tf_file(
     let tf_start = @mcap.parse_decimal(text(config, "tf_start"))
     let tf_end = @mcap.parse_decimal(text(config, "tf_end"))
     let context = tree.context(strings("frames"), tf_start, tf_end)
-    let retained : Map[String, Array[@mcap.Message]] = {}
+    let retained : Map[String, Array[@mcap.Message]] = Map([])
     fn key(message : @mcap.Message) -> String {
       message.channel_id.to_string() +
       ":" +
@@ -140,71 +140,64 @@ fn tf_file(
         raise @mcap.io_error("TF clip topic absent")
       }
     }
-    let selected : Map[Int32, Bool] = {}
+    let selected : Map[Int32, Bool] = Map([])
     for channel in template.channels {
       if topics.is_empty() || topics.contains(channel.topic) {
         selected[channel.id] = true
       }
     }
     let transaction = @nodeio.output_transaction(values[3])
-    try {
-      let writer = @mcap.new_stream_writer(
-        transaction.sink(),
-        profile=template.header.profile,
-      )
-      for schema in template.schemas {
-        writer.add_schema(schema)
+    errdefer (transaction.abort() catch { _ => () })
+
+    let writer = @mcap.new_stream_writer(
+      transaction.sink(),
+      profile=template.header.profile,
+    )
+    for schema in template.schemas {
+      writer.add_schema(schema)
+    }
+    for channel in template.channels {
+      writer.add_channel(channel)
+    }
+    let all = source.stream(query={ ..@mcap.all_query(), limit: 2147483647, })
+    defer all.cancel()
+    while all.next() is Some(message) {
+      let semantic = match retained.get(key(message)) {
+        Some(items) => items.contains(message)
+        None => false
       }
-      for channel in template.channels {
-        writer.add_channel(channel)
-      }
-      let all = source.stream(query={ ..@mcap.all_query(), limit: 2147483647, })
-      defer all.cancel()
-      while all.next() is Some(message) {
-        let semantic = match retained.get(key(message)) {
-          Some(items) => items.contains(message)
-          None => false
-        }
-        if semantic ||
-          (
-            message.log_time >= start &&
-            message.log_time <= end &&
-            selected.contains(message.channel_id)
-          ) {
-          writer.append(message)
-        }
-      }
-      if boolean(config, "copy_auxiliary", false) {
-        ignore(@mcap.copy_clip_auxiliary(input, writer, limits~))
-      }
-      writer.add_metadata({
-        name: "moonmcap.tf-context",
-        entries: [
-          ("source_sha256", sha256),
-          (
-            "manifest",
-            (
-              {
-                "start": start.to_string(),
-                "end": end.to_string(),
-                "tf_start": tf_start.to_string(),
-                "tf_end": tf_end.to_string(),
-                "evidence": context.map(@mcap.tf_stamped_json),
-                "copy_auxiliary": boolean(config, "copy_auxiliary", false),
-              } : Json).stringify(),
-          ),
-        ],
-      })
-      ignore(writer.finish())
-      transaction.publish()
-    } catch {
-      error => {
-        transaction.abort() catch {
-          _ => ()
-        }
-        raise error
+      if semantic ||
+        (
+          message.log_time >= start &&
+          message.log_time <= end &&
+          selected.contains(message.channel_id)
+        ) {
+        writer.append(message)
       }
     }
+    if boolean(config, "copy_auxiliary", false) {
+      ignore(@mcap.copy_clip_auxiliary(input, writer, limits~))
+    }
+    writer.add_metadata({
+      name: "moonmcap.tf-context",
+      entries: [
+        ("source_sha256", sha256),
+        (
+          "manifest",
+          (
+            {
+              "start": start.to_string(),
+              "end": end.to_string(),
+              "tf_start": tf_start.to_string(),
+              "tf_end": tf_end.to_string(),
+              "evidence": context.map(@mcap.tf_stamped_json),
+              "copy_auxiliary": boolean(config, "copy_auxiliary", false),
+            } : Json).stringify(),
+        ),
+      ],
+    })
+    ignore(writer.finish())
+    transaction.publish()
   }
   println(({ "source_sha256": sha256, "output": values[3] } : Json).stringify())
 }

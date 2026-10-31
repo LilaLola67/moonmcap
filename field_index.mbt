@@ -1,4 +1,5 @@
 ///|
+#warnings("-missing_priv")
 struct FieldBounds {
   mut present : Bool
   mut number_min : Json?
@@ -107,7 +108,7 @@ pub fn build_field_index(
     raise Invalid("invalid field index settings")
   }
   let seen : Map[String, Bool] = Map([])
-  let pointers = paths.map(fn(path) {
+  let pointers = paths.map(path => {
     if seen.contains(path) {
       raise Invalid("duplicate indexed field")
     }
@@ -135,7 +136,7 @@ pub fn build_field_index(
             declarations.channels.push(channel)
           }
         },
-        message=fn(message, location) {
+        message=(message, location) => {
           let zone = match zones.get(location.offset) {
             Some(zone) => {
               if zone.span != location.span {
@@ -253,7 +254,7 @@ pub fn FieldIndex::to_bytes(
   // Enforce the same structural/node budgets before publishing an index.
   ignore(parse_json_document(bytes, max_bytes, 32))
   b"MFLD1\r\n\x00" +
-  bytes.length().to_uint().mcap_le_bytes() +
+  bytes.length().reinterpret_as_uint().mcap_le_bytes() +
   bytes +
   crc32(bytes).mcap_le_bytes()
 }
@@ -341,9 +342,7 @@ pub fn open_field_index(
     checked_digest(fingerprint(source)) != digest {
     raise Invalid("field index source or decoder identity changed")
   }
-  let paths = field_array(field_get(object, "paths")).map(fn(v) {
-    field_text(v)
-  })
+  let paths = field_array(field_get(object, "paths")).map(v => field_text(v))
   if paths.is_empty() || paths.length() > 16 {
     raise Invalid("invalid field index path count")
   }
@@ -381,7 +380,7 @@ pub fn open_field_index(
     if values.length() != paths.length() {
       raise Invalid("field index summary count mismatch")
     }
-    let fields = values.map(fn(value) {
+    let fields = values.map(value => {
       let value = field_object(value)
       fn number(key : String) -> Json? raise McapError {
         let v = field_get(value, key)

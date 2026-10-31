@@ -125,32 +125,29 @@ pub fn TemporalJoinCursor::feed_left(
   self : TemporalJoinCursor,
   message : Message?,
 ) -> Unit raise McapError {
-  try {
-    if self.state != FileActive ||
-      self.waiting != 1 ||
-      self.left is Some(_) ||
-      self.left_done {
-      raise Invalid("unexpected temporal left feed")
-    }
-    if message is Some(m) {
-      if self.last_left is Some(time) && m.log_time < time {
-        raise Invalid("temporal left stream is not ascending")
-      }
-      self.last_left = Some(m.log_time)
-      self.left_read += 1UL
-    } else {
-      self.left_done = true
-    }
-    self.left = message
-    self.waiting = 0
-    self.check_buffer()
-  } catch {
-    error => {
-      self.state = FileFailed
-      self.clear()
-      raise error
-    }
+  errdefer {
+    self.state = FileFailed
+    self.clear()
   }
+
+  if self.state != FileActive ||
+    self.waiting != 1 ||
+    self.left is Some(_) ||
+    self.left_done {
+    raise Invalid("unexpected temporal left feed")
+  }
+  if message is Some(m) {
+    if self.last_left is Some(time) && m.log_time < time {
+      raise Invalid("temporal left stream is not ascending")
+    }
+    self.last_left = Some(m.log_time)
+    self.left_read += 1UL
+  } else {
+    self.left_done = true
+  }
+  self.left = message
+  self.waiting = 0
+  self.check_buffer()
 }
 
 ///|
@@ -158,32 +155,29 @@ pub fn TemporalJoinCursor::feed_right(
   self : TemporalJoinCursor,
   message : Message?,
 ) -> Unit raise McapError {
-  try {
-    if self.state != FileActive ||
-      self.waiting != 2 ||
-      self.after is Some(_) ||
-      self.right_done {
-      raise Invalid("unexpected temporal right feed")
-    }
-    if message is Some(m) {
-      if self.last_right is Some(time) && m.log_time < time {
-        raise Invalid("temporal right stream is not ascending")
-      }
-      self.last_right = Some(m.log_time)
-      self.right_read += 1UL
-    } else {
-      self.right_done = true
-    }
-    self.after = message
-    self.waiting = 0
-    self.check_buffer()
-  } catch {
-    error => {
-      self.state = FileFailed
-      self.clear()
-      raise error
-    }
+  errdefer {
+    self.state = FileFailed
+    self.clear()
   }
+
+  if self.state != FileActive ||
+    self.waiting != 2 ||
+    self.after is Some(_) ||
+    self.right_done {
+    raise Invalid("unexpected temporal right feed")
+  }
+  if message is Some(m) {
+    if self.last_right is Some(time) && m.log_time < time {
+      raise Invalid("temporal right stream is not ascending")
+    }
+    self.last_right = Some(m.log_time)
+    self.right_read += 1UL
+  } else {
+    self.right_done = true
+  }
+  self.after = message
+  self.waiting = 0
+  self.check_buffer()
 }
 
 ///|
@@ -323,26 +317,23 @@ pub fn TemporalJoinStream::next(
   if self.closed {
     return None
   }
-  try {
-    while true {
-      match self.cursor.poll() {
-        JoinReadLeft => self.cursor.feed_left((self.left.next_message)())
-        JoinReadRight => self.cursor.feed_right((self.right.next_message)())
-        JoinRow(row) => return Some(row)
-        JoinDone => {
-          self.close()
-          return None
-        }
+  errdefer {
+    self.cursor.cancel()
+    self.close()
+  }
+
+  while true {
+    match self.cursor.poll() {
+      JoinReadLeft => self.cursor.feed_left((self.left.next_message)())
+      JoinReadRight => self.cursor.feed_right((self.right.next_message)())
+      JoinRow(row) => return Some(row)
+      JoinDone => {
+        self.close()
+        return None
       }
     }
-    None
-  } catch {
-    error => {
-      self.cursor.cancel()
-      self.close()
-      raise error
-    }
   }
+  None
 }
 
 ///|
@@ -355,3 +346,27 @@ pub fn TemporalJoinStream::cancel(self : TemporalJoinStream) -> Unit {
 pub fn TemporalJoinStream::info(self : TemporalJoinStream) -> Json {
   self.cursor.info()
 }
+
+///|
+pub extend JoinMode with @debug.Debug::{to_repr}
+
+///|
+pub extend JoinMode with Eq::{not_equal, equal}
+
+///|
+pub extend JoinOptions with @debug.Debug::{to_repr}
+
+///|
+pub extend JoinOptions with Eq::{not_equal, equal}
+
+///|
+pub extend MissingMatch with @debug.Debug::{to_repr}
+
+///|
+pub extend MissingMatch with Eq::{not_equal, equal}
+
+///|
+pub extend TemporalMatch with @debug.Debug::{to_repr}
+
+///|
+pub extend TemporalMatch with Eq::{not_equal, equal}

@@ -23,7 +23,7 @@ pub fn io_error(message : String) -> McapError {
 
 ///|
 pub fn memory_source(bytes : Bytes) -> ReadSource {
-  new_read_source(bytes.length().to_uint64(), fn(offset, length) {
+  new_read_source(bytes.length().to_uint64(), (offset, length) => {
     let start = bounded_length(offset, bytes.length(), "memory offset")
     if length < 0 || length > bytes.length() - start {
       raise Invalid("memory read outside source")
@@ -67,8 +67,8 @@ pub fn ReadSource::read_exact(
 }
 
 ///|
+#warnings("-missing_priv")
 struct RangeRecord {
-  position : UInt64
   opcode : Byte
   body : Bytes
 }
@@ -89,5 +89,5 @@ fn ReadSource::record(
   if opcode == 0 || length.to_uint64() > end - offset - 9UL {
     raise Invalid("invalid record span at \{offset}")
   }
-  { position: offset, opcode, body: self.read_exact(offset + 9UL, length), }
+  { opcode, body: self.read_exact(offset + 9UL, length), }
 }

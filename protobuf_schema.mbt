@@ -1,4 +1,5 @@
 ///|
+#warnings("-missing_priv")
 struct ProtoField {
   name : String
   json_name : String
@@ -61,7 +62,7 @@ fn proto_identifier(name : String) -> Bool {
 
 ///|
 fn proto_json_name(name : String) -> String {
-  let out = StringBuilder::new()
+  let out = StringBuilder()
   let mut upper = false
   for char in name {
     if char == '_' {
@@ -121,7 +122,7 @@ fn ProtobufDecoder::field(
     raise Invalid("invalid or unsupported protobuf field descriptor")
   }
   if type_name.has_prefix(".") {
-    type_name = type_name[1:].to_string()
+    type_name = type_name[1:].to_owned()
   }
   self.field_count[0] += 1
   if self.field_count[0] > self.options.fields {
@@ -323,13 +324,13 @@ pub fn protobuf_decoder(
       continue
     }
     let file = proto_wire(item.bytes(), budget)
-    let mut package = ""
+    let mut package_name = ""
     let mut proto3 = false
     let messages = []
     let enums = []
     while file.next() is Some(field) {
       match field.number {
-        2 => package = field.text()
+        2 => package_name = field.text()
         4 => messages.push(field.bytes())
         5 => enums.push(field.bytes())
         12 => {
@@ -349,14 +350,16 @@ pub fn protobuf_decoder(
       }
     }
     for message in messages {
-      if package != "" &&
-        !package.split(".").all(fn(part) { proto_identifier(part.to_string()) }) {
+      if package_name != "" &&
+        !package_name
+        .split(".")
+        .all(fn(part) { proto_identifier(part.to_owned()) }) {
         raise Invalid("invalid protobuf package name")
       }
-      decoder.message_type(package, message, budget, 1, proto3)
+      decoder.message_type(package_name, message, budget, 1, proto3)
     }
     for enum_type in enums {
-      decoder.enum_type(package, enum_type, budget)
+      decoder.enum_type(package_name, enum_type, budget)
     }
   }
   for message in decoder.messages.values() {

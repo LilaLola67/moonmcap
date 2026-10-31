@@ -9,7 +9,7 @@ from mcap.reader import make_reader
 def main():
     work=ROOT/'_interop/stream-clips'/uuid.uuid4().hex;work.mkdir(parents=True)
     cli=ROOT/'_build/js/debug/build/cmd/incident/incident.js'
-    subprocess.run([os.environ.get('MOON','moon'),'build','--target','js','--warn-list','-a'],cwd=ROOT,capture_output=True,check=True)
+    subprocess.run([os.environ.get('MOON','moon'),'build','--target','js','--deny-warn'],cwd=ROOT,capture_output=True,check=True)
     commands=0
     def run(source,config,output,status=0):
         nonlocal commands

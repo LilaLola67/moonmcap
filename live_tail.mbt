@@ -21,7 +21,7 @@ pub struct GrowingTail {
 
 ///|
 fn live_prefix(source : ReadSource, size : UInt64) -> ReadSource {
-  new_read_source(size, fn(offset, length) { source.read_exact(offset, length) })
+  new_read_source(size, (offset, length) => source.read_exact(offset, length))
 }
 
 ///|
@@ -218,7 +218,7 @@ pub fn GrowingTail::poll(
         s.data.length().to_uint64() +
         ((s.name.length() + s.encoding.length()) * 4 + 32).to_uint64()
       }) +
-      log.channels.fold(init=0UL, fn(total, c) {
+      log.channels.fold(init=0UL, (total, c) => {
         total + encode_channel(c).length().to_uint64()
       })
     if declaration_cost > 3UL * 1024UL * 1024UL {
@@ -367,9 +367,9 @@ pub fn RecordingTail::poll(
     scan_source(
       source,
       source_visitor(
-        schema=fn(s) { add_schema(log, s) },
-        channel=fn(c) { add_channel(log, c) },
-        message=fn(m, _) {
+        schema=s => add_schema(log, s),
+        channel=c => add_channel(log, c),
+        message=(m, _) => {
           if m.data.length() > batch_bytes - stored[0] - 31 {
             raise Invalid("recording tail batch byte budget exceeded")
           }

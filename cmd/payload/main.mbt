@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn error_text(text : String) -> Unit =
@@ -68,7 +73,7 @@ fn rules(
   guard config.get("edits") is Some(Array(items)) else {
     raise @mcap.io_error("edits array required")
   }
-  let edits : Array[@mcap.PayloadEdit] = items.map(fn(item) {
+  let edits : Array[@mcap.PayloadEdit] = items.map(item => {
     let f = object(item, ["path", "value", "remove"])
     let remove = boolean(f, "remove", false)
     if remove == f.contains("value") {
@@ -86,7 +91,7 @@ fn rules(
   let topics = match config.get("topics") {
     None => []
     Some(Array(items)) =>
-      items.map(fn(item) {
+      items.map(item => {
         match item {
           String(topic) if topic != "" => topic
           _ => raise @mcap.io_error("nonempty topic string required")
@@ -230,7 +235,9 @@ fn run(
   let source = scope.open(values[1])
   let sha256 = @nodeio.source_sha256(source)
   let transaction = @nodeio.output_transaction(values[3])
-  let report = try {
+  let report = {
+    errdefer (transaction.abort() catch { _ => () })
+
     let report = @mcap.stream_rewrite_payload(
       source,
       transaction.sink(),
@@ -242,13 +249,6 @@ fn run(
     )
     transaction.publish()
     report
-  } catch {
-    error => {
-      transaction.abort() catch {
-        _ => ()
-      }
-      raise error
-    }
   }
   println(
     ({ "source_sha256": sha256, "output": values[3], "report": report } : Json).stringify(),

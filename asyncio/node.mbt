@@ -1,5 +1,6 @@
 ///|
 #external
+#warnings("-missing_priv")
 type SourceDigest
 
 ///|
@@ -36,6 +37,7 @@ extern "js" fn file_identity(path : String) -> @js_async.Promise[String] =
 
 ///|
 #external
+#warnings("-missing_priv")
 type FileRead
 
 ///|
@@ -71,7 +73,7 @@ pub async fn open_file(path : String) -> AsyncSource {
     raise @mcap.io_error(signature)
   }
   let size = match signature.split_once("|") {
-    Some((size, _)) => @mcap.parse_decimal(size.to_string())
+    Some((size, _)) => @mcap.parse_decimal(size.to_owned())
     None => raise @mcap.io_error("invalid async file identity")
   }
   new_source(size, async fn(offset, length) {

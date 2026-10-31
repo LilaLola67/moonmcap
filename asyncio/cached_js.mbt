@@ -1,5 +1,6 @@
 ///|
 #external
+#warnings("-missing_priv")
 type CacheHost
 
 ///|

@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn report_error(message : String) -> Unit =
@@ -88,27 +93,22 @@ fn run(
       extra,
     )
     let transaction = @nodeio.output_transaction(values[2])
-    try {
-      let report = @mcap.build_disk_sidecar(
-        source,
-        @nodeio.sort_directory(values[3]),
-        transaction.sink(),
-        @nodeio.source_sha256,
-        identity=@nodeio.file_identity_token(values[1]),
-        page_entries=width,
-        options={
-          ..parsed.external,
-          limits: { ..parsed.external.limits, max_records: records, },
-        },
-      )
-      transaction.publish()
-      println(report.stringify())
-    } catch {
-      error => {
-        transaction.abort()
-        raise error
-      }
-    }
+    errdefer transaction.abort()
+
+    let report = @mcap.build_disk_sidecar(
+      source,
+      @nodeio.sort_directory(values[3]),
+      transaction.sink(),
+      @nodeio.source_sha256,
+      identity=@nodeio.file_identity_token(values[1]),
+      page_entries=width,
+      options={
+        ..parsed.external,
+        limits: { ..parsed.external.limits, max_records: records, },
+      },
+    )
+    transaction.publish()
+    println(report.stringify())
   } else {
     let parsed = @mcap.parse_command(
       [

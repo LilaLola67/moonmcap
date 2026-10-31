@@ -53,7 +53,7 @@ pub fn LogBuilder::register_schema(
     id: self.next_schema,
     name,
     encoding,
-    data: data.copy(),
+    data: copy_payload(data),
   }
   let candidate = copy_log(self.log)
   candidate.schemas.push(schema)
@@ -117,7 +117,7 @@ pub fn LogBuilder::append(
     sequence,
     log_time,
     publish_time,
-    data: data.copy(),
+    data: copy_payload(data),
   }
   let candidate = copy_log(self.log)
   candidate.messages.push(message)
@@ -149,7 +149,7 @@ pub fn LogBuilder::add_attachment(
   value : Attachment,
 ) -> Unit raise McapError {
   self.require_open()
-  let copied = { ..value, data: value.data.copy(), }
+  let copied = { ..value, data: copy_payload(value.data), }
   let candidate = copy_log(self.log)
   candidate.attachments.push(copied)
   validate_log(candidate, limits=self.limits)

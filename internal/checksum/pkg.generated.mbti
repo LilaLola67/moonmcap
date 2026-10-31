@@ -19,7 +19,11 @@ pub struct XXH32 {
   buf : FixedArray[Byte]
   mut buf_used : Int32
 }
+pub fn XXH32::checksum(Self) -> UInt32
 pub fn XXH32::new(seed? : UInt32) -> Self
+pub fn XXH32::reset(Self) -> Unit
+pub fn XXH32::size(Self) -> Int32
+pub fn XXH32::update(Self, BytesView) -> Unit
 pub impl Hasher for XXH32
 
 pub struct XXH64 {

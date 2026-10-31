@@ -1,5 +1,6 @@
 ///|
 #external
+#warnings("-missing_priv")
 type NativeFile
 
 ///|
@@ -57,7 +58,7 @@ pub fn open_managed_file(
     raise @mcap.io_error(error)
   }
   let size = @mcap.parse_decimal(managed_size(state))
-  let source = @mcap.new_read_source(size, fn(offset, length) {
+  let source = @mcap.new_read_source(size, (offset, length) => {
     let result = managed_read(state, offset.to_string(), length)
     let error = file_read_error(result)
     if error != "" {
@@ -67,7 +68,7 @@ pub fn open_managed_file(
   })
   {
     source,
-    close_native: fn() {
+    close_native: () => {
       let error = managed_close(state)
       if error != "" {
         raise @mcap.io_error(error)

@@ -29,6 +29,7 @@ pub fn artifact_batch_storage(
 }
 
 ///|
+#warnings("-missing_priv")
 struct ArtifactReceipt {
   digest : String
   report : Json
@@ -50,8 +51,8 @@ fn artifact_checkpoint(
   let b = @buffer.Buffer::Buffer()
   b.write_bytes(b"ABAT1\r\n\x00"[:])
   checkpoint_text(b, plan)
-  b.write_uint_le(total.to_uint())
-  b.write_uint_le(completed.length().to_uint())
+  b.write_uint_le(total.reinterpret_as_uint())
+  b.write_uint_le(completed.length().reinterpret_as_uint())
   b.write_uint_le(if pending is Some(_) { 1U } else { 0U })
   let receipts = match pending {
     Some(r) => completed + [r]
@@ -88,7 +89,7 @@ fn restore_artifacts(
   let c = cursor(body, { ..default_limits(), max_string_bytes: 1024 * 1024, })
   if c.take(8) != b"ABAT1\r\n\x00" ||
     c.text() != plan ||
-    c.u32() != total.to_uint() {
+    c.u32() != total.reinterpret_as_uint() {
     raise Invalid("artifact plan, source or version changed")
   }
   let count = bounded_length(c.u32().to_uint64(), total, "completed artifacts")
@@ -98,7 +99,7 @@ fn restore_artifacts(
   }
   let completed : Array[ArtifactReceipt] = []
   let mut prepared : ArtifactReceipt? = None
-  for i = 0; i < count + pending.to_int(); i = i + 1 {
+  for i = 0; i < count + pending.reinterpret_as_int(); i = i + 1 {
     let digest = c.text()
     if !artifact_digest_valid(digest) {
       raise Invalid("invalid artifact digest")

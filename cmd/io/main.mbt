@@ -1,6 +1,11 @@
 ///|
-extern "js" fn args() -> Array[String] =
+extern "js" fn host_args() -> FixedArray[String] =
   #| ()=>process.argv.slice(2)
+
+///|
+fn args() -> Array[String] {
+  Array::from_fixed_array(host_args())
+}
 
 ///|
 extern "js" fn clock_ms() -> Double =
@@ -39,7 +44,7 @@ fn run(values : Array[String]) -> Unit raise @mcap.McapError {
   let result = try {
     let base = @nodeio.open_file(path)
     let source = if mode == "legacy" {
-      @mcap.new_read_source(base.size(), fn(offset, length) {
+      @mcap.new_read_source(base.size(), (offset, length) => {
         let hex = legacy_read(path, offset.to_string(), length)
         if hex.has_prefix("!") {
           raise @mcap.io_error(hex)

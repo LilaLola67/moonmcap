@@ -1,5 +1,5 @@
 ///|
-extern "js" fn job_open(path : String, resume : Bool) -> String =
+extern "js" fn job_open(path : String, resume_name : Bool) -> String =
   #| (path,resume)=>{const fs=process.getBuiltinModule('node:fs'),p=process.getBuiltinModule('node:path'),crypto=process.getBuiltinModule('node:crypto');try{
   #|   if(!resume){fs.mkdirSync(path);fs.writeFileSync(p.join(path,'owner.json'),'MoonMCAP merge job 1\n',{flag:'wx'});}
   #|   if(!fs.lstatSync(path).isDirectory()||fs.lstatSync(path).isSymbolicLink()||fs.readFileSync(p.join(path,'owner.json'),'utf8')!=='MoonMCAP merge job 1\n')throw new Error('not an owned merge job');
@@ -33,11 +33,12 @@ extern "js" fn job_operation(
   #| }catch(e){return '!'+e.message;}}
 
 ///|
+#label_migration(resume_name, alias=resume)
 pub fn open_merge_job(
   path : String,
-  resume~ : Bool = false,
+  resume_name~ : Bool = false,
 ) -> MergeJob raise @mcap.McapError {
-  let key = job_open(path, resume)
+  let key = job_open(path, resume_name)
   if key.has_prefix("!") {
     raise @mcap.io_error(key)
   }
@@ -88,15 +89,15 @@ pub fn MergeJob::save(
 ///|
 pub fn MergeJob::storage(self : MergeJob) -> @mcap.SortStorage {
   @mcap.sort_storage(
-    fn(id) {
+    id => {
       ignore(self.operation("inspect", ""))
       create_sink("\{self.path}/\{id}.run")
     },
-    fn(id) {
+    id => {
       ignore(self.operation("inspect", ""))
       open_file("\{self.path}/\{id}.run")
     },
-    fn(id) {
+    id => {
       ignore(self.operation("inspect", ""))
       let error = remove_owned("\{self.path}/\{id}.run", false)
       if error != "" {
