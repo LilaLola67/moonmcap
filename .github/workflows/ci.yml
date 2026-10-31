@@ -420,9 +420,6 @@ jobs:
           - os: macos-15
             node: '22.3.0'
             machine: arm64
-          - os: macos-15-intel
-            node: '22.3.0'
-            machine: x86_64
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v4

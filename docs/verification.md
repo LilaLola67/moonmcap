@@ -12,7 +12,7 @@ python tools/verify.py --profile source
 `source` 执行 Wasm/JS 检查、构建、单元测试、运行时及文档核验、承诺追溯、干净导出树
 快速开始、CLI 失败合同、文件系统故障、旧产物读取、实际进程中断和批次恢复。
 需要 Python 3.12、Git、Node.js 22.3+ 和 moonc 0.10.17 基准或已验证的新版本。
-CI 为 Windows、Linux 及 macOS 15 ARM64/Intel 配置 Node 22.3.0 验证，另有 Windows 维护版 Node 22；各平台是否通过以确切提交的 Actions 结果为准。
+CI 为 Windows、Linux 及 macOS 15 ARM64 配置 Node 22.3.0 验证，另有 Windows 维护版 Node 22；各平台是否通过以确切提交的 Actions 结果为准。
 主 Linux CI 另执行较完整的互操作工作流，当前编译器有独立任务。
 
 | 配置 | 命令 | 额外依赖和含义 |
@@ -70,3 +70,5 @@ python tools/real_journey.py
 原始公开数据不随仓库或发布包分发；MIT 不改变其来源许可。
 
 新增严格诊断与旧 API 门禁见[静态检查](static-checks.md)。单元行插桩、V8 宿主执行与风险测试执行追溯分别记录，详见[风险覆盖](risk-coverage.md)。公开配置另执行可直接展示的 [SO-101 示例](../examples/so101/README.md)。
+
+macOS 源码验收范围为 Apple Silicon / ARM64。2026-10-31 的 Intel runner 实测中，官方安装器在构建前拒绝 `Darwin x86_64`；本轮不提供 Intel macOS 的源码构建验收结论，也不将其记为项目测试通过。生成 JS 的可移植性不替代该平台的源码验收。

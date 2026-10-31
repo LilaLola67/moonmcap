@@ -50,3 +50,7 @@ MoonMCAP 的核心目标是可靠读写、查询和处理 MCAP 0 消息日志。
 百万消息与超过 2 GiB 的历史观测只证明报告中的布局与环境，见 [实测边界](performance.md)。
 设备桥接已验证真实 SDK 本机订阅与 MCAP 读回，尚未联调实体设备或操作 Foxglove 桌面界面。
 不提供 ROS 网络发现、硬件驱动、XCDR2、通用 schema 协商或数据库事务承诺。
+
+## 平台验收边界
+
+固定工具链的源码验证覆盖 Linux、Windows 和 macOS 15 Apple Silicon / ARM64，具体以目标提交的 CI 为准。Intel macOS 不在本轮已验证源码平台中：官方安装器在 2026-10-31 的 Intel runner 上报 `Unsupported platform: Darwin x86_64`，未进入项目构建。此限制不被描述成库测试已通过，也不据此推断所有其他工具链或生成 JS 在 Intel 上均不可用。

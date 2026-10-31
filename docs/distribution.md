@@ -28,7 +28,7 @@ GitHub Actions 的主要任务固定使用 `moonc 0.10.17+d971670cd`，完整执
 
 ## GitHub Release
 
-发行按确切提交执行：先通过源码 CI（包含 macOS ARM64 / Intel），发布 Mooncakes 并通过只读发行包核验，再创建指向该提交的 annotated tag `vVERSION`。GitHub Release 说明记录版本、完整提交、兼容变化、安装方式、边界及 CI 链接。先上传草稿资产并校验，再公开发布。
+发行按确切提交执行：先通过源码 CI（包含 macOS ARM64），发布 Mooncakes 并通过只读发行包核验，再创建指向该提交的 annotated tag `vVERSION`。GitHub Release 说明记录版本、完整提交、兼容变化、安装方式、边界及 CI 链接。先上传草稿资产并校验，再公开发布。
 
 资产为与 Mooncakes SHA-256 一致的实际 ZIP、`SHA256SUMS`、去除本地路径的 `quality-evidence.json` 和仅含元数据的 `so101-preview.html`。不附带公开录制原件、私人文档、凭据或聊天内容。GitHub 自动生成的 Source code 压缩包与 Mooncakes 发行 ZIP 不同，二者不要求字节相同。
 
