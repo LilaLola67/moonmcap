@@ -1,0 +1,28 @@
+///|
+fn main {
+ try {
+  let builder = @mcap.new_builder()
+  let id = builder.register_channel("/frozen", "json")
+  for i = 0; i < 6; i = i + 1 { builder.append(id, i.to_uint64(), b"{\"v\":1}") }
+  let bytes = builder.finish(compression=@mcap.Zstd, messages_per_chunk=2)
+  @nodeio.write_atomic_new("output/source.mcap",bytes)
+  let source = @mcap.memory_source(bytes)
+  @nodeio.write_atomic_new("output/source.midx",@mcap.build_sidecar(source,@nodeio.source_sha256))
+  let disk = @buffer.Buffer::Buffer()
+  ignore(@mcap.build_disk_sidecar(source,@nodeio.sort_directory("output"),@mcap.new_write_sink(fn(b){disk.write_bytes(b[:])}),@nodeio.source_sha256,page_entries=2))
+  @nodeio.write_atomic_new("output/source.midx2",disk.to_bytes())
+  let tail = @mcap.growing_tail("frozen-0.17.1",@nodeio.source_sha256)
+  ignore(tail.poll(source,units=4096))
+  @nodeio.write_atomic_new("output/live.bin",tail.snapshot())
+  let log = @mcap.read_log(bytes)
+  let query = @mcap.build_query_index(log).query_source()
+  let directory = @nodeio.open_recording_directory("output/recording")
+  let session = @mcap.open_recording_session(query.declaration_log(),directory.storage(),options={..@mcap.recording_options(),segment_messages:2})
+  for m in log.messages {session.append(m)}
+  ignore(session.finish());directory.close()
+  let batch = @nodeio.open_artifact_directory("output/batch")
+  ignore(@mcap.run_artifact_batch("frozen-plan-0.17.1",2,batch.storage(),fn(i,sink){@mcap.stream_context_clip(query,sink,i.to_uint64(),i.to_uint64()+1UL)}))
+  batch.close()
+  println("FROZEN_PRODUCER_OK")
+ } catch { @mcap.Invalid(reason) => abort(reason) }
+}

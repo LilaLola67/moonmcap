@@ -22,7 +22,7 @@ extern "js" fn range_bytes(
   length : Int32,
 ) -> FileRead =
   #| (path, expected, offset, length) => {
-  #|   const fs = process.getBuiltinModule('node:fs'); let fd;
+  #|   const fs = process.getBuiltinModule('node:fs'); let fd,result;
   #|   try {
   #|     fd = fs.openSync(path, 'r');
   #|     const sig = () => { const s = fs.fstatSync(fd, {bigint:true}); return `${s.size}|${s.dev}|${s.ino}|${s.mtimeNs}|${s.ctimeNs}`; };
@@ -32,8 +32,10 @@ extern "js" fn range_bytes(
   #|     const data = Buffer.alloc(length);
   #|     const count = fs.readSync(fd, data, 0, length, position);
   #|     if (sig() !== expected) throw new Error('source changed while reading');
-  #|     return {error:'',bytes:new Uint8Array(data.buffer,data.byteOffset,count)};
-  #|   } catch (e) { return {error:e.message,bytes:new Uint8Array()}; } finally { if (fd !== undefined) fs.closeSync(fd); }
+  #|     result={error:'',bytes:new Uint8Array(data.buffer,data.byteOffset,count)};
+  #|   } catch (e) { result={error:e.message,bytes:new Uint8Array()}; }
+  #|   finally { if(fd!==undefined)try{fs.closeSync(fd);}catch(e){result={error:(result.error?result.error+'; ':'')+'close cleanup: '+e.message,bytes:new Uint8Array()};} }
+  #|   return result;
   #| }
 
 ///|
@@ -58,7 +60,7 @@ pub fn open_file(path : String) -> @mcap.ReadSource raise @mcap.McapError {
 
 ///|
 extern "js" fn create_exclusive(path : String) -> String =
-  #| (path) => { const fs=process.getBuiltinModule('node:fs'); let fd; try { fd=fs.openSync(path,'wx'); const s=fs.fstatSync(fd,{bigint:true}); return `${s.dev}|${s.ino}`; } catch(e) { return '!'+e.message; } finally { if(fd!==undefined) fs.closeSync(fd); } }
+  #| (path) => { const fs=process.getBuiltinModule('node:fs'); let fd,key,error=''; try { fd=fs.openSync(path,'wx');const s=fs.fstatSync(fd,{bigint:true});key=`${s.dev}|${s.ino}`;}catch(e){error=e.message;}finally{if(fd!==undefined)try{fs.closeSync(fd);}catch(e){error+=(error?'; ':'')+'close cleanup: '+e.message;}}if(error&&key)try{const s=fs.lstatSync(path,{bigint:true});if(`${s.dev}|${s.ino}`===key)fs.unlinkSync(path);}catch(e){error+='; staging cleanup: '+e.message;}return error?'!'+error:key; }
 
 ///|
 extern "js" fn append_bytes(
@@ -68,15 +70,16 @@ extern "js" fn append_bytes(
   data : Bytes,
 ) -> String =
   #| (path,expected,position,data) => {
-  #|   const fs=process.getBuiltinModule('node:fs'); let fd;
+  #|   const fs=process.getBuiltinModule('node:fs'); let fd,error='';
   #|   try {
   #|     fd=fs.openSync(path,'r+'); const s=fs.fstatSync(fd,{bigint:true});
   #|     if(`${s.dev}|${s.ino}`!==expected || s.size!==BigInt(position)) throw new Error('output changed');
   #|     const start=Number(BigInt(position));
   #|     if(!Number.isSafeInteger(start+data.length)) throw new Error('output offset exceeds Node safe range');
   #|     let done=0; while(done<data.length) { const n=fs.writeSync(fd,data,done,data.length-done,start+done); if(!n) throw new Error('write made no progress'); done+=n; }
-  #|     return '';
-  #|   } catch(e) { return '!'+e.message; } finally { if(fd!==undefined) fs.closeSync(fd); }
+  #|   } catch(e) { error=e.message; }
+  #|   finally { if(fd!==undefined)try{fs.closeSync(fd);}catch(e){error+=(error?'; ':'')+'close cleanup: '+e.message;} }
+  #|   return error?'!'+error:'';
   #| }
 
 ///|
@@ -128,17 +131,23 @@ extern "js" fn atomic_bytes(path : String, data : Bytes) -> String =
   #| (destination,data) => {
   #|   const fs=process.getBuiltinModule('node:fs'), path=process.getBuiltinModule('node:path');
   #|   const temp=path.join(path.dirname(destination),'.'+path.basename(destination)+'.'+process.getBuiltinModule('node:crypto').randomUUID()+'.tmp');
-  #|   let fd,created=false;
+  #|   let fd,created=false,published=false,error='';
   #|   try {
   #|     fd=fs.openSync(temp,'wx'); created=true;
   #|     fs.writeFileSync(fd,data); fs.fsyncSync(fd); fs.closeSync(fd); fd=undefined;
-  #|     fs.linkSync(temp,destination); return '';
-  #|   } catch(e) { return '!'+e.message; }
-  #|   finally { if(fd!==undefined) fs.closeSync(fd); if(created) fs.unlinkSync(temp); }
+  #|     fs.linkSync(temp,destination); published=true;
+  #|   } catch(e) { error=e.message; }
+  #|   finally {
+  #|     if(fd!==undefined)try{fs.closeSync(fd);}catch(e){error+=(error?'; ':'')+'close cleanup: '+e.message;}
+  #|     if(created)try{fs.unlinkSync(temp);}catch(e){error+=(error?'; ':'')+'staging cleanup: '+e.message;}
+  #|   }
+  #|   return error?'!'+(published?'output published; ':'')+error:'';
   #| }
 
 ///|
 /// Publish a complete new file using a same-directory hard link; never replace paths.
+/// Errors after hard-link publication explicitly contain "output published";
+/// the complete target may exist if temporary-file cleanup subsequently fails.
 pub fn write_atomic_new(
   path : String,
   bytes : Bytes,

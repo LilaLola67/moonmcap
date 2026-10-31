@@ -1,0 +1,43 @@
+name: verify-published-release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact published version, for example 0.17.2
+        required: true
+        type: string
+      commit:
+        description: Full 40-character source commit SHA
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  published-consumer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.commit }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.3.0'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install fixed supported toolchain
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.17+d971670cd'
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Verify release against exact source commit
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_COMMIT: ${{ inputs.commit }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/verify.py --profile release --version "$RELEASE_VERSION" --commit "$RELEASE_COMMIT"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: published-release-evidence
+          path: _interop/verification/

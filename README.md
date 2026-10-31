@@ -1,6 +1,6 @@
 # MoonMCAP
 
-MoonBit 的 **MCAP 0 消息日志库**，用于读取和校验机器人、传感器与仿真日志，按主题和时间查询，并裁剪、合并或恢复可读数据。当前版本 **0.17.1**。
+MoonBit 的 **MCAP 0 消息日志库**，用于读取和校验机器人、传感器与仿真日志，按主题和时间查询，并裁剪、合并或恢复可读数据。当前版本 **0.17.2**。
 
 从 [首次使用](docs/quickstart.md) 开始，选择入口前阅读 [支持范围](docs/scope.md)。完整索引见 [文档导航](docs/README.md)，异常处理见 [排错说明](docs/troubleshooting.md)。
 
@@ -16,7 +16,7 @@ version = "0.0.1"
 ```
 
 ```sh
-moon add LilaLola67/moonmcap@0.17.1
+moon add LilaLola67/moonmcap@0.17.2
 ```
 
 使用方的 `moon.pkg`：
@@ -95,11 +95,11 @@ python tools/quickstart_smoke.py
 
 [测试方法](docs/testing.md) 区分单元测试、独立参考实现、真实进程中断、干净源码副本、发行包安装和公开数据验证；[GitHub CI](https://github.com/LilaLola67/moonmcap/actions/workflows/ci.yml) 保存可复核的报告。公开录制、转换数据和合成样例分别标注，见 [公开语料](docs/corpus-validation.md)；历史百万消息和大文件实测的环境与限制见 [性能报告](docs/performance.md)。设备 SDK 桥接尚未进行实体设备联调。
 
-本轮的失败合同、文档重放和公开语料复核结果见 [0.17.1 质量验证记录](examples/validation/release-0.17.1.json)。
+本次改进的范围和独立验证记录见 [0.17.2 质量记录](examples/validation/release-0.17.2.json)，完整验证命令及证据判读见 [验收入口](docs/verification.md)。历史记录见 [0.17.1 质量验证](examples/validation/release-0.17.1.json)。
 
 历史验证记录保留在 [验证报告](examples/validation/release-0.16.10.json) 等文件中，版本变化见 [更新记录](CHANGELOG.md) 与 [迁移说明](docs/migration.md)。
 
-从 Mooncakes 全新安装的验证命令为 `python tools/install_smoke.py --version 0.17.1`，不使用仓库源路径覆盖。
+从 Mooncakes 全新安装的验证命令为 `python tools/install_smoke.py --version 0.17.2`，不使用仓库源路径覆盖。
 
 ## 开源许可
 

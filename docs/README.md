@@ -6,6 +6,7 @@
 
 | 目标 | 文档 |
 | --- | --- |
+| 设计、合同与验收 | [架构和所有权](architecture.md)、[API 合同与错误](api-contracts.md)、[统一验收入口](verification.md) |
 | MCAP 格式、压缩和资源边界 | [兼容范围](compatibility.md)、[实测与 RSS](performance.md)、[来源和许可](../third_party/README.md) |
 | 安装、API 和版本升级 | [项目入口](../README.md)、[发行包](distribution.md)、[迁移](migration.md)、[更新记录](../CHANGELOG.md) |
 | 查询、裁剪、合并、完整诊断 | [CLI](cli.md)、[文件样例](../examples/README.md)、[诊断修复](diagnostics.md)、[大文件诊断](source-diagnostics.md) |

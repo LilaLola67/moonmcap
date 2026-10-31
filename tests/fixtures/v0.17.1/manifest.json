@@ -1,0 +1,74 @@
+{
+  "producer_module": "LilaLola67/moonmcap@0.17.1",
+  "published_dependency": true,
+  "source_path_override": false,
+  "compiler": "0.10.17+d971670cd",
+  "generator": "tools/compatibility_producer.mbt.txt",
+  "files": [
+    {
+      "path": "batch/clip-0.mcap",
+      "bytes": 911,
+      "sha256": "1bf140e2c42658f6a0243437f04a0e133f11577186dc2f32b1d4c9324c91f868"
+    },
+    {
+      "path": "batch/clip-1.mcap",
+      "bytes": 911,
+      "sha256": "db657af448d233a49c83ae4509b484c7c6733b7c4dbfc3dea01d3ab7d1603d7d"
+    },
+    {
+      "path": "batch/manifest.bin",
+      "bytes": 786,
+      "sha256": "8861b8dff43fec6ec5d662b3c3d8a58e1e00a74ccc915122724dcc04adf88bac"
+    },
+    {
+      "path": "batch/owner",
+      "bytes": 26,
+      "sha256": "cf56fc08436e61d6241a3a55deb6dc283eceba0f283704b38afa45aa7d4f0aee"
+    },
+    {
+      "path": "live.bin",
+      "bytes": 470,
+      "sha256": "07a3513bd8ebbd2650df33f7c2e4e8eb2af0746ff16eaeb1f41215aa86c6f1b5"
+    },
+    {
+      "path": "recording/manifest.bin",
+      "bytes": 1166,
+      "sha256": "ae1d03e662c8f2904a350437fe2c65358ccfe885560153277ac97d0c29a404b2"
+    },
+    {
+      "path": "recording/owner",
+      "bytes": 29,
+      "sha256": "02df0ad9cfad0f9c39fb53a964ad5279ad76a58d80c7a2b9bb37afe04a58907f"
+    },
+    {
+      "path": "recording/segment-0.mcap",
+      "bytes": 560,
+      "sha256": "57276926ca7f2d140649bb85564e783e7ff635b194ff622237b2ae2ad9b1dab6"
+    },
+    {
+      "path": "recording/segment-1.mcap",
+      "bytes": 560,
+      "sha256": "3bf5c2824a34613e47939bb18b79f57fc47ad35c1a40992bd7259c7b91d92790"
+    },
+    {
+      "path": "recording/segment-2.mcap",
+      "bytes": 560,
+      "sha256": "4a8dbe30ac9ad474124524f87d940f315c5e703ebef94288cc9f4457e5f2e56c"
+    },
+    {
+      "path": "source.mcap",
+      "bytes": 1022,
+      "sha256": "be5293f029d1f740ca16faec8fa276db80f7f4e0ba33c22d62a3492cbda30624"
+    },
+    {
+      "path": "source.midx",
+      "bytes": 386,
+      "sha256": "55fb8034efbdc45b7c7275c1d2838286e6bdaf9da041ca22220731c346d3f650"
+    },
+    {
+      "path": "source.midx2",
+      "bytes": 470,
+      "sha256": "f1588fadfee5baae8653088969bd6868c17988490334dad6ca2b252a35d26409"
+    }
+  ]
+}

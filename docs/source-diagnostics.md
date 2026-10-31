@@ -11,7 +11,7 @@ python tools/large_source_workflows.py
 python tools/large_source_workflows.py --large
 ```
 
-构建后也可运行 `node _build/js/debug/build/cmd/diagnose/diagnose.js ...`。validate 有效退出 0，格式错误输出 JSON 并退出 1；参数和命令操作失败退出 2。底层读取失败也会成为首个诊断问题；取消和无效预算抛出错误。recover 使用新路径、临时文件和独占发布，失败不留下半成品。直接使用库的输出 sink 时，调用方须丢弃失败输出。
+构建后也可运行 `node _build/js/debug/build/cmd/diagnose/diagnose.js ...`。validate 有效退出 0，格式错误输出 JSON 并退出 1；参数和命令操作失败退出 2。底层读取失败也会成为首个诊断问题；取消和无效预算抛出错误。recover 使用新路径、临时文件和独占发布，提交前失败不发布半成品；提交后清理错误可能仍有完整目标，见 [提交边界](architecture.md)。直接使用库的输出 sink 时，调用方须丢弃失败输出。
 
 ## 诊断证据
 
@@ -38,6 +38,8 @@ python tools/large_source_workflows.py --large
 `scan_source` 新增可选 `trace` 回调及 `SourceScanEvent`，供自定义进度记录；RecordAccepted 仅说明当前记录已通过解析，后续全局检查仍可能失败。
 
 ## 恢复范围
+
+截断容器若缺少可用头尾/摘要，应使用 `cmd/mcap recover` 提取连续前缀；这里的独立块模式不接受缺失这些元信息的输入。
 
 `recover_blocks_detailed` 保留既有 `recover_blocks` 的严格接受条件，并提供有数量预算的逐块证据：
 

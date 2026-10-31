@@ -1,0 +1,3 @@
+# Preserve exact Git blob bytes in source exports and published archives on every OS.
+# Historical reports and binary fixtures must not be rewritten during checkout.
+* -text

@@ -1,0 +1,323 @@
+{
+  "version": "0.17.2",
+  "date": "2026-10-31",
+  "focus": [
+    "explicit contracts and resource ownership",
+    "host failures and historical compatibility",
+    "architecture, API errors and reproducible documentation",
+    "original public recording journey and exact published package verification"
+  ],
+  "baseline_compiler": "0.10.17+d971670cd",
+  "unit_tests": {
+    "wasm": 217,
+    "js": 239
+  },
+  "current_toolchain": {
+    "moonc": "0.10.18+6c83a7f62",
+    "steps": [
+      {
+        "step": "check",
+        "passed": true
+      },
+      {
+        "step": "build",
+        "passed": true
+      },
+      {
+        "step": "test",
+        "passed": true
+      },
+      {
+        "step": "doc",
+        "passed": true
+      }
+    ]
+  },
+  "targeted_checks": {
+    "filesystem_faults": {
+      "result": "passed",
+      "cases": [
+        {
+          "kind": "atomic",
+          "fault": "space",
+          "result": "passed",
+          "publication": "no target",
+          "injections": 1
+        },
+        {
+          "kind": "atomic",
+          "fault": "sync",
+          "result": "passed",
+          "publication": "no target",
+          "injections": 1
+        },
+        {
+          "kind": "atomic",
+          "fault": "link",
+          "result": "passed",
+          "publication": "no target",
+          "injections": 1
+        },
+        {
+          "kind": "atomic",
+          "fault": "close",
+          "result": "passed",
+          "publication": "no target",
+          "injections": 1
+        },
+        {
+          "kind": "atomic",
+          "fault": "cleanup",
+          "result": "passed",
+          "publication": "complete target retained",
+          "injections": 1
+        },
+        {
+          "kind": "stream",
+          "fault": "space",
+          "result": "passed",
+          "publication": "no target",
+          "injections": 2
+        },
+        {
+          "kind": "stream",
+          "fault": "zero",
+          "result": "passed",
+          "publication": "no target",
+          "injections": 1
+        },
+        {
+          "kind": "stream",
+          "fault": "short",
+          "result": "passed",
+          "publication": "complete target",
+          "injections": 285641
+        },
+        {
+          "kind": "stream",
+          "fault": "sync",
+          "result": "passed",
+          "publication": "no target",
+          "injections": 1
+        },
+        {
+          "kind": "stream",
+          "fault": "link",
+          "result": "passed",
+          "publication": "no target",
+          "injections": 1
+        },
+        {
+          "kind": "stream",
+          "fault": "close",
+          "result": "passed",
+          "publication": "no target",
+          "injections": 1
+        },
+        {
+          "kind": "stream",
+          "fault": "create-close",
+          "result": "passed",
+          "publication": "no target",
+          "injections": 1
+        },
+        {
+          "kind": "stream",
+          "fault": "cleanup",
+          "result": "passed",
+          "publication": "complete target retained",
+          "injections": 1
+        }
+      ],
+      "power_loss_tested": false,
+      "source_unchanged": true,
+      "notes": "Injected syscall failures exercise real staging writes. Post-link cleanup failure explicitly reports a complete published target; never retry blindly."
+    },
+    "historical_compatibility": {
+      "result": "passed",
+      "producer": "LilaLola67/moonmcap@0.17.1",
+      "historical_files": 13,
+      "formats": [
+        "MCAP0",
+        "MIDX1",
+        "MIDX2",
+        "MRSC1",
+        "ABAT1",
+        "MLIV1"
+      ],
+      "checks": [
+        "hash-pinned published producer",
+        "query equivalence",
+        "source identity rejection",
+        "completed recording and artifacts resume",
+        "completed artifact not re-executed",
+        "future versions rejected",
+        "frozen inputs untouched"
+      ],
+      "policy": "No promise for unknown future formats. Recipe code fingerprints deliberately prohibit changed-code resume."
+    }
+  },
+  "line_coverage": {
+    "measurement": "MoonBit JS unit-test line instrumentation only",
+    "risk_files": [
+      {
+        "file": "sidecar.mbt",
+        "covered_lines": 182,
+        "executable_lines": 223
+      },
+      {
+        "file": "cli_options.mbt",
+        "covered_lines": 155,
+        "executable_lines": 213
+      },
+      {
+        "file": "range_reader.mbt",
+        "covered_lines": 131,
+        "executable_lines": 174
+      },
+      {
+        "file": "stream_writer.mbt",
+        "covered_lines": 153,
+        "executable_lines": 160
+      },
+      {
+        "file": "artifact_batch.mbt",
+        "covered_lines": 79,
+        "executable_lines": 86
+      },
+      {
+        "file": "recording_session.mbt",
+        "covered_lines": 158,
+        "executable_lines": 199
+      }
+    ],
+    "limitations": [
+      "Not branch coverage.",
+      "Does not measure embedded JavaScript host bodies.",
+      "External CLI workflows are not merged into this trace.",
+      "Uncovered lines remain candidates for review, not proof of defects."
+    ],
+    "percentage_gate": false
+  },
+  "real_recording_journey": {
+    "result": "passed",
+    "original": {
+      "name": "so101-real.mcap",
+      "kind": "physical-robot-recording",
+      "description": "SO-101 physical arm joint and transform feedback; ROS 2 CDR. Camera is not included.",
+      "url": "https://assets.foxglove.dev/website/blog/record-and-replay-with-a-ros-2-powered-so-101/replay_capture_2026_10_14_15_10_26_0.mcap",
+      "source": "https://foxglove.dev/blog/record-and-replay-with-a-ros-2-powered-so-101",
+      "bytes": 2592733,
+      "sha256": "e11ebd97b793b101b91237dcb4ceac32540aa2adb515df97650ad22116f6ac84",
+      "redistribution": "Original is publicly linked by its publisher. No dataset redistribution license is asserted here; fetch the original separately. The project MIT license does not relicense this recording."
+    },
+    "messages": 4719,
+    "query": {
+      "topic": "/joint_states",
+      "start": "1791983428732915000",
+      "end": "1791983428992984000",
+      "messages": 14
+    },
+    "clip_independently_equal": true,
+    "derived_fault": {
+      "kind": "artificial truncation of original public recording",
+      "cutoff_bytes": 2015608,
+      "interrupted_chunk_offset": 1622353,
+      "sha256": "9de51b331837b5d17642170491f657e545da5d9977fba04b4f77680d911cb2bd",
+      "recovered_prefix_messages": 2999,
+      "not_an_original_recording_failure": true
+    },
+    "recovery": {
+      "profile": "ros2",
+      "library": "libmcap 1.4.0",
+      "schemas": 3,
+      "channels": 5,
+      "messages": 2999,
+      "payload_bytes": "1471516",
+      "attachments": 0,
+      "metadata": 1,
+      "topics": [
+        {
+          "topic": "/joint_states",
+          "channel_id": 3,
+          "messages": 723,
+          "first_time": [
+            "1791983428633611000"
+          ],
+          "last_time": [
+            "1791983443393720000"
+          ]
+        },
+        {
+          "topic": "/tf",
+          "channel_id": 2,
+          "messages": 927,
+          "first_time": [
+            "1791983428634192000"
+          ],
+          "last_time": [
+            "1791983443394307000"
+          ]
+        },
+        {
+          "topic": "/tf_static",
+          "channel_id": 1,
+          "messages": 1,
+          "first_time": [
+            "1791983428622598000"
+          ],
+          "last_time": [
+            "1791983428622598000"
+          ]
+        },
+        {
+          "topic": "/dynamic_joint_states",
+          "channel_id": 5,
+          "messages": 724,
+          "first_time": [
+            "1791983428653490000"
+          ],
+          "last_time": [
+            "1791983443413695000"
+          ]
+        },
+        {
+          "topic": "/joint_commands_replay",
+          "channel_id": 4,
+          "messages": 624,
+          "first_time": [
+            "1791983430965997000"
+          ],
+          "last_time": [
+            "1791983443412208000"
+          ]
+        }
+      ]
+    },
+    "original_unchanged": true,
+    "reference": "mcap 1.3.0 NonSeekingReader and StreamReader with CRC validation",
+    "limits": [
+      "No raw public data is redistributed.",
+      "Recovered valid prefix does not prove completeness or quantify unread lost messages."
+    ]
+  },
+  "source_verification": {
+    "plan": "tools/verification-plan.json",
+    "runner": "tools/verify.py",
+    "manifest_records_exact_commit_and_tree": true,
+    "local_targeted_checks_are_not_a_claim_that_all_ci_cells_passed": true,
+    "ci": "https://github.com/LilaLola67/moonmcap/actions/workflows/ci.yml"
+  },
+  "published_release_verification": {
+    "runner": "tools/release_verify.py",
+    "workflow": ".github/workflows/release-verify.yml",
+    "separately_required_after_upload": true,
+    "not_proven_by_this_source_controlled_report": true
+  },
+  "limitations": [
+    "No power-loss or storage hardware failure guarantee.",
+    "No physical device integration is inferred from the published recording.",
+    "Minimum Node and Windows claims require successful corresponding CI cells.",
+    "This is a source-controlled scope/evidence summary; exact clean-commit and registry evidence is retained by the verification runs."
+  ]
+}

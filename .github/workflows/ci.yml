@@ -16,6 +16,8 @@ on:
         type: boolean
 permissions:
   contents: read
+env:
+  PYTHONUTF8: '1'
 jobs:
   core:
     runs-on: ubuntu-latest
@@ -237,6 +239,18 @@ jobs:
       - name: Measure process RSS and payload counters
         if: matrix.target == 'js'
         run: python tools/memory_benchmark.py
+      - name: Trace declared contracts
+        if: matrix.target == 'js'
+        run: python tools/contract_audit.py
+      - name: Inject filesystem publication faults
+        if: matrix.target == 'js'
+        run: python tools/fs_fault_workflows.py
+      - name: Read frozen historical formats
+        if: matrix.target == 'js'
+        run: python tools/compatibility_workflows.py
+      - name: Measure unit-test risk line coverage
+        if: matrix.target == 'js'
+        run: python tools/coverage_audit.py
       - name: Audit package file allowlist
         if: matrix.target == 'js'
         run: python tools/package_audit.py
@@ -291,6 +305,10 @@ jobs:
             _interop/memory/report.json
             _interop/package/report.json
             _interop/runtime/report.json
+            _interop/contracts/report.json
+            _interop/fs-faults/report.json
+            _interop/compatibility/report.json
+            _interop/coverage/report.json
             _interop/pipeline/report.json
             _interop/paged-fields/report.json
             _interop/payload-views/report.json
@@ -378,9 +396,55 @@ jobs:
       - run: python tools/cdr_workflows.py --public
       - run: python tools/ros1_workflows.py --public
       - run: python tools/incident_workflows.py --public
+      - run: python tools/real_journey.py
       - uses: actions/upload-artifact@v4
         with:
           name: public-corpus-report
           path: |
             _interop/corpus/report-public.json
             _interop/incidents/report-public.json
+            _interop/real-journey/report.json
+  platform-contracts:
+    name: platform-${{ matrix.os }}-node-${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            node: '22.3.0'
+          - os: windows-latest
+            node: '22.3.0'
+          - os: windows-latest
+            node: '22'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install Linux toolchain
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash -s -- '0.10.17+d971670cd'
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Install Windows toolchain
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:MOONBIT_INSTALL_VERSION = '0.10.17+d971670cd'
+          $installer = Join-Path $env:RUNNER_TEMP 'moonbit-install.ps1'
+          Invoke-WebRequest https://cli.moonbitlang.com/install/powershell.ps1 -OutFile $installer
+          & $installer
+          (Join-Path $HOME '.moon/bin') >> $env:GITHUB_PATH
+      - run: moon update
+      - run: python -m pip install mcap==1.3.0 lz4==4.4.5 zstandard==0.25.0
+      - run: python tools/verify.py --profile source
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: platform-${{ matrix.os }}-node-${{ matrix.node }}
+          path: _interop/verification/

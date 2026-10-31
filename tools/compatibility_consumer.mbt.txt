@@ -1,0 +1,52 @@
+///|
+extern "js" fn directory() -> String = #| () => process.argv[2]
+
+///|
+fn main {
+  try {
+    let path = directory()
+    let bytes = @nodeio.read_file(path + "/source.mcap")
+    let source = @mcap.memory_source(bytes)
+    let log = @mcap.read_log(bytes)
+    assert_eq(log.messages.length(), 6)
+    assert_eq(log.header.library, "moonmcap/0.17.1")
+    let verification = @mcap.VerifyContent(@nodeio.source_sha256)
+    let index = @nodeio.read_file(path + "/source.midx")
+    let one = @mcap.open_sidecar(source,index,verification)
+    one.validate_entries()
+    assert_eq(one.cursor(@mcap.all_query()).next_page(20).length(),6)
+    let two = @mcap.open_disk_sidecar(source,@nodeio.open_file(path + "/source.midx2"),verification)
+    two.validate_entries()
+    assert_eq(two.cursor(@mcap.all_query()).next_page(20).length(),6)
+    try @mcap.open_sidecar(source,index,@mcap.VerifyContent(fn(_) { "0000000000000000000000000000000000000000000000000000000000000000" })) catch {
+      @mcap.Invalid(_) => ()
+    } noraise { _ => fail("source mismatch accepted") }
+    let live = @mcap.growing_tail("frozen-0.17.1",@nodeio.source_sha256,snapshot=@nodeio.read_file(path + "/live.bin"))
+    assert_eq(live.poll(source).messages.length(),0)
+    try @mcap.growing_tail("different-source",@nodeio.source_sha256,snapshot=@nodeio.read_file(path + "/live.bin")) catch {
+      @mcap.Invalid(_) => ()
+    } noraise { _ => fail("live identity mismatch accepted") }
+    let recording = @nodeio.open_recording_directory(path + "/recording",resume=true)
+    let session = @mcap.open_recording_session(@mcap.build_query_index(log).query_source().declaration_log(),recording.storage(),manifest?=recording.manifest(),options={..@mcap.recording_options(),segment_messages:2})
+    assert_eq(session.committed_messages(),6UL)
+    ignore(session.finish())
+    recording.close()
+    let batch = @nodeio.open_artifact_directory(path + "/batch",resume=true)
+    let result = @mcap.run_artifact_batch("frozen-plan-0.17.1",2,batch.storage(),fn(_,_) {raise @mcap.io_error("completed artifacts must not be re-executed")})
+    assert_true(result is Object(fields) && fields["complete"]==Json::boolean(true))
+    try @mcap.run_artifact_batch("changed-plan",2,batch.storage(),fn(_,_) {raise @mcap.io_error("changed plan executed")}) catch {
+      @mcap.Invalid(_) => ()
+    } noraise { _ => fail("changed artifact plan accepted") }
+    batch.close()
+    try @mcap.inspect_recording_manifest(@nodeio.read_file(path + "/future-recording.bin")) catch {
+      @mcap.Invalid(_) => ()
+    } noraise { _ => fail("future recording version accepted") }
+    try @mcap.open_sidecar(source,@nodeio.read_file(path + "/future-index.bin"),verification) catch {
+      @mcap.Invalid(_) => ()
+    } noraise { _ => fail("future index version accepted") }
+    println("COMPATIBILITY_OK: MCAP0 MIDX1 MIDX2 MRSC1 ABAT1 MLIV1 and incompatible state rejected")
+  } catch {
+    @mcap.Invalid(reason) => abort(reason)
+    _ => abort("compatibility assertion failed")
+  }
+}

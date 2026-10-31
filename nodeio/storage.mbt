@@ -47,7 +47,7 @@ extern "js" fn publish_stage(
   key : String,
   size : String,
 ) -> String =
-  #| (path,target,key,size)=>{let fd;const fs=process.getBuiltinModule('node:fs');try{const s=fs.lstatSync(path,{bigint:true});if(!s.isFile()||`${s.dev}|${s.ino}`!==key||s.size!==BigInt(size))throw new Error('staging output changed');fd=fs.openSync(path,'r+');fs.fsyncSync(fd);fs.closeSync(fd);fd=undefined;fs.linkSync(path,target);fs.unlinkSync(path);return '';}catch(e){return '!'+e.message;}finally{if(fd!==undefined)fs.closeSync(fd);}}
+  #| (path,target,key,size)=>{let fd,published=false,error='';const fs=process.getBuiltinModule('node:fs');try{const s=fs.lstatSync(path,{bigint:true});if(!s.isFile()||`${s.dev}|${s.ino}`!==key||s.size!==BigInt(size))throw new Error('staging output changed');fd=fs.openSync(path,'r+');fs.fsyncSync(fd);fs.closeSync(fd);fd=undefined;fs.linkSync(path,target);published=true;fs.unlinkSync(path);}catch(e){error=e.message;}finally{if(fd!==undefined)try{fs.closeSync(fd);}catch(e){error+=(error?'; ':'')+'close cleanup: '+e.message;}}return error?'!'+(published?'output published; ':'')+error:'';}
 
 ///|
 pub fn output_transaction(
@@ -80,6 +80,9 @@ pub fn OutputTransaction::publish(
     self.sink.position().to_string(),
   )
   if error != "" {
+    if error.has_prefix("!output published;") {
+      self.closed = true
+    }
     raise @mcap.io_error(error)
   }
   self.closed = true

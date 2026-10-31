@@ -56,7 +56,7 @@ def main():
                 if sidecars:
                     for index in indexes:args += ["--index",index]
                 if descending:args += ["--descending"]
-                result=run(cli,*args);assert result.returncode==0,result.stderr
+                result=run(cli,*args);assert result.returncode==0,(result.returncode,args,result.stderr,result.stdout)
                 actual=[json.loads(line) for line in result.stdout.splitlines()]
                 wanted=sorted(expected,key=lambda r:(r[2],r[0],r[1]),reverse=descending)[2:7]
                 assert [(r["source_index"],r["sequence"],int(r["log_time"])) for r in actual]==wanted

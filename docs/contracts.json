@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "contracts": [
+    {
+      "id": "C01",
+      "promise": "MCAP0 structural checks and available CRCs",
+      "conditions": "Supported format and explicit budgets; zero CRC means unavailable",
+      "failure": "Invalid data rejected; no inferred absent-checksum verification",
+      "source": "source_scan.mbt",
+      "tests": [
+        "tools/conformance.py",
+        "tools/reliability_workflows.py"
+      ]
+    },
+    {
+      "id": "C02",
+      "promise": "Selective queries do not claim full-file validation",
+      "conditions": "Indexed query validates summary and accessed chunks; --full separately loads within budget",
+      "failure": "Corruption outside selected regions may be detected only by full validation",
+      "source": "range_reader.mbt",
+      "tests": [
+        "tools/reliability_workflows.py",
+        "range_reader_test.mbt"
+      ]
+    },
+    {
+      "id": "C03",
+      "promise": "Reject ineffective CLI budgets before IO",
+      "conditions": "Only options consumed by the chosen operation are accepted",
+      "failure": "Exit 2 and no target/job creation",
+      "source": "cli_options.mbt",
+      "tests": [
+        "cli_test.mbt",
+        "tools/reliability_workflows.py"
+      ]
+    },
+    {
+      "id": "C04",
+      "promise": "New-file publication has an explicit hard-link commit point",
+      "conditions": "Same-directory hard links; exclusively owned staging path",
+      "failure": "Before link: no target. After link: complete target can exist; cleanup failure reports output published",
+      "source": "nodeio/storage.mbt",
+      "tests": [
+        "tools/fs_fault_workflows.py"
+      ]
+    },
+    {
+      "id": "C05",
+      "promise": "Committed recording segments survive retry without rewriting",
+      "conditions": "Owned directory, matching manifest/options, immutable committed segments",
+      "failure": "Changed committed files fail closed; incomplete tail quarantined; no power-loss guarantee",
+      "source": "recording_session.mbt",
+      "tests": [
+        "tools/recording_session_workflows.py",
+        "tools/compatibility_workflows.py"
+      ]
+    },
+    {
+      "id": "C06",
+      "promise": "Historical documented formats remain readable within their identities",
+      "conditions": "Frozen 0.17.1 MCAP0/MIDX1/MIDX2/MRSC1/ABAT1/MLIV1 fixtures; supported configuration unchanged",
+      "failure": "Unsupported future version, source/plan mismatch rejected",
+      "source": "artifact_batch.mbt",
+      "tests": [
+        "risk_paths_test.mbt",
+        "tools/compatibility_workflows.py"
+      ]
+    },
+    {
+      "id": "C07",
+      "promise": "Recipe resume binds inputs, rules, code and runtime",
+      "conditions": "Same recorded plan and intact completed artifacts",
+      "failure": "Changed-code resume intentionally rejected; create a new job",
+      "source": "tools/recipes.py",
+      "tests": [
+        "tools/recipe_workflows.py"
+      ]
+    },
+    {
+      "id": "C08",
+      "promise": "Failing writes do not falsely advance committed output",
+      "conditions": "Write callback accepts all bytes or raises; host loops over short writes",
+      "failure": "ENOSPC, zero progress, sync/close/link failures return errors; accepted is not committed",
+      "source": "nodeio/files.mbt",
+      "tests": [
+        "tools/fs_fault_workflows.py",
+        "recording_session_test.mbt"
+      ]
+    },
+    {
+      "id": "C09",
+      "promise": "Runtime claims are exercised on declared environments",
+      "conditions": "Compiler 0.10.17 and separate current compiler; Linux/Windows; Node minimum 22.3 and maintained 22",
+      "failure": "Unsupported combinations are not inferred from a passing matrix cell",
+      "source": ".github/workflows/ci.yml",
+      "tests": [
+        "tools/quickstart_smoke.py",
+        "tools/recording_session_workflows.py"
+      ]
+    },
+    {
+      "id": "C10",
+      "promise": "Published installation evidence belongs to the requested release",
+      "conditions": "Fixed version, package SHA256, fresh consumer, no source override",
+      "failure": "Wrong version/checksum/CI status or missing result prevents successful release verification",
+      "source": "tools/release_verify.py",
+      "tests": [
+        "tools/install_smoke.py"
+      ]
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 # 验证方法与证据
 
+统一命令、证据目录和固定发布包核验见 [可复现验收入口](verification.md)，设计与错误约定见 [架构](architecture.md)、[API 合同](api-contracts.md)。
+
 测试按风险组织，数量不代表支持范围。固定基准是 moonc 0.10.17+d971670cd、
 Node.js 22.3+；CI 的参考工具使用 Python 3.12，依赖版本写在工作流中。
 
@@ -10,7 +12,7 @@ Node.js 22.3+；CI 的参考工具使用 Python 3.12，依赖版本写在工作�
 | 用户可见失败合同 | `python tools/reliability_workflows.py` | 参数在 IO 前失败、精确预算、晚发错误原子性、stdout 部分结果、完整/选择性校验区别 |
 | 文档可以使用 | `python tools/check_docs.py`、`python tools/quickstart_smoke.py` | 本地链接与锚点、隔离源码树中的真实命令、README API 示例 |
 | 任务中断恢复 | `python tools/recording_session_workflows.py`、`python tools/clip_batch_workflows.py` | 实际终止进程、已提交内容复用、重复恢复；不声称通过断电测试 |
-| 已发布包可安装 | `python tools/install_smoke.py --version 0.17.1` | 新使用者目录从 Mooncakes 安装，无源码路径覆盖，并编译使用方自己的 worker |
+| 已发布包可安装 | `python tools/install_smoke.py --version 0.17.2` | 新使用者目录从 Mooncakes 安装，无源码路径覆盖，并编译使用方自己的 worker |
 | 公开采集数据 | `python tools/corpus_workflows.py --public` | 固定大小和 SHA-256 的公开文件；网络或指纹失败不能算通过 |
 
 常规 CI 执行检查、构建、单元测试、离线互操作与故障工作流，并保存 JSON 报告。
