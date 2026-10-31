@@ -47,7 +47,7 @@ extern "js" fn publish_stage(
   key : String,
   size : String,
 ) -> String =
-  #| (path,target,key,size)=>{let fd,published=false,error='';const fs=process.getBuiltinModule('node:fs');try{const s=fs.lstatSync(path,{bigint:true});if(!s.isFile()||`${s.dev}|${s.ino}`!==key||s.size!==BigInt(size))throw new Error('staging output changed');fd=fs.openSync(path,'r+');fs.fsyncSync(fd);fs.closeSync(fd);fd=undefined;fs.linkSync(path,target);published=true;fs.unlinkSync(path);}catch(e){error=e.message;}finally{if(fd!==undefined)try{fs.closeSync(fd);}catch(e){error+=(error?'; ':'')+'close cleanup: '+e.message;}}return error?'!'+(published?'output published; ':'')+error:'';}
+  #| (path,target,key,size)=>{let fd,published=false,error='';const fs=process.getBuiltinModule('node:fs');try{const s=fs.lstatSync(path,{bigint:true});if(!s.isFile()||`${s.dev}|${s.ino}`!==key||s.size!==BigInt(size))throw new Error('staging output changed');fd=fs.openSync(path,'r+');fs.fsyncSync(fd);const closing=fd;fd=undefined;fs.closeSync(closing);fs.linkSync(path,target);published=true;fs.unlinkSync(path);}catch(e){error=e.message;}finally{if(fd!==undefined)try{fs.closeSync(fd);}catch(e){error+=(error?'; ':'')+'close cleanup: '+e.message;}}return error?'!'+(published?'output published; ':'')+error:'';}
 
 ///|
 pub fn output_transaction(

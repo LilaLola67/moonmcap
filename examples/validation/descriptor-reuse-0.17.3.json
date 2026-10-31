@@ -1,0 +1,169 @@
+{
+  "version": "0.17.3",
+  "date": "2026-10-31",
+  "scope": "Descriptor ownership under close and fsync failures; no public API or disk format change",
+  "baseline_reproduction": {
+    "version": "0.17.2",
+    "method": "Close owned descriptor, immediately open an unrelated file on the same number, then throw EIO",
+    "atomic_and_stream_both_reproduced": true,
+    "unrelated_descriptor_intact_before_fix": false
+  },
+  "fixed_paths": [
+    "atomic file publication",
+    "stream file publication",
+    "recording segment close/unlock",
+    "artifact batch close/unlock"
+  ],
+  "regression": {
+    "result": "passed",
+    "cases": [
+      {
+        "kind": "atomic",
+        "fault": "space",
+        "result": "passed",
+        "publication": "no target",
+        "injections": 1
+      },
+      {
+        "kind": "atomic",
+        "fault": "sync",
+        "result": "passed",
+        "publication": "no target",
+        "injections": 1
+      },
+      {
+        "kind": "atomic",
+        "fault": "link",
+        "result": "passed",
+        "publication": "no target",
+        "injections": 1
+      },
+      {
+        "kind": "atomic",
+        "fault": "close",
+        "result": "passed",
+        "publication": "no target",
+        "injections": 1
+      },
+      {
+        "kind": "atomic",
+        "fault": "reuse",
+        "result": "passed",
+        "publication": "no target",
+        "injections": 1
+      },
+      {
+        "kind": "atomic",
+        "fault": "cleanup",
+        "result": "passed",
+        "publication": "complete target retained",
+        "injections": 1
+      },
+      {
+        "kind": "stream",
+        "fault": "space",
+        "result": "passed",
+        "publication": "no target",
+        "injections": 2
+      },
+      {
+        "kind": "stream",
+        "fault": "zero",
+        "result": "passed",
+        "publication": "no target",
+        "injections": 1
+      },
+      {
+        "kind": "stream",
+        "fault": "short",
+        "result": "passed",
+        "publication": "complete target",
+        "injections": 285641
+      },
+      {
+        "kind": "stream",
+        "fault": "sync",
+        "result": "passed",
+        "publication": "no target",
+        "injections": 1
+      },
+      {
+        "kind": "stream",
+        "fault": "link",
+        "result": "passed",
+        "publication": "no target",
+        "injections": 1
+      },
+      {
+        "kind": "stream",
+        "fault": "close",
+        "result": "passed",
+        "publication": "no target",
+        "injections": 1
+      },
+      {
+        "kind": "stream",
+        "fault": "reuse",
+        "result": "passed",
+        "publication": "no target",
+        "injections": 1
+      },
+      {
+        "kind": "stream",
+        "fault": "create-close",
+        "result": "passed",
+        "publication": "no target",
+        "injections": 1
+      },
+      {
+        "kind": "stream",
+        "fault": "cleanup",
+        "result": "passed",
+        "publication": "complete target retained",
+        "injections": 1
+      },
+      {
+        "kind": "recording",
+        "fault": "sync",
+        "result": "passed",
+        "injections": 1,
+        "publication": "no committed segment or artifact",
+        "owned_handles_closed": true
+      },
+      {
+        "kind": "recording",
+        "fault": "reuse",
+        "result": "passed",
+        "injections": 1,
+        "publication": "no committed segment or artifact",
+        "owned_handles_closed": true
+      },
+      {
+        "kind": "batch",
+        "fault": "sync",
+        "result": "passed",
+        "injections": 1,
+        "publication": "no committed segment or artifact",
+        "owned_handles_closed": true
+      },
+      {
+        "kind": "batch",
+        "fault": "reuse",
+        "result": "passed",
+        "injections": 1,
+        "publication": "no committed segment or artifact",
+        "owned_handles_closed": true
+      }
+    ],
+    "power_loss_tested": false,
+    "source_unchanged": true,
+    "notes": "Injected syscall failures exercise real staging writes. Post-link cleanup failure explicitly reports a complete published target; never retry blindly."
+  },
+  "regression_script": "tools/fs_fault_workflows.py",
+  "runtime": "Windows, Node 24.15.0, moonc 0.10.17+d971670cd",
+  "limits": [
+    "Injected close errors first release the descriptor; no assumption that every possible kernel close failure has identical behavior.",
+    "No power-loss safety claim.",
+    "CI executes the same regression on Linux/Windows Node minimum 22.3.0 and maintained 22."
+  ]
+}

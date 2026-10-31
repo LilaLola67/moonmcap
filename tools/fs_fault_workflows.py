@@ -7,12 +7,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 SHIM = r"""const fs=require('node:fs'),p=require('node:path');
 const original={};for(const n of ['openSync','closeSync','writeSync','writeFileSync','fsyncSync','linkSync','unlinkSync'])original[n]=fs[n];
-const handles=new Map(),synced=new Set();let injected=0;const mode=process.env.MCAP_FAULT;
-const relevant=x=>typeof x==='string'&&p.basename(x).startsWith('.out.');
+const handles=new Map(),synced=new Set();let injected=0,unrelated,reused=false;const mode=process.env.MCAP_FAULT;
+const relevant=x=>typeof x==='string'&&p.basename(x).startsWith(process.env.MCAP_FAULT_PREFIX||'.out.');
 const selected=fd=>relevant(handles.get(fd));
 const failure=code=>{injected++;const e=new Error('injected '+mode);e.code=code;return e;};
 fs.openSync=function(file,...args){const fd=original.openSync.call(this,file,...args);handles.set(fd,typeof file==='string'?file:'');return fd;};
-fs.closeSync=function(fd){const hit=selected(fd),path=handles.get(fd);const r=original.closeSync.call(this,fd);handles.delete(fd);if(hit&&!injected&&(mode==='create-close'||mode==='close'&&synced.has(path)))throw failure('EIO');return r;};
+fs.closeSync=function(fd){const hit=selected(fd),path=handles.get(fd);const r=original.closeSync.call(this,fd);handles.delete(fd);if(hit&&!injected&&(mode==='create-close'||(mode==='close'||mode==='reuse')&&synced.has(path))){if(mode==='reuse'){unrelated=original.openSync(process.env.MCAP_UNRELATED_PATH,'r');reused=unrelated===fd;}throw failure('EIO');}return r;};
 fs.writeFileSync=function(fd,data,...rest){if(selected(fd)&&mode==='space'){original.writeSync(fd,Buffer.from(data).subarray(0,3));throw failure('ENOSPC');}return original.writeFileSync.call(this,fd,data,...rest);};
 fs.writeSync=function(fd,buffer,offset,length,position){if(selected(fd)){
  if(mode==='space'){if(!injected){injected++;return original.writeSync.call(this,fd,buffer,offset,Math.min(length,3),position);}throw failure('ENOSPC');}
@@ -22,7 +22,7 @@ fs.writeSync=function(fd,buffer,offset,length,position){if(selected(fd)){
 fs.fsyncSync=function(fd){if(selected(fd)&&mode==='sync')throw failure('EIO');const r=original.fsyncSync.call(this,fd);synced.add(handles.get(fd));return r;};
 fs.linkSync=function(from,to){if(relevant(from)&&mode==='link')throw failure('EPERM');return original.linkSync.call(this,from,to);};
 fs.unlinkSync=function(file){if(relevant(file)&&mode==='cleanup')throw failure('EACCES');return original.unlinkSync.call(this,file);};
-process.on('exit',()=>original.writeFileSync(process.env.MCAP_FAULT_REPORT,JSON.stringify({injected,open_owned_handles:[...handles.values()].filter(relevant).length})));
+process.on('exit',()=>{let intact=null;if(unrelated!==undefined)try{fs.fstatSync(unrelated);intact=true;}catch{intact=false;}original.writeFileSync(process.env.MCAP_FAULT_REPORT,JSON.stringify({injected,reused_descriptor:reused,unrelated_handle_intact:intact,open_owned_handles:[...handles.values()].filter(relevant).length}));if(intact)original.closeSync(unrelated);});
 """
 
 
@@ -47,6 +47,8 @@ def main():
     source_sha = hashlib.sha256(source.read_bytes()).hexdigest()
     shim = work / "inject.cjs"
     shim.write_text(SHIM)
+    marker = work / "unrelated.txt"
+    marker.write_bytes(b"owned by another request")
     rows = []
     for kind in ("atomic", "stream"):
 
@@ -71,7 +73,7 @@ def main():
         assert p.returncode == 0, p.stderr
         expected = baseline.read_bytes()
         for mode in (
-            ["space", "sync", "link", "close", "cleanup"]
+            ["space", "sync", "link", "close", "reuse", "cleanup"]
             if kind == "atomic"
             else [
                 "space",
@@ -80,6 +82,7 @@ def main():
                 "sync",
                 "link",
                 "close",
+                "reuse",
                 "create-close",
                 "cleanup",
             ]
@@ -88,7 +91,12 @@ def main():
             directory.mkdir()
             out = directory / "out"
             report = directory / "fault.json"
-            env = {**os.environ, "MCAP_FAULT": mode, "MCAP_FAULT_REPORT": str(report)}
+            env = {
+                **os.environ,
+                "MCAP_FAULT": mode,
+                "MCAP_FAULT_REPORT": str(report),
+                "MCAP_UNRELATED_PATH": str(marker),
+            }
             p = subprocess.run(
                 ["node", "--require", str(shim), str(cli), *command(out)],
                 cwd=ROOT,
@@ -101,6 +109,11 @@ def main():
             observed = json.loads(report.read_text())
             assert observed["injected"] > 0, (kind, mode, p.stderr)
             assert observed["open_owned_handles"] == 0, (kind, mode, observed)
+            if mode == "reuse":
+                assert (
+                    observed["reused_descriptor"]
+                    and observed["unrelated_handle_intact"]
+                ), (kind, observed)
             if mode == "short":
                 assert p.returncode == 0 and out.read_bytes() == expected, (
                     kind,
@@ -140,6 +153,80 @@ def main():
                     "injections": observed["injected"],
                 }
             )
+    # Directory writers retain handles across operations: sync failure must still
+    # close once, and a later unlock must not close a reused numeric descriptor.
+    for kind, prefix, entry in (
+        ("recording", "segment-", "session"),
+        ("batch", "clip-", "incident"),
+    ):
+        for mode in ("sync", "reuse"):
+            directory = work / (kind + "-" + mode)
+            report = work / (kind + "-" + mode + ".json")
+            binary = ROOT / f"_build/js/debug/build/cmd/{entry}/{entry}.js"
+            if kind == "recording":
+                arguments = [
+                    "new",
+                    str(directory),
+                    str(source),
+                    "--segment-messages",
+                    "17",
+                ]
+            else:
+                config = work / "batch-config.json"
+                config.write_text(
+                    json.dumps(
+                        {"windows": [{"start": "0", "end": "18446744073709551615"}]}
+                    ),
+                    encoding="utf-8",
+                )
+                arguments = ["batch", str(source), str(config), str(directory)]
+            env = {
+                **os.environ,
+                "MCAP_FAULT": mode,
+                "MCAP_FAULT_PREFIX": prefix,
+                "MCAP_FAULT_REPORT": str(report),
+                "MCAP_UNRELATED_PATH": str(marker),
+            }
+            process = subprocess.run(
+                ["node", "--require", str(shim), str(binary), *arguments],
+                cwd=ROOT,
+                env=env,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=90,
+            )
+            observed = json.loads(report.read_text())
+            assert process.returncode == 2 and "injected" in process.stderr, (
+                kind,
+                mode,
+                process.stderr,
+            )
+            assert observed["injected"] > 0 and observed["open_owned_handles"] == 0, (
+                kind,
+                mode,
+                observed,
+            )
+            if mode == "reuse":
+                assert (
+                    observed["reused_descriptor"]
+                    and observed["unrelated_handle_intact"]
+                ), (kind, observed)
+            assert not list(directory.glob("*.mcap")), (
+                "failed first seal must not commit a segment/artifact"
+            )
+            assert hashlib.sha256(source.read_bytes()).hexdigest() == source_sha
+            rows.append(
+                {
+                    "kind": kind,
+                    "fault": mode,
+                    "result": "passed",
+                    "injections": observed["injected"],
+                    "publication": "no committed segment or artifact",
+                    "owned_handles_closed": True,
+                }
+            )
+    assert marker.read_bytes() == b"owned by another request"
     result = {
         "result": "passed",
         "cases": rows,

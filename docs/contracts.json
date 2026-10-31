@@ -80,7 +80,7 @@
       "id": "C08",
       "promise": "Failing writes do not falsely advance committed output",
       "conditions": "Write callback accepts all bytes or raises; host loops over short writes",
-      "failure": "ENOSPC, zero progress, sync/close/link failures return errors; accepted is not committed",
+      "failure": "ENOSPC, zero progress, sync/close/link failures return errors; accepted is not committed; consumed close descriptors are not retried, including recording/artifact unlock",
       "source": "nodeio/files.mbt",
       "tests": [
         "tools/fs_fault_workflows.py",

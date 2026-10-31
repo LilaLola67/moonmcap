@@ -134,7 +134,8 @@ extern "js" fn atomic_bytes(path : String, data : Bytes) -> String =
   #|   let fd,created=false,published=false,error='';
   #|   try {
   #|     fd=fs.openSync(temp,'wx'); created=true;
-  #|     fs.writeFileSync(fd,data); fs.fsyncSync(fd); fs.closeSync(fd); fd=undefined;
+  #|     fs.writeFileSync(fd,data); fs.fsyncSync(fd);
+  #|     const closing=fd; fd=undefined; fs.closeSync(closing);
   #|     fs.linkSync(temp,destination); published=true;
   #|   } catch(e) { error=e.message; }
   #|   finally {

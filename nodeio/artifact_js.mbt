@@ -21,7 +21,7 @@ extern "js" fn artifact_host(
   #| const file=(id,suffix)=>p.join(path,`clip-${id}.${suffix}`);
   #| const inventory=()=>{const names=fs.readdirSync(path);for(const name of names){if(name==='recovery'){const s=fs.lstatSync(guard);if(!s.isDirectory()||s.isSymbolicLink())throw new Error('invalid artifact recovery guard');continue;}if(!['owner','lock','manifest.bin','manifest.tmp'].includes(name)&&!/^clip-(0|[1-9][0-9]{0,3})\.(part|mcap)$/.test(name))throw new Error('unrecognized artifact entry');regular(p.join(path,name));}return names;};
   #| const selected=id=>{const part=file(id,'part'),final=file(id,'mcap');if(fs.existsSync(part)&&fs.existsSync(final)){const a=regular(part),b=regular(final);if(a.ino!==b.ino||a.dev!==b.dev)throw new Error('conflicting artifact files');}const value=fs.existsSync(final)?final:part;regular(value);return value;};
-  #| const closefd=id=>{if(handles.has(id)){const fd=handles.get(id);fs.fsyncSync(fd);fs.closeSync(fd);handles.delete(id);}};
+  #| const closefd=id=>{if(handles.has(id)){const fd=handles.get(id);handles.delete(id);let error;try{fs.fsyncSync(fd);}catch(e){error=e;}try{fs.closeSync(fd);}catch(e){error=error?new Error(error.message+'; close cleanup: '+e.message):e;}if(error)throw error;}};
   #| const replace=(from,to)=>{for(let attempt=0;;attempt++){try{fs.renameSync(from,to);return;}catch(e){if(process.platform!=='win32'||!['EPERM','EACCES','EBUSY'].includes(e.code)||attempt>=7)throw e;Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,5*(attempt+1));}}};
   #| return (op,id,bytes)=>{try{
   #|   if(closed)throw new Error('artifact directory closed');owned();regular(lock);if(JSON.parse(fs.readFileSync(lock,'utf8')).key!==key)throw new Error('artifact lock ownership changed');
