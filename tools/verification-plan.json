@@ -429,8 +429,7 @@
     ],
     [
       "python",
-      "tools/ros1_workflows.py",
-      "--public"
+      "tools/driving_workflow.py"
     ],
     [
       "python",
