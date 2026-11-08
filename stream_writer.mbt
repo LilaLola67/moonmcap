@@ -29,6 +29,7 @@ pub fn WriteSink::write(
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) enum WriterState {
   WriterOpen
   WriterFinished
@@ -37,6 +38,7 @@ pub(all) enum WriterState {
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct StreamOptions {
   compression : Compression
   chunk_bytes : Int32
@@ -57,6 +59,7 @@ pub fn stream_options() -> StreamOptions {
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct WriteProgress {
   state : WriterState
   bytes_written : UInt64

@@ -1,4 +1,5 @@
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct ReadSpan {
   offset : UInt64
   length : Int32
@@ -12,6 +13,7 @@ pub(all) enum FilePoll {
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) enum FileCursorState {
   FileActive
   FileExhausted
@@ -20,6 +22,7 @@ pub(all) enum FileCursorState {
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct FileProgress {
   state : FileCursorState
   candidate_chunks : Int32

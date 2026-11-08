@@ -1,4 +1,5 @@
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct FieldPageLayout {
   header_bytes : Int32
   page_bytes : Int32

@@ -1,10 +1,12 @@
 ///|
+#warnings("-deprecated_syntax")
 pub(all) enum SequencePolicy {
   PreserveSequence
   ContinueSequence
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct RecordingOptions {
   stream : StreamOptions
   segment_messages : Int32

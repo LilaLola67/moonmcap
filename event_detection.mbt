@@ -25,6 +25,7 @@ pub fn event_rule(topic : String, enter : String) -> EventRule {
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct EventSpan {
   start : UInt64
   confirmed : UInt64

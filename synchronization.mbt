@@ -40,6 +40,7 @@ pub fn message_timestamp(
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) enum SyncMode {
   SyncNearest
   SyncPrevious
@@ -48,6 +49,7 @@ pub(all) enum SyncMode {
 } derive(Eq)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) enum SyncReuse {
   SyncAllowReuse
   SyncConsume

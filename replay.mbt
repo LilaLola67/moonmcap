@@ -1,4 +1,5 @@
 ///|
+#warnings("-deprecated_syntax")
 pub(all) enum ReplayState {
   ReplayReady
   ReplayRunning

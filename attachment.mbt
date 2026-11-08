@@ -1,4 +1,5 @@
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct Attachment {
   log_time : UInt64
   create_time : UInt64

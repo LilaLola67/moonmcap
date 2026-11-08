@@ -197,12 +197,14 @@ pub fn Dataset::schemas(self : Dataset) -> Array[Schema] {
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct DatasetMessage {
   source_index : Int32
   message : Message
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct DatasetProgress {
   state : FileCursorState
   sources : Int32

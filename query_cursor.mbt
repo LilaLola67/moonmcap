@@ -1,4 +1,5 @@
 ///|
+#warnings("-deprecated_syntax")
 pub(all) enum QueryCursorState {
   Active
   Exhausted
@@ -7,6 +8,7 @@ pub(all) enum QueryCursorState {
 
 ///|
 /// Counts refer to the current traversal, reset by seek. Remaining respects limit.
+#warnings("-deprecated_syntax")
 pub(all) struct QueryProgress {
   state : QueryCursorState
   matching_messages : Int32

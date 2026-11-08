@@ -86,11 +86,39 @@
       "scope_sha256": "8bc9bb0e8e6594b4c946ca43025326f945d5071678753922515bbd733baf3b7f"
     },
     {
+      "file": "asyncio/writer.mbt",
+      "declaration": "AsyncWriterState",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "d064762035f660426a3efd2cc6533044fe2f7c8cf6cac0184887d884cffb2f59",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "attachment.mbt",
+      "declaration": "Attachment",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "7a223e08ed041708607eb97e81f4cbc604a5969e52937167aa516e77fed045d0",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
       "file": "binary.mbt",
       "declaration": "Cursor",
       "warning": "missing_priv",
       "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
       "scope_sha256": "3cf438ebe0942066e362f0f4fcec9330389e5e961a1a3bfda511a5fcf27b8540"
+    },
+    {
+      "file": "block_recovery.mbt",
+      "declaration": "RecoveredBlock",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "6104e72cacacdcee52053fc7323846b11bd90b0497e040500b83074fc0bacb06",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "block_recovery.mbt",
+      "declaration": "SkippedBlock",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "a8d51af9e5c4e0c38fe248ff12ff8ed16ff57f1b0a05543438b06bcc7ea39aff",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
     },
     {
       "file": "cdr_decode.mbt",
@@ -121,11 +149,60 @@
       "scope_sha256": "5212be9af8972cdbb4d39f7cbf1e48ef8fdeccddab0fdfca9547c4046dfdaefa"
     },
     {
+      "file": "compression.mbt",
+      "declaration": "Compression",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "bcf00bd5e91425ca2e88d25d326e3bd11689b544a017de223c87b8e0191ec67b",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "dataset.mbt",
+      "declaration": "DatasetMessage",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "0bda55aa4ad9287d14ad207561ef39ec5bf393e3738696a540d49f53c93b8fea",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "dataset.mbt",
+      "declaration": "DatasetProgress",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "37e216e25bcbcb1a8973b4fa0dd7d77eac27e9277ba3bf6e1b8544fd1de6ed9b",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
       "file": "diagnostics.mbt",
       "declaration": "DataInspection",
       "warning": "missing_priv",
       "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
       "scope_sha256": "0e437453bcbeefd1880b33e0f3ef159ed2a84d884bef7fb9d8039ceb6ef0a363"
+    },
+    {
+      "file": "diagnostics.mbt",
+      "declaration": "Diagnostic",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "9a3524c77d68d5e1591fcf87cac9555042b65a87a35f014643ff3220060c6ed5",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "diagnostics.mbt",
+      "declaration": "DiagnosticCode",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "1d2f7a13ad2f8b2dfa874ada09fc4d5ca3c41a9b789eaa3d6712c45fd085eb53",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "diagnostics.mbt",
+      "declaration": "FileDiagnosis",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "206c1e348f6434bea34bf7381b85801690155efc923f50955eb895399b31a882",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "event_detection.mbt",
+      "declaration": "EventSpan",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "014c434167280962429ae2d114af165ccdac3ed332a278dead674e7e4af20543",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
     },
     {
       "file": "external_ingest.mbt",
@@ -168,6 +245,34 @@
       "warning": "missing_priv",
       "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
       "scope_sha256": "3fc99861fa5a3e4571ce0a2d9bc8af74a3b6963dd0caafed20d7e15a952c86f6"
+    },
+    {
+      "file": "file_cursor.mbt",
+      "declaration": "FileCursorState",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "2e3dd29d917af087d193eb0acd7fd0a4b85e764270c3686980760a1f70e9f1aa",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "file_cursor.mbt",
+      "declaration": "FileProgress",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "1b9fd81c572071042f92883aa8c67fb12feb275d01de17a907c3c946e97b23d4",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "file_cursor.mbt",
+      "declaration": "ReadSpan",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "9d580b8dae36e77f617c0e29669bc67b6cdaf9f80afcaa00942d5b8bff1b213e",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "file_statistics.mbt",
+      "declaration": "FileStatistics",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "be386353e65bf3825831a47556ae0090602b87e2788c9324a4d72641ff03dc18",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
     },
     {
       "file": "internal/lz4/types.mbt",
@@ -254,11 +359,88 @@
       "scope_sha256": "ec9a681b0be3cbfebfc26b88ecb4d1d8862d04ada027f1ede0c47a0df6917262"
     },
     {
+      "file": "json_filter.mbt",
+      "declaration": "JsonInvalidPolicy",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "1d786e762978d4456411fc686a89851d261cb70733e2eeeaf2fa931937e96c5f",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
       "file": "merge_checkpoint.mbt",
       "declaration": "MergeState",
       "warning": "missing_priv",
       "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
       "scope_sha256": "2dba1947005281106d4a76fb3fdef736dd568d8b7f84a8483532d9aa3d613713"
+    },
+    {
+      "file": "model.mbt",
+      "declaration": "Channel",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "618dbf667f3605a59f8cb673da355b85198769372f1d3c6691466fa16aadc605",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "model.mbt",
+      "declaration": "Footer",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "7a6ce0b200ea0674f57432fdabfc26d1a3a5f14c1e9320f9b2d4f51fc4991098",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "model.mbt",
+      "declaration": "Header",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "b1657e02091a4980cd6c48dfe639f1674f17874673e2ce0786d4bb3b94ef65f3",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "model.mbt",
+      "declaration": "Limits",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "458b8420d88348c0589152b3a3ab7c68d69433ae5c1bdd5a40d8faa33f30c0ee",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "model.mbt",
+      "declaration": "Log",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "1b36f0d1ec0ad897d5615183a45f396da016169c719031e4b7760127360fdf88",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "model.mbt",
+      "declaration": "McapError",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "516e719fbf792d1dad6c4a5fd97b1e383b34118173ecd1bfb4e0df6b51a3bfef",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "model.mbt",
+      "declaration": "Message",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "e11dd74bf8d7b91d7c2669836bfe7b0dee7e961974077a3095ffc5eb1c52a22a",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "model.mbt",
+      "declaration": "Metadata",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "437eeb722cbb14df89571ed5d82880e6a37cf4bc6ee4acc9ba90da09bb2fae8b",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "model.mbt",
+      "declaration": "Record",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "5c7f05cd207a615bfa72578f610f441c2f1ede56d938946fc6b1a348f9281d49",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "model.mbt",
+      "declaration": "Schema",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "bb0d51f8b091573345083bd241edf6be5d7462205797fbf3f261a68d4f5be9bc",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
     },
     {
       "file": "nodeio/files.mbt",
@@ -280,6 +462,13 @@
       "warning": "missing_priv",
       "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
       "scope_sha256": "dc96df63290ef28b2852c44858eeae90bfc8a2cf17148df6eb3cdbbc69839ccb"
+    },
+    {
+      "file": "paged_field.mbt",
+      "declaration": "FieldPageLayout",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "5914331d0bf56f0af7bbf256824779968f86774507c48b687349b0662fe856d6",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
     },
     {
       "file": "payload_decoder.mbt",
@@ -304,10 +493,24 @@
     },
     {
       "file": "payload_view.mbt",
+      "declaration": "BinaryField",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "7dffd2d690bcd7397f5098dbc56fc1e2d6db4fb179c5934dcd139ab0e7e569cd",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "payload_view.mbt",
       "declaration": "CdrProjection",
       "warning": "missing_priv",
       "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
       "scope_sha256": "0611b078e0e02def50838d25f49fdf52f13a3caea7d0e906e599b53c4134b82c"
+    },
+    {
+      "file": "payload_view.mbt",
+      "declaration": "DecodeSelection",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "820cd58fc4a90dfc0943e3abda60c248b8e4d0038b72faf3139cb7c8caf33a94",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
     },
     {
       "file": "protobuf_encode.mbt",
@@ -345,11 +548,53 @@
       "scope_sha256": "a7a50f24471f9cf230c68589918ba3098bfd89e243824ddb0317e2cd24afe60c"
     },
     {
+      "file": "query_cursor.mbt",
+      "declaration": "QueryCursorState",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "3d1d03498088de473e6dc75a6fc65c749aa86fbb6f66fea5a948b91b222a0695",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "query_cursor.mbt",
+      "declaration": "QueryProgress",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "1f0f94e50bfc920a8df15258e08e18cdab41f6d34a5b1c3b2ab3712f7391822a",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "range_reader.mbt",
+      "declaration": "ReadDiagnostics",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "789df78852bdae8340f37a7a950f4f7768eaebab1e0a7872849bd27a15074e39",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
       "file": "range_source.mbt",
       "declaration": "RangeRecord",
       "warning": "missing_priv",
       "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
       "scope_sha256": "1ff502609cfa428e3a82c7190dac5a6d2680647ecd1803e07cc0688b003ff410"
+    },
+    {
+      "file": "recording_session.mbt",
+      "declaration": "RecordingOptions",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "a1149f197890ab9e3e9a10e44a33c657cf5d2781f79035341677aead362be5ce",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "recording_session.mbt",
+      "declaration": "SequencePolicy",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "d6d87be4c85237803969b9388af67061ad30031876302e79237dc63e343c298e",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "replay.mbt",
+      "declaration": "ReplayState",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "202442e11b14bf1916eacff96f76768ea3548065810d94e25375be9fe2c430c7",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
     },
     {
       "file": "schema_compare.mbt",
@@ -373,11 +618,102 @@
       "scope_sha256": "4482d32aa5cb6de23ffd4b557e70625943648f66bbb8905161310b0d5ae4498a"
     },
     {
+      "file": "source_scan.mbt",
+      "declaration": "MessageLocation",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "263796089100270f7ed8a2ca3f621931214d95f5a0ea99f869478b62fa16f248",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "stream_writer.mbt",
+      "declaration": "StreamOptions",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "9d70b93ce0aeddea85bf65ef3f00d21345bc5ba62b384f7d5175e0f0274090e0",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "stream_writer.mbt",
+      "declaration": "WriteProgress",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "1adcecdacdff3ec8b85223aa1aed210eab75574cff2532a5b3cdccbe75450812",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "stream_writer.mbt",
+      "declaration": "WriterState",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "ec7c3af83ef1e4f955d5db3c7bae84f18bdcf29f69f8269b967ef800b54d2c64",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "synchronization.mbt",
+      "declaration": "SyncMode",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "35ab16c3e142a7d600dd72f1a0c18711520c5a6c29e63a98e8070e5f7f5d8b8f",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "synchronization.mbt",
+      "declaration": "SyncReuse",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "7758855047ac507c1987b2a4f67fac72f7d0fee828dacdc6b82423f1a6573428",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "temporal_join.mbt",
+      "declaration": "JoinMode",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "672ae523f7e0c2669c44439994486af930fe95eb9eabc79a2d2a539b6be7e338",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "temporal_join.mbt",
+      "declaration": "JoinOptions",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "22c8fb2d2e87153123602c729d42cd7be4f0169ee8c7d4b3e9f26049b9aa964b",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "temporal_join.mbt",
+      "declaration": "MissingMatch",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "0554abefd66ac421cce91af4a7b680593047f06fac6c50c21bb56805adf0c6e8",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "temporal_join.mbt",
+      "declaration": "TemporalMatch",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "f431dc4c4361631ec77b8fd356bc139ba50be38299524aac257e574a1303bf39",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
       "file": "temporary_workspace.mbt",
       "declaration": "TemporaryWorkspace",
       "warning": "missing_priv",
       "reason": "Preserve the opaque type name already present in the published interface; no public constructor or representation is introduced.",
       "scope_sha256": "4524217dc96e01dc070e8541518af26c0ef9425afcb1da53cb043031b3152487"
+    },
+    {
+      "file": "tf_tree.mbt",
+      "declaration": "TfQuaternion",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "a0ac1e7a6ebbde9e05cd57c808b1e5977fdc9f4d93c98c425c009e140b8269c0",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "tf_tree.mbt",
+      "declaration": "TfTransform",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "fd8cebda5b868d0a9ff84a82aa25ec629e3fea79f580e00f8e634dead7a88b5f",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
+    },
+    {
+      "file": "tf_tree.mbt",
+      "declaration": "TfVector",
+      "warning": "deprecated_syntax",
+      "scope_sha256": "51dca31f8092097f186e2b41a9a444b7a9fd57a71700435dbdd8cc80fa74b91b",
+      "reason": "Keep suffix trait derivation for moonc 0.10.17, which cannot derive traits with #derive. Newer compilers deprecate this syntax on this declaration."
     }
   ]
 }

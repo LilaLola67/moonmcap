@@ -1,4 +1,5 @@
 ///|
+#warnings("-deprecated_syntax")
 pub(all) enum DiagnosticCode {
   BadEnvelope
   BadRecord
@@ -12,6 +13,7 @@ pub(all) enum DiagnosticCode {
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct Diagnostic {
   code : DiagnosticCode
   offset : UInt64?
@@ -22,6 +24,7 @@ pub(all) struct Diagnostic {
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct FileDiagnosis {
   valid : Bool
   data_valid : Bool

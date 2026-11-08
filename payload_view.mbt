@@ -1,4 +1,5 @@
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct DecodeSelection {
   paths : Array[String]
   inline_array_items : Int32
@@ -11,6 +12,7 @@ pub fn decode_selection() -> DecodeSelection {
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct BinaryField {
   path : String
   offset : Int32

@@ -1,4 +1,5 @@
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct Limits {
   max_record_bytes : Int32
   max_string_bytes : Int32
@@ -17,17 +18,20 @@ pub fn default_limits() -> Limits {
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub suberror McapError {
   Invalid(String)
 } derive(@debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct Header {
   profile : String
   library : String
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct Schema {
   id : Int32
   name : String
@@ -36,6 +40,7 @@ pub(all) struct Schema {
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct Channel {
   id : Int32
   schema_id : Int32
@@ -45,6 +50,7 @@ pub(all) struct Channel {
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct Message {
   channel_id : Int32
   sequence : UInt32
@@ -54,6 +60,7 @@ pub(all) struct Message {
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct Footer {
   summary_start : UInt64
   summary_offset_start : UInt64
@@ -61,12 +68,14 @@ pub(all) struct Footer {
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct Metadata {
   name : String
   entries : Array[(String, String)]
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct Record {
   opcode : Byte
   offset : Int32
@@ -74,6 +83,7 @@ pub(all) struct Record {
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct Log {
   header : Header
   schemas : Array[Schema]

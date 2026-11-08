@@ -4,6 +4,7 @@ fn tf_finite(value : Double) -> Bool {
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct TfVector {
   x : Double
   y : Double
@@ -11,6 +12,7 @@ pub(all) struct TfVector {
 } derive(Eq, Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct TfQuaternion {
   x : Double
   y : Double
@@ -19,6 +21,7 @@ pub(all) struct TfQuaternion {
 } derive(Eq, Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct TfTransform {
   translation : TfVector
   rotation : TfQuaternion

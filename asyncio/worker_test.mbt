@@ -30,11 +30,11 @@ async test "worker host retains running cancellation reservations and closes all
   let log = builder.snapshot()
   let declarations = { ..log, messages: [], }
   let message = log.messages[0]
-  {
-    errdefer {
+  @async.with_task_group(async fn(cleanup) {
+    cleanup.add_defer(async fn() {
       pool.close()
-      close_worker_fixture(fixture).wait()
-    }
+      @async.protect_from_cancel(() => close_worker_fixture(fixture).wait())
+    })
 
     @async.with_task_group(async fn(group) {
       let task = group.spawn(
@@ -70,7 +70,5 @@ async test "worker host retains running cancellation reservations and closes all
         ..
       },
     )
-    pool.close()
-  }
-  close_worker_fixture(fixture).wait()
+  })
 }

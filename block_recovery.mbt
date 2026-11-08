@@ -12,6 +12,7 @@ pub(all) struct BlockRecoveryEvidence {
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct RecoveredBlock {
   start : UInt64
   end : UInt64
@@ -19,6 +20,7 @@ pub(all) struct RecoveredBlock {
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct SkippedBlock {
   start : UInt64
   end : UInt64

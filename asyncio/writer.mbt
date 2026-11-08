@@ -36,6 +36,7 @@ pub async fn AsyncSink::write(self : AsyncSink, bytes : Bytes) -> Unit {
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) enum AsyncWriterState {
   AsyncOpen
   AsyncFinished

@@ -1,16 +1,19 @@
 ///|
+#warnings("-deprecated_syntax")
 pub(all) enum JoinMode {
   JoinAsOf
   JoinNearest
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) enum MissingMatch {
   JoinKeep
   JoinDrop
 } derive(Eq, @debug.Debug)
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct JoinOptions {
   mode : JoinMode
   tolerance : UInt64
@@ -31,6 +34,7 @@ pub fn join_options() -> JoinOptions {
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct TemporalMatch {
   left : Message
   right : Message?

@@ -1,4 +1,5 @@
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct ReadDiagnostics {
   read_calls : Int32
   bytes_read : UInt64

@@ -1,5 +1,6 @@
 ///|
 /// MCAP Statistics record (opcode 0x0b), distinct from timing diagnostics.
+#warnings("-deprecated_syntax")
 pub(all) struct FileStatistics {
   message_count : UInt64
   schema_count : Int32

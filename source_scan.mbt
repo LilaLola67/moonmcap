@@ -10,6 +10,7 @@ pub(all) enum SourceScanEvent {
 }
 
 ///|
+#warnings("-deprecated_syntax")
 pub(all) struct MessageLocation {
   offset : UInt64
   span : Int32
