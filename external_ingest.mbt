@@ -462,7 +462,10 @@ fn SortSession::ingest(
     self.trace_event(
       RecordAccepted(position, record.opcode, record.body.length() + 9),
     )
-    crc = crc32_extend(crc, frame(record.opcode, record.body))
+    // The CRC covers the same on-disk header and body without joining them.
+    let header = @buffer.Buffer::Buffer()
+    put_record_header(header, record.opcode, record.body.length())
+    crc = crc32_extend(crc32_extend(crc, header.to_bytes()), record.body)
     position += (record.body.length() + 9).to_uint64()
     count += 1
   }

@@ -5,18 +5,25 @@ pub fn crc32(bytes : Bytes) -> UInt32 {
 }
 
 ///|
+let crc32_table : FixedArray[UInt32] = FixedArray::makei(256, index => {
+  let mut value = index.reinterpret_as_uint()
+  for _ in 0..<8 {
+    value = if (value & 1U) != 0U {
+      (value >> 1) ^ 0xedb88320U
+    } else {
+      value >> 1
+    }
+  }
+  value
+})
+
+///|
 /// Accepts a previously finalized CRC, allowing independent streaming blocks.
 pub fn crc32_extend(previous : UInt32, bytes : Bytes) -> UInt32 {
   let mut value = previous ^ 0xffffffffU
   for byte in bytes {
-    value = value ^ byte.to_uint()
-    for i = 0; i < 8; i = i + 1 {
-      value = if (value & 1U) != 0U {
-        (value >> 1) ^ 0xedb88320U
-      } else {
-        value >> 1
-      }
-    }
+    let index = ((value ^ byte.to_uint()) & 0xffU).reinterpret_as_int()
+    value = (value >> 8) ^ crc32_table[index]
   }
   value ^ 0xffffffffU
 }

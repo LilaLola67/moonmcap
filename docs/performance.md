@@ -31,6 +31,27 @@ python tools/large_source_workflows.py --large --compare
 
 两份输入的完整扫描均由 Python 更快完成，且峰值 RSS 更低。约 54 倍的耗时差出现在超过 2 GiB 的完整扫描用例。下面的范围读取试验记录选择性查询的读取量，使用独立的输入和验证方法。
 
+## CRC 与记录复制优化的同机复测
+
+优化前的 2 GiB CPU 采样将热点定位在 CRC 更新和字节复制。扫描路径用 256 项查表推进 IEEE CRC32，记录头和负载分别更新同一个校验值。输入的读取、结构诊断和 CRC 范围维持原有语义。
+
+2026 年 11 月 8 日用同一台 Windows x64 主机、Node v24.15.0 和 moonc 0.10.17，对同一份 2,148,621,208 字节文件交替运行。两次中位耗时从 **140.11 秒** 降至 **53.42 秒**，缩短 **61.9%**。两组的最大峰值 RSS 分别为 135,728 KiB 和 137,652 KiB。诊断报告逐字段一致，均确认 2,049 条消息、513 个 Chunk、原始时间范围及有效的数据区 CRC。 [原始样本、诊断和指纹](../examples/validation/scan-crc-comparison.json)
+
+独立插桩的叶节点样本中，CRC 更新的占比从约 60.5% 降至 21.7%。优化后剩余样本主要落在字节复制。前文的 Python MCAP 流式扫描是独立测量，执行的诊断范围与 MoonMCAP 完整诊断有差别。
+
+以 `de7be29` 为基线，分别编译基线与候选源码，然后将两份 `diagnose.js` 传给比较脚本。以下命令从候选源码目录执行，使用同一套 MoonBit 工具链和 Node。
+
+```sh
+python -m pip install mcap==1.3.0
+git worktree add --detach ../moonmcap-before de7be29
+(cd ../moonmcap-before && moon update && moon build --target js --deny-warn)
+moon update
+moon build --target js --deny-warn
+python tools/scan_comparison.py ../moonmcap-before/_build/js/debug/build/cmd/diagnose/diagnose.js _build/js/debug/build/cmd/diagnose/diagnose.js --large
+```
+
+默认小规模用例适合快速复测。`--large` 生成超过 2 GiB 的固定指纹输入，也可用 `--fixture` 复用同指纹文件。两组测量交换顺序，逐项比较完整诊断 JSON，并核对源文件 SHA-256。加 `--profile` 可另行记录 CPU 样本，插桩运行独立于计时。耗时和峰值 RSS 用于记录机器上的观测结果，正确性通过独立 CRC 向量、损坏文件诊断和报告一致性检查约束。 [Node CPU profiler](https://nodejs.org/docs/latest-v24.x/api/cli.html#--cpu-prof)
+
 ## 查询与外部合并
 
 ```sh

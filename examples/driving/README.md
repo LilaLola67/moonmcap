@@ -21,3 +21,5 @@ python tools/driving_workflow.py
 固定指纹输入的实测结果为 1,606 条 ROS 1 消息通过独立解码对照，裁剪得到 5 条雷达轨迹消息，从截断副本恢复 788 条消息。两个输出文件均通过结构校验与独立读回对照，源文件通过操作后的 SHA-256 核对。
 
 GitHub Actions 的 `check-build-test` 可手动勾选 `public_corpus` 复跑这个案例。下载与转换指纹、裁剪和恢复结果收录在 `public-corpus-report` 构件中的驾驶案例 `summary.json`。 [工作流](../../.github/workflows/ci.yml)
+
+首次公开运行已通过，云端报告同样记录 1,606 条解码对照、5 条裁剪消息和 788 条恢复消息。 [CI 运行](https://github.com/LilaLola67/moonmcap/actions/runs/42464383345) · [报告构件](https://github.com/LilaLola67/moonmcap/actions/runs/42464383345/artifacts/13610834036)

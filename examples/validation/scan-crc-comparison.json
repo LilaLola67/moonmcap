@@ -1,0 +1,151 @@
+{
+  "date": "2026-11-08",
+  "baseline_commit": "de7be29282eb5bda844a8ecb3fa60529014e94d3",
+  "compiler": "moonc 0.10.17+d971670cd",
+  "cpu": "AMD Ryzen 9 7845HX",
+  "timed_with_profiler": false,
+  "profile_note": "Separate V8 leaf samples. Both profiled runs returned the same diagnosis as the timed runs.",
+  "result": "passed",
+  "source_sha256": "ccf2c2c4b8b7c695fd896d9a3ca33bf84132dbbfc88e91a68582f0379170ae39",
+  "source_bytes": 2148621208,
+  "build_sha256": {
+    "baseline": "6547f7cddf1766ead89d26c6844ea639f6db0d2e0ee7a0dc6ec6b98a7eec384c",
+    "candidate": "3ac66521b77cb24f6bf8ca270be19e03f55d341532eb388a04f223dfdcd7662c"
+  },
+  "samples": [
+    {
+      "baseline": {
+        "seconds": 141.1005,
+        "max_rss_kib": 135728,
+        "final_rss_bytes": 59146240,
+        "node": "v24.15.0",
+        "platform": "win32",
+        "arch": "x64"
+      },
+      "candidate": {
+        "seconds": 54.1015,
+        "max_rss_kib": 137652,
+        "final_rss_bytes": 70483968,
+        "node": "v24.15.0",
+        "platform": "win32",
+        "arch": "x64"
+      }
+    },
+    {
+      "candidate": {
+        "seconds": 52.7431,
+        "max_rss_kib": 134888,
+        "final_rss_bytes": 58806272,
+        "node": "v24.15.0",
+        "platform": "win32",
+        "arch": "x64"
+      },
+      "baseline": {
+        "seconds": 139.1142,
+        "max_rss_kib": 132860,
+        "final_rss_bytes": 118534144,
+        "node": "v24.15.0",
+        "platform": "win32",
+        "arch": "x64"
+      }
+    }
+  ],
+  "order": [
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ]
+  ],
+  "diagnosis": {
+    "valid": true,
+    "source_complete": true,
+    "source_bytes": "2148621208",
+    "data_valid": true,
+    "data_crc_verified": true,
+    "observed_messages": "2049",
+    "accepted_chunks": "513",
+    "observed_time_start": "0",
+    "observed_time_end": "20480",
+    "parsed_data_prefix_end": "2148620994",
+    "prefix_is_integrity_proof": false,
+    "failed_record_range": null,
+    "unchecked_range": null,
+    "unknown_lost_messages": null,
+    "issues": [],
+    "io": {
+      "bytes_read": "2148621759",
+      "read_calls": "3095",
+      "peak_read_bytes": 1048576,
+      "peak_record_span": 4194511
+    },
+    "budgets": {
+      "read_bytes": 1048576,
+      "record_bytes": 16777216,
+      "decoded_chunk_bytes": 67108864,
+      "summary_bytes": 8388608,
+      "total_records": 3000000
+    },
+    "memory_mode": "bounded records, decoded chunks and declaration tables; not an RSS cap"
+  },
+  "os_cache_state_controlled": false,
+  "profile_samples": {
+    "baseline": {
+      "total": 114968,
+      "crc_update": 69548,
+      "blit": 35644,
+      "top_leaf_functions": [
+        [
+          "_M0FP210LilaLola678moonmcap13crc32__extend",
+          69548
+        ],
+        [
+          "_M0MPC15array10FixedArray12unsafe__blitGyE",
+          16127
+        ],
+        [
+          "_M0MPC15array10FixedArray12unsafe__blitGRPB17UnsafeMaybeUninitGyEE",
+          11055
+        ],
+        [
+          "_M0MPC15array10FixedArray17blit__from__bytes",
+          8371
+        ],
+        [
+          "_M0MPC15bytes5Bytes5makei",
+          5014
+        ]
+      ]
+    },
+    "candidate": {
+      "total": 34210,
+      "crc_update": 7416,
+      "blit": 20887,
+      "top_leaf_functions": [
+        [
+          "_M0MPC15array10FixedArray12unsafe__blitGyE",
+          10874
+        ],
+        [
+          "_M0FP210LilaLola678moonmcap13crc32__extend",
+          7416
+        ],
+        [
+          "_M0MPC15array10FixedArray17blit__from__bytes",
+          5728
+        ],
+        [
+          "_M0MPC15array10FixedArray12unsafe__blitGRPB17UnsafeMaybeUninitGyEE",
+          4221
+        ],
+        [
+          "_M0MPC15bytes5Bytes5makei",
+          3595
+        ]
+      ]
+    }
+  }
+}

@@ -167,10 +167,19 @@ pub fn frame(opcode : Byte, body : Bytes) -> Bytes raise McapError {
     raise Invalid("opcode zero is reserved")
   }
   let out = @buffer.Buffer::Buffer()
-  out.write_byte(opcode)
-  out.write_uint64_le(body.length().to_uint64())
+  put_record_header(out, opcode, body.length())
   out.write_bytes(body[:])
   out.to_bytes()
+}
+
+///|
+fn put_record_header(
+  out : @buffer.Buffer,
+  opcode : Byte,
+  length : Int32,
+) -> Unit {
+  out.write_byte(opcode)
+  out.write_uint64_le(length.to_uint64())
 }
 
 ///|

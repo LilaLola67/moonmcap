@@ -27,6 +27,19 @@ def sha256(path):
     return digest.hexdigest()
 
 
+def write_scale_fixture(stream, count, payload_size, chunk_size):
+    writer = Writer(stream, compression=CompressionType.NONE, chunk_size=chunk_size,
+                    index_types=IndexType.NONE, enable_crcs=True, enable_data_crcs=True)
+    writer.start(library="official-python-mcap/1.3.0-scale-reference")
+    channel = writer.register_channel("/scale", "raw", 0)
+    payload = (bytes(range(256)) * (payload_size // 256)
+               if payload_size >= 256 else bytes(range(payload_size)))
+    for index in range(count):
+        writer.add_message(channel, index * 10, payload, index * 10, index)
+    writer.finish()
+    return payload
+
+
 def compare(source, moon_command, expected):
     """Alternate process order and retain the raw samples, including startup."""
     commands = {
@@ -79,14 +92,7 @@ def main():
         # Each path is fixed, owned by this script, and removed individually.
         try:
             with source.open("wb") as stream:
-                writer = Writer(stream, compression=CompressionType.NONE, chunk_size=chunk_size,
-                                index_types=IndexType.NONE, enable_crcs=True, enable_data_crcs=True)
-                writer.start(library="official-python-mcap/1.3.0-scale-reference")
-                channel = writer.register_channel("/scale", "raw", 0)
-                payload = bytes(range(256)) * (payload_size // 256) if payload_size >= 256 else bytes(range(payload_size))
-                for i in range(count):
-                    writer.add_message(channel, i * 10, payload, i * 10, i)
-                writer.finish()
+                payload = write_scale_fixture(stream, count, payload_size, chunk_size)
             size = source.stat().st_size
             if args.large and name == "over-2gib":
                 assert size > 2**31
