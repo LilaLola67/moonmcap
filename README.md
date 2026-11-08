@@ -2,7 +2,7 @@
 
 质量与使用入口：[入口选择](docs/entry-points.md)、[静态检查](docs/static-checks.md)、[风险覆盖](docs/risk-coverage.md)、[SO-101 完整示例](examples/so101/README.md)。
 
-MoonBit 的 **MCAP 0 消息日志库**，用于读取和校验机器人、传感器与仿真日志，按主题和时间查询，并裁剪、合并或恢复可读数据。当前版本 **0.17.4**。
+MoonBit 的 **MCAP 0 消息日志库**，用于读取和校验机器人、传感器与仿真日志，按主题和时间查询，并裁剪、合并或恢复可读数据。当前版本 **0.17.5**。
 
 从 [首次使用](docs/quickstart.md) 开始，选择入口前阅读 [支持范围](docs/scope.md)。完整索引见 [文档导航](docs/README.md)，异常处理见 [排错说明](docs/troubleshooting.md)。
 
@@ -18,7 +18,7 @@ version = "0.0.1"
 ```
 
 ```sh
-moon add LilaLola67/moonmcap@0.17.4
+moon add LilaLola67/moonmcap@0.17.5
 ```
 
 使用方的 `moon.pkg`：
@@ -103,7 +103,7 @@ python tools/quickstart_smoke.py
 
 历史验证记录保留在 [验证报告](examples/validation/release-0.16.10.json) 等文件中，版本变化见 [更新记录](CHANGELOG.md) 与 [迁移说明](docs/migration.md)。
 
-从 Mooncakes 全新安装的验证命令为 `python tools/install_smoke.py --version 0.17.4`，不使用仓库源路径覆盖。
+从 Mooncakes 全新安装的验证命令为 `python tools/install_smoke.py --version 0.17.5`，不使用仓库源路径覆盖。
 
 ## 开源许可
 
